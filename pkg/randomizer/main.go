@@ -1,9 +1,12 @@
 package randomizer
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -35,16 +38,66 @@ func NewApp(store Store) *App {
 }
 
 // Main is the entrypoint to the randomizer tool.
-func (App) Main(args []string) (string, error) {
+func (a *App) Main(args []string) (string, error) {
 	fs := buildFlagSet()
 	err := fs.Parse(args)
 	if err != nil {
 		return "", err
 	}
 
-	options := fs.Args()
+	if fs.listGroups {
+		groups, err := a.store.List()
+		if err != nil {
+			return "", err
+		}
+
+		if len(groups) == 0 {
+			return "No groups are saved", nil
+		}
+
+		result := bytes.NewBufferString("The following groups are saved:\n")
+		for _, g := range groups {
+			result.Write([]byte(fmt.Sprintf("• %s\n", g)))
+		}
+
+		return result.String()[:result.Len()-1], nil
+	}
+
+	if fs.deleteGroup != "" {
+		if err := a.store.Delete(fs.deleteGroup); err != nil {
+			return "", err
+		}
+
+		return fmt.Sprintf("Group %q was deleted", fs.deleteGroup), nil
+	}
+
+	argOpts := fs.Args()
+	options := make([]string, 0, len(argOpts))
+	for _, opt := range argOpts {
+		if !strings.HasPrefix(opt, "+") {
+			options = append(options, opt)
+			continue
+		}
+
+		groupOpts, err := a.store.Get(opt[1:])
+		if err != nil {
+			return "", err
+		}
+
+		for _, opt := range groupOpts {
+			options = append(options, opt)
+		}
+	}
+
 	if len(options) < 2 {
 		return "", ErrTooFewOptions
+	}
+
+	if fs.saveGroup != "" {
+		if err := a.store.Put(fs.saveGroup, argOpts); err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Saved group %q with %d options", fs.saveGroup, len(argOpts)), nil
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())
@@ -55,6 +108,10 @@ func (App) Main(args []string) (string, error) {
 
 type flagSet struct {
 	*flag.FlagSet
+
+	listGroups  bool
+	saveGroup   string
+	deleteGroup string
 }
 
 func buildFlagSet() *flagSet {
@@ -62,6 +119,10 @@ func buildFlagSet() *flagSet {
 		FlagSet: flag.NewFlagSet("randomizer", flag.ContinueOnError),
 	}
 	fs.SetOutput(ioutil.Discard)
+
+	fs.BoolVar(&fs.listGroups, "list", false, "list all known groups")
+	fs.StringVar(&fs.saveGroup, "save", "", "save options into the specified group")
+	fs.StringVar(&fs.deleteGroup, "delete", "", "delete the specified group")
 
 	return fs
 }

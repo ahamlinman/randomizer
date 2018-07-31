@@ -61,7 +61,7 @@ func (b *boltStore) Put(name string, options []string) error {
 		}
 
 		return errors.Wrapf(
-			bucket.Put([]byte(groupsBucket), result.Bytes()),
+			bucket.Put([]byte(name), result.Bytes()),
 			"writing group %q",
 			name,
 		)

@@ -30,7 +30,7 @@ func main() {
 
 	default:
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintf(os.Stderr, "%+v", err)
 			os.Exit(1)
 		}
 	}
