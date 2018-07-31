@@ -1,11 +1,12 @@
 package randomizer
 
 import (
-	"errors"
 	"flag"
 	"io/ioutil"
 	"math/rand"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // ErrTooFewOptions is returned when, after parsing arguments, there are fewer

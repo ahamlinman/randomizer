@@ -6,10 +6,17 @@ import (
 	"os"
 
 	"github.com/ahamlinman/randomizer/pkg/randomizer"
+	bolt "github.com/coreos/bbolt"
 )
 
 func main() {
-	app := randomizer.NewApp(nil)
+	db, err := bolt.Open("randomizer.db", os.ModePerm&0644, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(2)
+	}
+
+	app := randomizer.NewApp(&boltStore{db})
 	result, err := app.Main(os.Args[1:])
 
 	switch err {
