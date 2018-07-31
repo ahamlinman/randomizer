@@ -14,7 +14,7 @@ import (
 
 // ErrTooFewOptions is returned when, after parsing arguments, there are fewer
 // than two options to choose from for randomization.
-var ErrTooFewOptions = errors.New("nothing to randomize")
+var ErrTooFewOptions = errors.New("need at least two options")
 
 // App represents a randomizer app that can accept commands.
 type App struct {
@@ -46,47 +46,16 @@ func (a *App) Main(args []string) (string, error) {
 	}
 
 	if fs.listGroups {
-		groups, err := a.store.List()
-		if err != nil {
-			return "", err
-		}
-
-		if len(groups) == 0 {
-			return "No groups are saved", nil
-		}
-
-		result := bytes.NewBufferString("The following groups are saved:\n")
-		for _, g := range groups {
-			result.Write([]byte(fmt.Sprintf("• %s\n", g)))
-		}
-
-		return result.String()[:result.Len()-1], nil
+		return a.listGroups()
 	}
 
 	if fs.deleteGroup != "" {
-		if err := a.store.Delete(fs.deleteGroup); err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Group %q was deleted", fs.deleteGroup), nil
+		return a.deleteGroup(fs.deleteGroup)
 	}
 
-	argOpts := fs.Args()
-	options := make([]string, 0, len(argOpts))
-	for _, opt := range argOpts {
-		if !strings.HasPrefix(opt, "+") {
-			options = append(options, opt)
-			continue
-		}
-
-		groupOpts, err := a.store.Get(opt[1:])
-		if err != nil {
-			return "", err
-		}
-
-		for _, opt := range groupOpts {
-			options = append(options, opt)
-		}
+	options, err := a.expandGroups(fs.Args())
+	if err != nil {
+		return "", err
 	}
 
 	if len(options) < 2 {
@@ -94,10 +63,7 @@ func (a *App) Main(args []string) (string, error) {
 	}
 
 	if fs.saveGroup != "" {
-		if err := a.store.Put(fs.saveGroup, argOpts); err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("Saved group %q with %d options", fs.saveGroup, len(argOpts)), nil
+		return a.saveGroup(fs.saveGroup, options)
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())
@@ -125,4 +91,60 @@ func buildFlagSet() *flagSet {
 	fs.StringVar(&fs.deleteGroup, "delete", "", "delete the specified group")
 
 	return fs
+}
+
+func (a *App) listGroups() (string, error) {
+	groups, err := a.store.List()
+	if err != nil {
+		return "", err
+	}
+
+	if len(groups) == 0 {
+		return "No groups are saved", nil
+	}
+
+	result := bytes.NewBufferString("The following groups are saved:\n")
+	for _, g := range groups {
+		result.Write([]byte(fmt.Sprintf("• %s\n", g)))
+	}
+
+	return result.String()[:result.Len()-1], nil
+}
+
+func (a *App) deleteGroup(name string) (string, error) {
+	if err := a.store.Delete(name); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Group %q was deleted", name), nil
+}
+
+func (a *App) expandGroups(argOpts []string) ([]string, error) {
+	options := make([]string, 0, len(argOpts))
+
+	for _, opt := range argOpts {
+		if !strings.HasPrefix(opt, "+") {
+			options = append(options, opt)
+			continue
+		}
+
+		groupOpts, err := a.store.Get(opt[1:])
+		if err != nil {
+			return nil, err
+		}
+
+		for _, opt := range groupOpts {
+			options = append(options, opt)
+		}
+	}
+
+	return options, nil
+}
+
+func (a *App) saveGroup(name string, options []string) (string, error) {
+	if err := a.store.Put(name, options); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Saved group %q with %d options", name, len(options)), nil
 }
