@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	app := randomizer.NewApp()
+	app := randomizer.NewApp(nil)
 	result, err := app.Main(os.Args[1:])
 
 	switch err {

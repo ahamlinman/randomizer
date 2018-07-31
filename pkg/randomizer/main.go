@@ -14,12 +14,23 @@ var ErrTooFewOptions = errors.New("nothing to randomize")
 
 // App represents a randomizer app that can accept commands.
 type App struct {
-	todo struct{}
+	store Store
+}
+
+// Store represents an object that provides persistence for "groups" of
+// options.
+type Store interface {
+	List() ([]string, error)
+	Get(name string) ([]string, error)
+	Put(name string, options []string) error
+	Delete(name string) error
 }
 
 // NewApp returns an App.
-func NewApp() *App {
-	return &App{}
+func NewApp(store Store) *App {
+	return &App{
+		store: store,
+	}
 }
 
 // Main is the entrypoint to the randomizer tool.
