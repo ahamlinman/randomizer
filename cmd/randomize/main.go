@@ -9,7 +9,8 @@ import (
 )
 
 func main() {
-	result, err := randomizer.Main(os.Args[1:])
+	app := randomizer.NewApp()
+	result, err := app.Main(os.Args[1:])
 
 	switch err {
 	case randomizer.ErrTooFewOptions:

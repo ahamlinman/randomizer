@@ -12,8 +12,18 @@ import (
 // than two options to choose from for randomization.
 var ErrTooFewOptions = errors.New("nothing to randomize")
 
+// App represents a randomizer app that can accept commands.
+type App struct {
+	todo struct{}
+}
+
+// NewApp returns an App.
+func NewApp() *App {
+	return &App{}
+}
+
 // Main is the entrypoint to the randomizer tool.
-func Main(args []string) (string, error) {
+func (App) Main(args []string) (string, error) {
 	fs := buildFlagSet()
 	err := fs.Parse(args)
 	if err != nil {
