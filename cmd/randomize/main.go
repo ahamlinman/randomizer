@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ahamlinman/randomizer"
+	"github.com/ahamlinman/randomizer/pkg/randomizer"
 )
 
 func main() {
