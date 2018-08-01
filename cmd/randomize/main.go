@@ -28,5 +28,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "Whoops, we had a problem… %v\n", err)
+	fmt.Fprintf(os.Stderr, "Whoops, I had a problem… %v\n", err)
 }

@@ -39,7 +39,7 @@ func (e Error) HelpText() string {
 		return e.helpText
 	}
 
-	return fmt.Sprintf("Whoops, we had a problem… %v", e.cause)
+	return fmt.Sprintf("Whoops, I had a problem… %v", e.cause)
 }
 
 // App represents a randomizer app that can accept commands.
