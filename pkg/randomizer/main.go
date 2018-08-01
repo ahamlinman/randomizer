@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/pkg/errors"
@@ -44,6 +45,7 @@ func (e Error) HelpText() string {
 
 // App represents a randomizer app that can accept commands.
 type App struct {
+	name  string
 	store Store
 }
 
@@ -57,8 +59,9 @@ type Store interface {
 }
 
 // NewApp returns an App.
-func NewApp(store Store) *App {
+func NewApp(name string, store Store) *App {
 	return &App{
+		name:  name,
 		store: store,
 	}
 }
@@ -83,7 +86,7 @@ func (a *App) Main(args []string) (result string, err error) {
 	if err != nil {
 		return "", Error{
 			cause:    err,
-			helpText: "TODO",
+			helpText: a.buildUsage(),
 		}
 	}
 
@@ -136,6 +139,27 @@ func buildFlagSet() *flagSet {
 	fs.StringVar(&fs.deleteGroup, "delete", "", "delete the specified group")
 
 	return fs
+}
+
+var usageTmpl = template.Must(template.New("").Parse(
+	`{{.Name}} is a simple command that picks a random option from a list.
+
+*Example:* {{.Name}} one two three
+> I choose… *three*
+
+You can also save *groups* for later use.
+
+*Saving a group:* {{.Name}} -save first3 one two three
+*Randomizing from a group:* {{.Name}} +first3
+*Combining groups with other options:* {{.Name}} +first3 +next3 seven eight
+*Listing groups:* {{.Name}} -list
+*Deleting a group:* {{.Name}} -delete first3
+`))
+
+func (a *App) buildUsage() string {
+	var buf bytes.Buffer
+	usageTmpl.Execute(&buf, struct{ Name string }{a.name})
+	return buf.String()
 }
 
 func (a *App) listGroups() (string, error) {
