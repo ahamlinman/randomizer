@@ -13,6 +13,38 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ResultType represents the type of successful result returned by the
+// randomizer.
+type ResultType int
+
+const (
+	// Selection indicates that the randomizer made a random selection from input
+	// options.
+	Selection ResultType = iota
+	// ListedGroups indicates that a group list was successfully obtained.
+	ListedGroups
+	// SavedGroup indicates that a group was successfully saved.
+	SavedGroup
+	// DeletedGroup indicates that a group was successfully deleted.
+	DeletedGroup
+)
+
+// Result represents a successful randomizer operation.
+type Result struct {
+	resultType ResultType
+	message    string
+}
+
+// Type returns the type of this result.
+func (r Result) Type() ResultType {
+	return r.resultType
+}
+
+// Message returns the user-friendly output associated with this result.
+func (r Result) Message() string {
+	return r.message
+}
+
 // Error represents an error encountered by the randomizer. It includes
 // friendly help messages that can be displayed directly to users when errors
 // occur, along with an underlying developer-friendly error that may be useful
@@ -71,7 +103,7 @@ func NewApp(name string, store Store) *App {
 // Note that all errors returned from this function will be of this package's
 // Error type. This provides the HelpText method for user-friendly output
 // formatting.
-func (a *App) Main(args []string) (result string, err error) {
+func (a *App) Main(args []string) (result Result, err error) {
 	defer func() {
 		if err != nil {
 			if _, ok := err.(Error); !ok {
@@ -84,7 +116,7 @@ func (a *App) Main(args []string) (result string, err error) {
 	fs := buildFlagSet()
 	err = fs.Parse(args)
 	if err != nil {
-		return "", Error{
+		return Result{}, Error{
 			cause:    err,
 			helpText: a.buildUsage(),
 		}
@@ -100,11 +132,11 @@ func (a *App) Main(args []string) (result string, err error) {
 
 	options, err := a.expandGroups(fs.Args())
 	if err != nil {
-		return "", err
+		return Result{}, err
 	}
 
 	if len(options) < 2 {
-		return "", Error{
+		return Result{}, Error{
 			cause:    errors.New("too few options"),
 			helpText: "Whoops, I need at least two options to work with!",
 		}
@@ -117,7 +149,10 @@ func (a *App) Main(args []string) (result string, err error) {
 	source := rand.NewSource(time.Now().UnixNano())
 	rander := rand.New(source)
 	selector := Selector(rander.Intn)
-	return selector.PickString(options), nil
+	return Result{
+		resultType: Selection,
+		message:    fmt.Sprintf("I choose… *%s*", selector.PickString(options)),
+	}, nil
 }
 
 type flagSet struct {
@@ -162,36 +197,45 @@ func (a *App) buildUsage() string {
 	return buf.String()
 }
 
-func (a *App) listGroups() (string, error) {
+func (a *App) listGroups() (Result, error) {
 	groups, err := a.store.List()
 	if err != nil {
-		return "", Error{
+		return Result{}, Error{
 			cause:    err,
 			helpText: "Whoops, I had trouble getting your groups. Please try again later!",
 		}
 	}
 
 	if len(groups) == 0 {
-		return "No groups are saved", nil
+		return Result{
+			resultType: ListedGroups,
+			message:    "No groups are available. (Use the -save option to create one!)",
+		}, nil
 	}
 
-	result := bytes.NewBufferString("The following groups are saved:\n")
+	result := bytes.NewBufferString("The following groups are available:\n")
 	for _, g := range groups {
 		result.Write([]byte(fmt.Sprintf("• %s\n", g)))
 	}
 
-	return result.String()[:result.Len()-1], nil
+	return Result{
+		resultType: ListedGroups,
+		message:    result.String()[:result.Len()-1],
+	}, nil
 }
 
-func (a *App) deleteGroup(name string) (string, error) {
+func (a *App) deleteGroup(name string) (Result, error) {
 	if err := a.store.Delete(name); err != nil {
-		return "", Error{
+		return Result{}, Error{
 			cause:    err,
 			helpText: "Whoops, I had trouble deleting that group. Please try again later!",
 		}
 	}
 
-	return fmt.Sprintf("Group %q was deleted", name), nil
+	return Result{
+		resultType: DeletedGroup,
+		message:    fmt.Sprintf("Done! Group %q was deleted.", name),
+	}, nil
 }
 
 func (a *App) expandGroups(argOpts []string) ([]string, error) {
@@ -219,13 +263,16 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 	return options, nil
 }
 
-func (a *App) saveGroup(name string, options []string) (string, error) {
+func (a *App) saveGroup(name string, options []string) (Result, error) {
 	if err := a.store.Put(name, options); err != nil {
-		return "", Error{
+		return Result{}, Error{
 			cause:    err,
 			helpText: "Whoops, I had trouble saving that group. Please try again later!",
 		}
 	}
 
-	return fmt.Sprintf("Saved group %q with %d options", name, len(options)), nil
+	return Result{
+		resultType: SavedGroup,
+		message:    fmt.Sprintf("Done! Group %q was saved with %d options.", name, len(options)),
+	}, nil
 }
