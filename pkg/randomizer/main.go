@@ -64,9 +64,22 @@ func NewApp(store Store) *App {
 }
 
 // Main is the entrypoint to the randomizer tool.
-func (a *App) Main(args []string) (string, error) {
+//
+// Note that all errors returned from this function will be of this package's
+// Error type. This provides the HelpText method for user-friendly output
+// formatting.
+func (a *App) Main(args []string) (result string, err error) {
+	defer func() {
+		if err != nil {
+			if _, ok := err.(Error); !ok {
+				// Just in case…
+				err = Error{cause: err}
+			}
+		}
+	}()
+
 	fs := buildFlagSet()
-	err := fs.Parse(args)
+	err = fs.Parse(args)
 	if err != nil {
 		return "", Error{
 			cause:    err,
@@ -128,7 +141,10 @@ func buildFlagSet() *flagSet {
 func (a *App) listGroups() (string, error) {
 	groups, err := a.store.List()
 	if err != nil {
-		return "", err
+		return "", Error{
+			cause:    err,
+			helpText: "Whoops, I had trouble getting your groups. Please try again later!",
+		}
 	}
 
 	if len(groups) == 0 {
@@ -145,7 +161,10 @@ func (a *App) listGroups() (string, error) {
 
 func (a *App) deleteGroup(name string) (string, error) {
 	if err := a.store.Delete(name); err != nil {
-		return "", err
+		return "", Error{
+			cause:    err,
+			helpText: "Whoops, I had trouble deleting that group. Please try again later!",
+		}
 	}
 
 	return fmt.Sprintf("Group %q was deleted", name), nil
@@ -178,7 +197,10 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 
 func (a *App) saveGroup(name string, options []string) (string, error) {
 	if err := a.store.Put(name, options); err != nil {
-		return "", err
+		return "", Error{
+			cause:    err,
+			helpText: "Whoops, I had trouble saving that group. Please try again later!",
+		}
 	}
 
 	return fmt.Sprintf("Saved group %q with %d options", name, len(options)), nil

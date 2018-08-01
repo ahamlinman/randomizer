@@ -17,16 +17,12 @@ func main() {
 
 	app := randomizer.NewApp(&boltStore{db})
 	result, err := app.Main(os.Args[1:])
-
-	if err == nil {
-		fmt.Println(result)
-		return
-	}
-
-	if err, ok := err.(randomizer.Error); ok {
+	if err != nil {
+		err := err.(randomizer.Error)
 		fmt.Fprintln(os.Stderr, err.HelpText())
+		fmt.Fprintf(os.Stderr, "\n%+v\n", err.Cause())
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "Whoops, I had a problem… %v\n", err)
+	fmt.Println(result)
 }
