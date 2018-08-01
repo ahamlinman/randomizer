@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
@@ -19,21 +18,15 @@ func main() {
 	app := randomizer.NewApp(&boltStore{db})
 	result, err := app.Main(os.Args[1:])
 
-	switch err {
-	case randomizer.ErrTooFewOptions:
-		fmt.Fprintln(os.Stderr, "Hey, I need things to randomize!")
-		os.Exit(1)
-
-	case flag.ErrHelp:
-		fmt.Fprintln(os.Stderr, "Usage: Just give me things to randomize!")
+	if err == nil {
+		fmt.Println(result)
 		return
-
-	default:
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%+v", err)
-			os.Exit(1)
-		}
 	}
 
-	fmt.Println(result)
+	if err, ok := err.(randomizer.UsageError); ok {
+		fmt.Fprintln(os.Stderr, err.UserHelpText)
+		os.Exit(1)
+	}
+
+	fmt.Fprintf(os.Stderr, "Whoops, we had a problem… %v\n", err)
 }

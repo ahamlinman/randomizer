@@ -8,13 +8,18 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
-// ErrTooFewOptions is returned when, after parsing arguments, there are fewer
-// than two options to choose from for randomization.
-var ErrTooFewOptions = errors.New("need at least two options")
+// UsageError represents an error with a user's invocation of the randomizer.
+// It includes a special field for help text that may be displayed to the user.
+type UsageError struct {
+	Message      string
+	UserHelpText string
+}
+
+func (e UsageError) Error() string {
+	return e.Message
+}
 
 // App represents a randomizer app that can accept commands.
 type App struct {
@@ -42,7 +47,10 @@ func (a *App) Main(args []string) (string, error) {
 	fs := buildFlagSet()
 	err := fs.Parse(args)
 	if err != nil {
-		return "", err
+		return "", UsageError{
+			Message:      err.Error(),
+			UserHelpText: "TODO",
+		}
 	}
 
 	if fs.listGroups {
@@ -59,7 +67,10 @@ func (a *App) Main(args []string) (string, error) {
 	}
 
 	if len(options) < 2 {
-		return "", ErrTooFewOptions
+		return "", UsageError{
+			Message:      "too few options",
+			UserHelpText: "Whoops, I need at least two options to work with!",
+		}
 	}
 
 	if fs.saveGroup != "" {
@@ -130,7 +141,10 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 
 		groupOpts, err := a.store.Get(opt[1:])
 		if err != nil {
-			return nil, err
+			return nil, UsageError{
+				Message:      "group not found",
+				UserHelpText: fmt.Sprintf("Whoops, I couldn't find the %q group!", opt),
+			}
 		}
 
 		for _, opt := range groupOpts {
