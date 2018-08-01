@@ -23,8 +23,8 @@ func main() {
 		return
 	}
 
-	if err, ok := err.(randomizer.UsageError); ok {
-		fmt.Fprintln(os.Stderr, err.UserHelpText)
+	if err, ok := err.(randomizer.Error); ok {
+		fmt.Fprintln(os.Stderr, err.HelpText())
 		os.Exit(1)
 	}
 

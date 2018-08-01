@@ -8,17 +8,38 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
-// UsageError represents an error with a user's invocation of the randomizer.
-// It includes a special field for help text that may be displayed to the user.
-type UsageError struct {
-	Message      string
-	UserHelpText string
+// Error represents an error encountered by the randomizer. It includes
+// friendly help messages that can be displayed directly to users when errors
+// occur, along with an underlying developer-friendly error that may be useful
+// for debugging.
+type Error struct {
+	cause    error
+	helpText string
 }
 
-func (e UsageError) Error() string {
-	return e.Message
+func (e Error) Error() string {
+	return e.cause.Error()
+}
+
+// Cause returns the underlying developer-friendly error that represents this
+// usage error.
+func (e Error) Cause() error {
+	return e.cause
+}
+
+// HelpText returns user-friendly help text associated with this error. While
+// the underlying error is more suitable for developer use, the help text may
+// be displayed directly to a user.
+func (e Error) HelpText() string {
+	if e.helpText != "" {
+		return e.helpText
+	}
+
+	return fmt.Sprintf("Whoops, we had a problem… %v", e.cause)
 }
 
 // App represents a randomizer app that can accept commands.
@@ -47,9 +68,9 @@ func (a *App) Main(args []string) (string, error) {
 	fs := buildFlagSet()
 	err := fs.Parse(args)
 	if err != nil {
-		return "", UsageError{
-			Message:      err.Error(),
-			UserHelpText: "TODO",
+		return "", Error{
+			cause:    err,
+			helpText: "TODO",
 		}
 	}
 
@@ -67,9 +88,9 @@ func (a *App) Main(args []string) (string, error) {
 	}
 
 	if len(options) < 2 {
-		return "", UsageError{
-			Message:      "too few options",
-			UserHelpText: "Whoops, I need at least two options to work with!",
+		return "", Error{
+			cause:    errors.New("too few options"),
+			helpText: "Whoops, I need at least two options to work with!",
 		}
 	}
 
@@ -141,9 +162,9 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 
 		groupOpts, err := a.store.Get(opt[1:])
 		if err != nil {
-			return nil, UsageError{
-				Message:      "group not found",
-				UserHelpText: fmt.Sprintf("Whoops, I couldn't find the %q group!", opt),
+			return nil, Error{
+				cause:    err,
+				helpText: fmt.Sprintf("Whoops, I couldn't find the %q group!", opt),
 			}
 		}
 
