@@ -23,6 +23,8 @@ const (
 	Selection ResultType = iota
 	// ListedGroups indicates that a group list was successfully obtained.
 	ListedGroups
+	// ShowedGroup indicates that the options of a single group were successfully obtained.
+	ShowedGroup
 	// SavedGroup indicates that a group was successfully saved.
 	SavedGroup
 	// DeletedGroup indicates that a group was successfully deleted.
@@ -126,6 +128,10 @@ func (a *App) Main(args []string) (result Result, err error) {
 		return a.listGroups()
 	}
 
+	if fs.showGroup != "" {
+		return a.showGroup(fs.showGroup)
+	}
+
 	if fs.deleteGroup != "" {
 		return a.deleteGroup(fs.deleteGroup)
 	}
@@ -159,6 +165,7 @@ type flagSet struct {
 	*flag.FlagSet
 
 	listGroups  bool
+	showGroup   string
 	saveGroup   string
 	deleteGroup string
 }
@@ -170,6 +177,7 @@ func buildFlagSet() *flagSet {
 	fs.SetOutput(ioutil.Discard)
 
 	fs.BoolVar(&fs.listGroups, "list", false, "list all known groups")
+	fs.StringVar(&fs.showGroup, "show", "", "show the options in the specified group")
 	fs.StringVar(&fs.saveGroup, "save", "", "save options into the specified group")
 	fs.StringVar(&fs.deleteGroup, "delete", "", "delete the specified group")
 
@@ -184,11 +192,12 @@ var usageTmpl = template.Must(template.New("").Parse(
 
 You can also save *groups* for later use.
 
-*Saving a group:* {{.Name}} -save first3 one two three
-*Randomizing from a group:* {{.Name}} +first3
-*Combining groups with other options:* {{.Name}} +first3 +next3 seven eight
-*Listing groups:* {{.Name}} -list
-*Deleting a group:* {{.Name}} -delete first3
+*Save a group:* {{.Name}} -save first3 one two three
+*Randomize from a group:* {{.Name}} +first3
+*Combine groups with other options:* {{.Name}} +first3 +next3 seven eight
+*List groups:* {{.Name}} -list
+*Show options in a group:* {{.Name}} -show first3
+*Delete a group:* {{.Name}} -delete first3
 `))
 
 func (a *App) buildUsage() string {
@@ -220,6 +229,26 @@ func (a *App) listGroups() (Result, error) {
 
 	return Result{
 		resultType: ListedGroups,
+		message:    result.String()[:result.Len()-1],
+	}, nil
+}
+
+func (a *App) showGroup(name string) (Result, error) {
+	group, err := a.store.Get(name)
+	if err != nil {
+		return Result{}, Error{
+			cause:    err,
+			helpText: "Whoops, I couldn't find that group!",
+		}
+	}
+
+	result := bytes.NewBufferString(fmt.Sprintf("Group %q has the following options:\n", name))
+	for _, g := range group {
+		result.Write([]byte(fmt.Sprintf("• %s\n", g)))
+	}
+
+	return Result{
+		resultType: ShowedGroup,
 		message:    result.String()[:result.Len()-1],
 	}, nil
 }
