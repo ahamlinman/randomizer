@@ -1,27 +1,17 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/ahamlinman/randomizer/pkg/randomizer"
+	"github.com/ahamlinman/randomizer/pkg/slack"
 	boltstore "github.com/ahamlinman/randomizer/pkg/store/bbolt"
 	bolt "github.com/coreos/bbolt"
 	"github.com/pkg/errors"
 )
-
-type slackResponse struct {
-	ResponseType string `json:"response_type"`
-	Text         string `json:"text"`
-}
-
-func (s slackResponse) Send(w io.Writer) {
-	json.NewEncoder(w).Encode(&s)
-}
 
 func main() {
 	token := os.Getenv("SLACK_TOKEN")
@@ -56,16 +46,25 @@ func main() {
 
 		result, err := app.Main(strings.Split(r.PostForm.Get("text"), " "))
 		if err != nil {
-			slackResponse{"ephemeral", err.(randomizer.Error).HelpText()}.Send(w)
+			slack.Response{
+				Type: slack.TypeEphemeral,
+				Text: err.(randomizer.Error).HelpText(),
+			}.Send(w)
 			return
 		}
 
 		switch result.Type() {
 		case randomizer.ListedGroups, randomizer.ShowedGroup:
-			slackResponse{"ephemeral", result.Message()}.Send(w)
+			slack.Response{
+				Type: slack.TypeEphemeral,
+				Text: result.Message(),
+			}.Send(w)
 
 		default:
-			slackResponse{"in_channel", result.Message()}.Send(w)
+			slack.Response{
+				Type: slack.TypeInChannel,
+				Text: result.Message(),
+			}.Send(w)
 		}
 	}
 
