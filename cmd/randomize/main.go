@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/ahamlinman/randomizer/pkg/randomizer"
+	boltstore "github.com/ahamlinman/randomizer/pkg/store/bbolt"
 	bolt "github.com/coreos/bbolt"
 )
 
@@ -15,7 +16,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	app := randomizer.NewApp("randomizer", &boltStore{db})
+	app := randomizer.NewApp("randomizer", boltstore.New(db))
 	result, err := app.Main(os.Args[1:])
 	if err != nil {
 		err := err.(randomizer.Error)

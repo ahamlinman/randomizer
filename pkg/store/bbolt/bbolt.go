@@ -1,4 +1,4 @@
-package main
+package bbolt
 
 import (
 	"bytes"
@@ -10,11 +10,20 @@ import (
 
 const groupsBucket = "groups"
 
-type boltStore struct {
+// Store is a store backed by a bbolt database.
+type Store struct {
 	db *bolt.DB
 }
 
-func (b *boltStore) List() (groups []string, err error) {
+// New creates a new store backed by the provided (pre-opened) bbolt database.
+func New(db *bolt.DB) *Store {
+	return &Store{
+		db: db,
+	}
+}
+
+// List obtains the set of stored groups.
+func (b *Store) List() (groups []string, err error) {
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(groupsBucket))
 		if bucket == nil {
@@ -29,7 +38,8 @@ func (b *boltStore) List() (groups []string, err error) {
 	return
 }
 
-func (b *boltStore) Get(name string) (options []string, err error) {
+// Get obtains the options in a single named group.
+func (b *Store) Get(name string) (options []string, err error) {
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(groupsBucket))
 		if bucket == nil {
@@ -47,7 +57,8 @@ func (b *boltStore) Get(name string) (options []string, err error) {
 	return
 }
 
-func (b *boltStore) Put(name string, options []string) error {
+// Put saves the provided options into a named group.
+func (b *Store) Put(name string, options []string) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(groupsBucket))
 		if err != nil {
@@ -68,7 +79,8 @@ func (b *boltStore) Put(name string, options []string) error {
 	})
 }
 
-func (b *boltStore) Delete(name string) error {
+// Delete removes the named group from the store.
+func (b *Store) Delete(name string) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(groupsBucket))
 		if bucket == nil {
