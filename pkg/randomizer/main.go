@@ -118,7 +118,7 @@ func (a *App) Main(args []string) (result Result, err error) {
 
 	fs := buildFlagSet()
 	err = fs.Parse(args)
-	if err != nil {
+	if err != nil || (len(args) == 1 && args[0] == "help") {
 		return Result{}, Error{
 			cause:    err,
 			helpText: a.buildUsage(),
