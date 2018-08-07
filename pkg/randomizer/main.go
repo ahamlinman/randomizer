@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"strings"
@@ -226,9 +227,7 @@ func (a *App) listGroups() (Result, error) {
 	}
 
 	result := bytes.NewBufferString("The following groups are available:\n")
-	for _, g := range groups {
-		result.Write([]byte(fmt.Sprintf("• %s\n", g)))
-	}
+	a.formatList(result, groups)
 
 	return Result{
 		resultType: ListedGroups,
@@ -246,9 +245,7 @@ func (a *App) showGroup(name string) (Result, error) {
 	}
 
 	result := bytes.NewBufferString(fmt.Sprintf("Group %q has the following options:\n", name))
-	for _, g := range group {
-		result.Write([]byte(fmt.Sprintf("• %s\n", g)))
-	}
+	a.formatList(result, group)
 
 	return Result{
 		resultType: ShowedGroup,
@@ -303,8 +300,17 @@ func (a *App) saveGroup(name string, options []string) (Result, error) {
 		}
 	}
 
+	result := bytes.NewBufferString(fmt.Sprintf("Done! Group %q was saved with the following options:\n", name))
+	a.formatList(result, options)
+
 	return Result{
 		resultType: SavedGroup,
-		message:    fmt.Sprintf("Done! Group %q was saved with %d options.", name, len(options)),
+		message:    result.String()[:result.Len()-1],
 	}, nil
+}
+
+func (App) formatList(w io.Writer, groups []string) {
+	for _, g := range groups {
+		w.Write([]byte(fmt.Sprintf("• %s\n", g)))
+	}
 }
