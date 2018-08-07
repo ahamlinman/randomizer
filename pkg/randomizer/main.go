@@ -200,9 +200,7 @@ You can also save *groups* for later use.
 *Show options in a group:* {{.Name}} -show first3
 *Delete a group:* {{.Name}} -delete first3
 
-Note that the selection is weighted. An option is more likely to be picked if
-it is given multiple times. This also applies when multiple groups are given,
-and an option is in more than one of them.`))
+Note that the selection is weighted. An option is more likely to be picked if it is given multiple times. This also applies when multiple groups are given, and an option is in more than one of them.`))
 
 func (a *App) buildUsage() string {
 	var buf bytes.Buffer
