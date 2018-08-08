@@ -26,10 +26,11 @@ func main() {
 		os.Exit(2)
 	}
 
-	app := randomizer.NewApp("/randomize", boltstore.New(db))
-
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		printErr := func(err error) { fmt.Fprintf(os.Stderr, "%+v\n", err) }
+
 		if err := r.ParseForm(); err != nil {
+			printErr(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -44,8 +45,13 @@ func main() {
 
 		w.Header().Add("Content-Type", "application/json")
 
+		app := randomizer.NewApp(
+			"/randomize",
+			boltstore.New(db, boltstore.WithBucketName(r.PostForm.Get("channel_id"))),
+		)
 		result, err := app.Main(strings.Split(r.PostForm.Get("text"), " "))
 		if err != nil {
+			printErr(err)
 			slack.Response{
 				Type: slack.TypeEphemeral,
 				Text: err.(randomizer.Error).HelpText(),
