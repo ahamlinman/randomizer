@@ -45,7 +45,19 @@ func main() {
 }
 
 func logErr(err error) {
-	fmt.Fprintf(os.Stderr, "%+v\n", errors.Cause(err))
+	if err == nil {
+		panic("logErr assumes that errors are non-nil")
+	}
+
+	type causer interface {
+		Cause() error
+	}
+
+	if e, ok := err.(causer); ok {
+		err = e.Cause()
+	}
+
+	fmt.Fprintf(os.Stderr, "%+v\n", err)
 }
 
 func rootHandler(token string, db *bolt.DB) http.HandlerFunc {
