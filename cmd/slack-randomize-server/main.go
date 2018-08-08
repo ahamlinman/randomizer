@@ -34,11 +34,24 @@ func main() {
 		os.Exit(2)
 	}
 
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		printErr := func(err error) { fmt.Fprintf(os.Stderr, "%+v\n", err) }
+	http.HandleFunc("/", rootHandler(token, db))
 
+	fmt.Println("Starting randomizer service")
+	err = http.ListenAndServe("0.0.0.0:7636", nil)
+	if err != nil {
+		logErr(errors.Wrap(err, "starting server"))
+		os.Exit(1)
+	}
+}
+
+func logErr(err error) {
+	fmt.Fprintf(os.Stderr, "%+v\n", errors.Cause(err))
+}
+
+func rootHandler(token string, db *bolt.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			printErr(err)
+			logErr(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -59,7 +72,7 @@ func main() {
 		)
 		result, err := app.Main(strings.Split(r.PostForm.Get("text"), " "))
 		if err != nil {
-			printErr(err)
+			logErr(err)
 			slack.Response{
 				Type: slack.TypeEphemeral,
 				Text: err.(randomizer.Error).HelpText(),
@@ -82,14 +95,5 @@ func main() {
 		}
 
 		fmt.Printf("Handled command from %v at %v\n", r.PostForm.Get("user_name"), time.Now())
-	}
-
-	http.HandleFunc("/", handler)
-
-	fmt.Println("Starting randomizer service")
-	err = http.ListenAndServe("0.0.0.0:7636", nil)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%+v\n", errors.Wrap(err, "starting server"))
-		os.Exit(1)
 	}
 }
