@@ -1,4 +1,4 @@
-package randomizer
+package randomizer // import "go.alexhamlin.co/randomizer/pkg/randomizer"
 
 import (
 	"bytes"

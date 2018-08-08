@@ -1,12 +1,13 @@
-package main
+package main // import "go.alexhamlin.co/randomizer/cmd/randomize"
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/ahamlinman/randomizer/pkg/randomizer"
-	boltstore "github.com/ahamlinman/randomizer/pkg/store/bbolt"
 	bolt "github.com/coreos/bbolt"
+
+	"go.alexhamlin.co/randomizer/pkg/randomizer"
+	boltstore "go.alexhamlin.co/randomizer/pkg/store/bbolt"
 )
 
 func main() {

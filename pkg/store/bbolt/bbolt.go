@@ -1,4 +1,4 @@
-package bbolt
+package bbolt // import "go.alexhamlin.co/randomizer/pkg/store/bbolt"
 
 import (
 	"bytes"

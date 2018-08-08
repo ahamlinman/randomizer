@@ -1,4 +1,4 @@
-package main
+package main // import "go.alexhamlin.co/randomizer/cmd/slack-randomize-server"
 
 import (
 	"fmt"
@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ahamlinman/randomizer/pkg/randomizer"
-	"github.com/ahamlinman/randomizer/pkg/slack"
-	boltstore "github.com/ahamlinman/randomizer/pkg/store/bbolt"
 	bolt "github.com/coreos/bbolt"
 	"github.com/pkg/errors"
+
+	"go.alexhamlin.co/randomizer/pkg/randomizer"
+	"go.alexhamlin.co/randomizer/pkg/slack"
+	boltstore "go.alexhamlin.co/randomizer/pkg/store/bbolt"
 )
 
 func main() {

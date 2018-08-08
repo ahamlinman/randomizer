@@ -1,4 +1,4 @@
-package slack
+package slack // import "go.alexhamlin.co/randomizer/pkg/slack"
 
 import (
 	"encoding/json"
