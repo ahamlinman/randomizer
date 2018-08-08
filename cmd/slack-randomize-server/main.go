@@ -20,7 +20,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	db, err := bolt.Open("randomizer.db", os.ModePerm&0644, nil)
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		fmt.Println("Using default DB path 'randomizer.db'")
+		dbPath = "randomizer.db"
+	}
+
+	db, err := bolt.Open(dbPath, os.ModePerm&0644, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(2)
