@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ahamlinman/randomizer/pkg/randomizer"
 	"github.com/ahamlinman/randomizer/pkg/slack"
@@ -78,6 +79,8 @@ func main() {
 				Text: result.Message(),
 			}.Send(w)
 		}
+
+		fmt.Printf("Handled command from %v at %v\n", r.PostForm.Get("user_name"), time.Now())
 	}
 
 	http.HandleFunc("/", handler)
