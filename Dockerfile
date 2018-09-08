@@ -1,13 +1,15 @@
-FROM golang:1.10
+FROM golang:1.11 AS builder
 
-COPY . /go/src/go.alexhamlin.co/randomizer
+COPY . /tmp/randomizer
+WORKDIR /tmp/randomizer
 
 ENV CGO_ENABLED=0
-RUN go get -v go.alexhamlin.co/randomizer/cmd/...
+RUN go install -v ./cmd/...
 
 
 FROM busybox:1.29
 
-COPY --from=0 /go/bin/randomize /usr/bin/randomize
-COPY --from=0 /go/bin/slack-randomize-server /usr/bin/slack-randomize-server
+COPY --from=builder /go/bin/randomize /usr/local/bin/randomize
+COPY --from=builder /go/bin/slack-randomize-server /usr/local/bin/slack-randomize-server
+
 EXPOSE 7636
