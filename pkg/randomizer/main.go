@@ -191,7 +191,7 @@ var usageTmpl = template.Must(template.New("").Parse(
 *Example:* {{.Name}} one two three
 > I choose… *three*
 
-You can also save *groups* for later use.
+You can also create *groups* for the current channel or DM.
 
 *Save a group:* {{.Name}} -save first3 one two three
 *Randomize from a group:* {{.Name}} +first3
