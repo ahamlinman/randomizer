@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	bolt "github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 
 	"go.alexhamlin.co/randomizer/pkg/randomizer"
 	boltstore "go.alexhamlin.co/randomizer/pkg/store/bbolt"

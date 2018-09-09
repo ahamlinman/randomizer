@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	bolt "github.com/coreos/bbolt"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 )
 
 // DefaultBucket is the default bucket in which groups are stored in the bbolt

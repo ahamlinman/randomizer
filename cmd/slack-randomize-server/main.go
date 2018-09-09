@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	bolt "github.com/coreos/bbolt"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 
 	"go.alexhamlin.co/randomizer/pkg/randomizer"
 	"go.alexhamlin.co/randomizer/pkg/slack"
