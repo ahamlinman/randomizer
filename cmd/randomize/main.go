@@ -17,7 +17,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	app := randomizer.NewApp("randomizer", boltstore.New(db))
+	app := randomizer.NewApp("randomize", boltstore.New(db))
 	result, err := app.Main(os.Args[1:])
 	if err != nil {
 		err := err.(randomizer.Error)
