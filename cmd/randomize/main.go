@@ -2,7 +2,9 @@ package main // import "go.alexhamlin.co/randomizer/cmd/randomize"
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
@@ -43,6 +45,9 @@ func getStore() (randomizer.Store, error) {
 		if endpoint != "" {
 			cfg.EndpointResolver = aws.ResolveWithEndpointURL(endpoint)
 		}
+
+		cfg.HTTPClient = &http.Client{Timeout: 2500 * time.Millisecond}
+		cfg.Retryer = aws.DefaultRetryer{NumMaxRetries: 2}
 
 		db := dynamodb.New(cfg)
 		return dynamostore.New(db), nil
