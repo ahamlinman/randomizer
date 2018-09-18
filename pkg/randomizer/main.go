@@ -191,7 +191,7 @@ var usageTmpl = template.Must(template.New("").Parse(
 *Example:* {{.Name}} one two three
 > I choose… *three*
 
-You can also create *groups* for the current channel or DM.
+You can also create *groups* for the current channel (or DM).
 
 *Save a group:* {{.Name}} -save first3 one two three
 *Randomize from a group:* {{.Name}} +first3
@@ -213,18 +213,18 @@ func (a *App) listGroups() (Result, error) {
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
-			helpText: "Whoops, I had trouble getting your groups. Please try again later!",
+			helpText: "Whoops, I had trouble getting this channel's groups. Please try again later!",
 		}
 	}
 
 	if len(groups) == 0 {
 		return Result{
 			resultType: ListedGroups,
-			message:    "No groups are available. (Use the -save option to create one!)",
+			message:    "No groups are available in this channel. (Use the -save option to create one!)",
 		}, nil
 	}
 
-	result := bytes.NewBufferString("The following groups are available:\n")
+	result := bytes.NewBufferString("The following groups are available in this channel:\n")
 	a.formatList(result, groups)
 
 	return Result{
@@ -238,7 +238,7 @@ func (a *App) showGroup(name string) (Result, error) {
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
-			helpText: "Whoops, I couldn't find that group!",
+			helpText: "Whoops, I couldn't find that group in this channel!",
 		}
 	}
 
@@ -278,7 +278,7 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 		if err != nil {
 			return nil, Error{
 				cause:    err,
-				helpText: fmt.Sprintf("Whoops, I couldn't find the %q group!", opt),
+				helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", opt),
 			}
 		}
 
@@ -298,7 +298,7 @@ func (a *App) saveGroup(name string, options []string) (Result, error) {
 		}
 	}
 
-	result := bytes.NewBufferString(fmt.Sprintf("Done! Group %q was saved with the following options:\n", name))
+	result := bytes.NewBufferString(fmt.Sprintf("Done! Group %q was saved in this channel with the following options:\n", name))
 	a.formatList(result, options)
 
 	return Result{
