@@ -275,11 +275,12 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 			continue
 		}
 
-		groupOpts, err := a.store.Get(opt[1:])
+		groupName := opt[1:]
+		groupOpts, err := a.store.Get(groupName)
 		if err != nil {
 			return nil, Error{
 				cause:    err,
-				helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", opt),
+				helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", groupName),
 			}
 		}
 
