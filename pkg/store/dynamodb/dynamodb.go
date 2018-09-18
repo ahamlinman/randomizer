@@ -14,6 +14,7 @@ const DefaultPartition = "Groups"
 const (
 	partitionKey = "Partition"
 	groupKey     = "Group"
+	itemsKey     = "Items"
 )
 
 // Store is a store backed by a pre-existing Amazon DynamoDB table.
@@ -112,4 +113,65 @@ func (s Store) Provision(readCap, writeCap int64) error {
 
 	_, err := s.db.CreateTableRequest(&input).Send()
 	return errors.Wrap(err, "creating DynamoDB table")
+}
+
+// List obtains the list of stored groups for this Store's partition.
+func (s Store) List() ([]string, error) {
+	// Look up rows where the "Partition" column is equal to this Store's
+	// partition. Note that an expression attribute name is required, as
+	// "partition" is a reserved word in DynamoDB.
+	keyConditionExpr := "#PART = :value"
+
+	// "Group" is also a reserved word.
+	projectionExpr := "#GROUP"
+
+	input := dynamodb.QueryInput{
+		TableName:              &s.table,
+		KeyConditionExpression: &keyConditionExpr,
+		ProjectionExpression:   &projectionExpr,
+		ExpressionAttributeNames: map[string]string{
+			"#PART":  partitionKey,
+			"#GROUP": groupKey,
+		},
+		ExpressionAttributeValues: map[string]dynamodb.AttributeValue{
+			":value": {S: &s.partition},
+		},
+	}
+
+	result, err := s.db.QueryRequest(&input).Send()
+	if err != nil {
+		return nil, errors.Wrapf(err, "listing groups for %q from table %q", s.partition, s.table)
+	}
+
+	list := make([]string, len(result.Items))
+	for i, item := range result.Items {
+		list[i] = *item[groupKey].S
+	}
+	return list, nil
+}
+
+// Get obtains the options in a single named group from this Store's partition.
+func (s Store) Get(name string) ([]string, error) {
+	return nil, errors.New("not implemented")
+}
+
+// Put saves the provided options into a named group for this Store's
+// partition.
+func (s Store) Put(name string, options []string) error {
+	input := dynamodb.PutItemInput{
+		TableName: &s.table,
+		Item: map[string]dynamodb.AttributeValue{
+			partitionKey: {S: &s.partition},
+			groupKey:     {S: &name},
+			itemsKey:     {SS: options},
+		},
+	}
+
+	_, err := s.db.PutItemRequest(&input).Send()
+	return errors.Wrapf(err, "saving group %q for %q to table %q", name, s.partition, s.table)
+}
+
+// Delete removes the named group from this Store's partition.
+func (s Store) Delete(name string) error {
+	return errors.New("not implemented")
 }
