@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"sort"
 	"strings"
 	"text/template"
 	"time"
@@ -307,8 +308,12 @@ func (a *App) saveGroup(name string, options []string) (Result, error) {
 	}, nil
 }
 
-func (App) formatList(w io.Writer, groups []string) {
-	for _, g := range groups {
+func (App) formatList(w io.Writer, items []string) {
+	sorted := make([]string, len(items))
+	copy(sorted, items)
+	sort.Strings(sorted)
+
+	for _, g := range sorted {
 		w.Write([]byte(fmt.Sprintf("• %s\n", g)))
 	}
 }
