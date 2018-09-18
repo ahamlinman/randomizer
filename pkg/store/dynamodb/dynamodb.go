@@ -21,7 +21,7 @@ const (
 //
 // The DynamoDB table used by a Store must have a composite primary key, with a
 // partition key named "Partition" and a sort key named "Group", both
-// string-valued. Items in each row are stored in a string set column named
+// string-valued. Items in each row are stored in a string set attribute named
 // "Items".
 type Store struct {
 	db        *dynamodb.DynamoDB
@@ -117,7 +117,7 @@ func (s Store) Provision(readCap, writeCap int64) error {
 
 // List obtains the list of stored groups for this Store's partition.
 func (s Store) List() ([]string, error) {
-	// Look up rows where the "Partition" column is equal to this Store's
+	// Look up rows where the "Partition" attribute is equal to this Store's
 	// partition. Note that an expression attribute name is required, as
 	// "partition" is a reserved word in DynamoDB.
 	keyConditionExpr := "#PART = :value"
@@ -152,7 +152,25 @@ func (s Store) List() ([]string, error) {
 
 // Get obtains the options in a single named group from this Store's partition.
 func (s Store) Get(name string) ([]string, error) {
-	return nil, errors.New("not implemented")
+	// "Items" is a reserved word in DynamoDB.
+	projectionExpr := "#ITEMS"
+
+	input := dynamodb.GetItemInput{
+		TableName: &s.table,
+		Key: map[string]dynamodb.AttributeValue{
+			partitionKey: {S: &s.partition},
+			groupKey:     {S: &name},
+		},
+		ProjectionExpression:     &projectionExpr,
+		ExpressionAttributeNames: map[string]string{"#ITEMS": itemsKey},
+	}
+
+	result, err := s.db.GetItemRequest(&input).Send()
+	if err != nil {
+		return nil, errors.Wrapf(err, "getting %q for %q from table %q", name, s.partition, s.table)
+	}
+
+	return result.Item[itemsKey].SS, nil
 }
 
 // Put saves the provided options into a named group for this Store's
@@ -168,7 +186,7 @@ func (s Store) Put(name string, options []string) error {
 	}
 
 	_, err := s.db.PutItemRequest(&input).Send()
-	return errors.Wrapf(err, "saving group %q for %q to table %q", name, s.partition, s.table)
+	return errors.Wrapf(err, "saving %q for %q to table %q", name, s.partition, s.table)
 }
 
 // Delete removes the named group from this Store's partition.
