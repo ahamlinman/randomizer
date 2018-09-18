@@ -243,7 +243,7 @@ func (a *App) showGroup(name string) (Result, error) {
 		}
 	}
 
-	result := bytes.NewBufferString(fmt.Sprintf("Group %q has the following options:\n", name))
+	result := bytes.NewBufferString(fmt.Sprintf("The %q group has the following options:\n", name))
 	a.formatList(result, group)
 
 	return Result{
@@ -262,7 +262,7 @@ func (a *App) deleteGroup(name string) (Result, error) {
 
 	return Result{
 		resultType: DeletedGroup,
-		message:    fmt.Sprintf("Done! Group %q was deleted.", name),
+		message:    fmt.Sprintf("Done! The %q group was deleted.", name),
 	}, nil
 }
 
@@ -300,7 +300,7 @@ func (a *App) saveGroup(name string, options []string) (Result, error) {
 		}
 	}
 
-	result := bytes.NewBufferString(fmt.Sprintf("Done! Group %q was saved in this channel with the following options:\n", name))
+	result := bytes.NewBufferString(fmt.Sprintf("Done! The %q group was saved in this channel with the following options:\n", name))
 	a.formatList(result, options)
 
 	return Result{
