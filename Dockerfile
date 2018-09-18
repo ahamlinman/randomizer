@@ -4,7 +4,7 @@ COPY . /tmp/randomizer
 WORKDIR /tmp/randomizer
 
 ENV CGO_ENABLED=0
-RUN go install -mod=readonly -v ./cmd/...
+RUN go install -mod=readonly -ldflags="-s -w" -v ./cmd/...
 
 
 FROM busybox:1.29
