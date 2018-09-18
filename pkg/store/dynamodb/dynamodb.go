@@ -170,6 +170,10 @@ func (s Store) Get(name string) ([]string, error) {
 		return nil, errors.Wrapf(err, "getting %q for %q from table %q", name, s.partition, s.table)
 	}
 
+	if len(result.Item) == 0 {
+		return nil, errors.Errorf("%q not found for %q in table %q", name, s.partition, s.table)
+	}
+
 	return result.Item[itemsKey].SS, nil
 }
 
