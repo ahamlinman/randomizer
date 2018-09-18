@@ -191,5 +191,14 @@ func (s Store) Put(name string, options []string) error {
 
 // Delete removes the named group from this Store's partition.
 func (s Store) Delete(name string) error {
-	return errors.New("not implemented")
+	input := dynamodb.DeleteItemInput{
+		TableName: &s.table,
+		Key: map[string]dynamodb.AttributeValue{
+			partitionKey: {S: &s.partition},
+			groupKey:     {S: &name},
+		},
+	}
+
+	_, err := s.db.DeleteItemRequest(&input).Send()
+	return errors.Wrapf(err, "deleting %q for %q from table %q", name, s.partition, s.table)
 }
