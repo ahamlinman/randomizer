@@ -11,5 +11,6 @@ FROM busybox:1.29
 
 COPY --from=builder /go/bin/randomize /usr/local/bin/randomize
 COPY --from=builder /go/bin/slack-randomize-server /usr/local/bin/slack-randomize-server
+COPY --from=builder /go/bin/dynamodb-provision /usr/local/bin/dynamodb-provision
 
 EXPOSE 7636
