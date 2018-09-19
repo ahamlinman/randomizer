@@ -95,8 +95,8 @@ type Store interface {
 }
 
 // NewApp returns an App.
-func NewApp(name string, store Store) *App {
-	return &App{
+func NewApp(name string, store Store) App {
+	return App{
 		name:  name,
 		store: store,
 	}
@@ -107,7 +107,7 @@ func NewApp(name string, store Store) *App {
 // Note that all errors returned from this function will be of this package's
 // Error type. This provides the HelpText method for user-friendly output
 // formatting.
-func (a *App) Main(args []string) (result Result, err error) {
+func (a App) Main(args []string) (result Result, err error) {
 	defer func() {
 		if err != nil {
 			if _, ok := err.(Error); !ok {
@@ -203,13 +203,13 @@ You can also create *groups* for the current channel (or DM).
 
 Note that the selection is weighted. An option is more likely to be picked if it is given multiple times. This also applies when multiple groups are given, and an option is in more than one of them.`))
 
-func (a *App) buildUsage() string {
+func (a App) buildUsage() string {
 	var buf bytes.Buffer
 	usageTmpl.Execute(&buf, struct{ Name string }{a.name})
 	return buf.String()
 }
 
-func (a *App) listGroups() (Result, error) {
+func (a App) listGroups() (Result, error) {
 	groups, err := a.store.List()
 	if err != nil {
 		return Result{}, Error{
@@ -234,7 +234,7 @@ func (a *App) listGroups() (Result, error) {
 	}, nil
 }
 
-func (a *App) showGroup(name string) (Result, error) {
+func (a App) showGroup(name string) (Result, error) {
 	group, err := a.store.Get(name)
 	if err != nil {
 		return Result{}, Error{
@@ -252,7 +252,7 @@ func (a *App) showGroup(name string) (Result, error) {
 	}, nil
 }
 
-func (a *App) deleteGroup(name string) (Result, error) {
+func (a App) deleteGroup(name string) (Result, error) {
 	if err := a.store.Delete(name); err != nil {
 		return Result{}, Error{
 			cause:    err,
@@ -266,7 +266,7 @@ func (a *App) deleteGroup(name string) (Result, error) {
 	}, nil
 }
 
-func (a *App) expandGroups(argOpts []string) ([]string, error) {
+func (a App) expandGroups(argOpts []string) ([]string, error) {
 	options := make([]string, 0, len(argOpts))
 
 	for _, opt := range argOpts {
@@ -292,7 +292,7 @@ func (a *App) expandGroups(argOpts []string) ([]string, error) {
 	return options, nil
 }
 
-func (a *App) saveGroup(name string, options []string) (Result, error) {
+func (a App) saveGroup(name string, options []string) (Result, error) {
 	if err := a.store.Put(name, options); err != nil {
 		return Result{}, Error{
 			cause:    err,
