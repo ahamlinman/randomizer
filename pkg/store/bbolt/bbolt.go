@@ -10,7 +10,7 @@ import (
 
 // DefaultBucket is the default bucket in which groups are stored in the bbolt
 // database.
-const DefaultBucket = "groups"
+const DefaultBucket = "Groups"
 
 // Store is a store backed by a bbolt database.
 type Store struct {
