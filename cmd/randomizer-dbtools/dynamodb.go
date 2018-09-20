@@ -1,6 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/spf13/cobra"
 
 	dynamostore "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
@@ -34,4 +40,18 @@ func init() {
 	)
 
 	rootCmd.AddCommand(dynamoDBCmd)
+}
+
+func getDynamoDB() *dynamodb.DynamoDB {
+	cfg, err := external.LoadDefaultAWSConfig()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not load AWS config: %v\n", err)
+		os.Exit(2)
+	}
+
+	if dynamoDBEndpoint != "" {
+		cfg.EndpointResolver = aws.ResolveWithEndpointURL(dynamoDBEndpoint)
+	}
+
+	return dynamodb.New(cfg)
 }

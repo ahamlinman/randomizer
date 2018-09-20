@@ -3,43 +3,47 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"flag"
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	bolt "go.etcd.io/bbolt"
 )
 
-func main() {
-	dbFile := flag.String("dbfile", "", "name of the BoltDB file to migrate from")
-	dynamoTable := flag.String("tablename", "", "name of the DynamoDB table to migrate to")
-	endpoint := flag.String("endpoint", "", "endpoint URL to use for DynamoDB")
-	flag.Parse()
+var dynamoImportBoltCmd = &cobra.Command{
+	Use:   "import-bolt",
+	Short: "Import a BoltDB database into a DynamoDB table",
+	Long: `Import a BoltDB database into a DynamoDB table.
 
-	if *dbFile == "" || *dynamoTable == "" {
-		flag.Usage()
-		os.Exit(2)
-	}
+Note that the DynamoDB table must already have been created with the randomizer
+schema, e.g. by using "randomizer-dbtools dynamodb create".
+`,
+	Run: runDynamoDBImportBolt,
+}
 
-	boltDB, err := bolt.Open(*dbFile, os.ModePerm&0644, nil)
+var boltDBFile string
+
+func init() {
+	dynamoImportBoltCmd.Flags().StringVarP(
+		&boltDBFile,
+		"file", "f", "",
+		"location of the BoltDB file to import (required)",
+	)
+	dynamoImportBoltCmd.MarkFlagRequired("file")
+
+	dynamoDBCmd.AddCommand(dynamoImportBoltCmd)
+}
+
+func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
+	boltDB, err := bolt.Open(boltDBFile, os.ModePerm&0644, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not open Bolt database: %v\n", err)
 		os.Exit(2)
 	}
 
-	cfg, err := external.LoadDefaultAWSConfig()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not load AWS config: %v\n", err)
-		os.Exit(2)
-	}
-	if *endpoint != "" {
-		cfg.EndpointResolver = aws.ResolveWithEndpointURL(*endpoint)
-	}
-	dynamoDB := dynamodb.New(cfg)
+	dynamoDB := getDynamoDB()
 
 	writeRequests := make([]dynamodb.WriteRequest, 0)
 	err = boltDB.View(func(tx *bolt.Tx) error {
@@ -77,7 +81,7 @@ func main() {
 
 	input := dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]dynamodb.WriteRequest{
-			*dynamoTable: writeRequests,
+			dynamoDBTable: writeRequests,
 		},
 	}
 	_, err = dynamoDB.BatchWriteItemRequest(&input).Send()

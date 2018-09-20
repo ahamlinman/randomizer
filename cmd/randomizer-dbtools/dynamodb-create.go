@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/spf13/cobra"
 
 	dynamostore "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
@@ -45,20 +42,9 @@ func init() {
 }
 
 func runDynamoDBCreate(cmd *cobra.Command, args []string) {
-	cfg, err := external.LoadDefaultAWSConfig()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not load AWS config: %v\n", err)
-		os.Exit(2)
-	}
+	store := dynamostore.New(getDynamoDB(), dynamostore.WithTable(dynamoDBTable))
 
-	if dynamoDBEndpoint != "" {
-		cfg.EndpointResolver = aws.ResolveWithEndpointURL(dynamoDBEndpoint)
-	}
-
-	db := dynamodb.New(cfg)
-	store := dynamostore.New(db, dynamostore.WithTable(dynamoDBTable))
-
-	err = store.CreateTable(createReadCap, createWriteCap)
+	err := store.CreateTable(createReadCap, createWriteCap)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "creation failed: %+v\n", err)
 		os.Exit(1)
