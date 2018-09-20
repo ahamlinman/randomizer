@@ -9,7 +9,7 @@ RUN go install -mod=readonly -ldflags="-s -w" -v ./cmd/...
 
 FROM alpine:latest
 
-RUN apk add --no-cache ca-certificates
+# RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /go/bin/randomize /usr/local/bin/randomize
 COPY --from=builder /go/bin/slack-randomize-server /usr/local/bin/slack-randomize-server

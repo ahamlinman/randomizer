@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/pkg/errors"
@@ -140,6 +141,9 @@ func getDynamoDBStoreFunc() (storeFunc, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	cfg.HTTPClient = &http.Client{Timeout: 2500 * time.Millisecond}
+	cfg.Retryer = aws.DefaultRetryer{NumMaxRetries: 2}
 
 	table, ok := os.LookupEnv("DYNAMODB_TABLE")
 	if !ok {
