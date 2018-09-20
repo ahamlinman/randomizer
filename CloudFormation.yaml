@@ -1,0 +1,29 @@
+Description: API for a Slack /randomizer command, with support for saving groups
+
+Parameters:
+  ReadCapacityUnits:
+    Description: The number of read capacity units to set on the DynamoDB table
+    Type: Number
+    Default: '10'
+  WriteCapacityUnits:
+    Description: The number of write capacity units to set on the DynamoDB table
+    Type: Number
+    Default: '10'
+
+Resources:
+  GroupsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+        - AttributeName: Partition
+          KeyType: HASH
+        - AttributeName: Group
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: Partition
+          AttributeType: S
+        - AttributeName: Group
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: {Ref: ReadCapacityUnits}
+        WriteCapacityUnits: {Ref: WriteCapacityUnits}
