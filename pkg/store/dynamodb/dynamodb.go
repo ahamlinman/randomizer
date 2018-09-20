@@ -65,16 +65,16 @@ func WithPartition(partition string) Option {
 	}
 }
 
-// Provision requests the creation of a DynamoDB table, using this store's
+// CreateTable requests the creation of a DynamoDB table, using this store's
 // table name and the expected schema for a Store, and the provided numbers of
 // read and write capacity units.
 //
-// Note that Provision returns when DynamoDB has accepted the request to create
-// a table, not necessarily when the table is ready to accept reads or writes.
-// Provision will fail if the table already exists. Generally speaking,
-// Provision is a helper method for use outside of a normal application
-// workflow.
-func (s Store) Provision(readCap, writeCap int64) error {
+// Note that CreateTable returns when DynamoDB has accepted the request to
+// create a table, not necessarily when the table is ready to accept reads or
+// writes. CreateTable will fail if the table already exists. Generally
+// speaking, CreateTable is a helper method for use outside of a normal
+// application workflow.
+func (s Store) CreateTable(readCap, writeCap int64) error {
 	var (
 		partitionKey = partitionKey
 		groupKey     = groupKey
