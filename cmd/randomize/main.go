@@ -2,28 +2,20 @@ package main // import "go.alexhamlin.co/randomizer/cmd/randomize"
 
 import (
 	"fmt"
-	"net/http"
 	"os"
-	"time"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	bolt "go.etcd.io/bbolt"
 
 	"go.alexhamlin.co/randomizer/pkg/randomizer"
-	boltstore "go.alexhamlin.co/randomizer/pkg/store/bbolt"
-	dynamostore "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
+	"go.alexhamlin.co/randomizer/pkg/store"
 )
 
 func main() {
-	store, err := getStore()
+	storeFactory, err := store.FactoryFromEnv(nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(2)
 	}
 
-	app := randomizer.NewApp("randomize", store)
+	app := randomizer.NewApp("randomize", storeFactory("Groups"))
 	result, err := app.Main(os.Args[1:])
 	if err != nil {
 		err := err.(randomizer.Error)
@@ -33,29 +25,4 @@ func main() {
 	}
 
 	fmt.Println(result.Message())
-}
-
-func getStore() (randomizer.Store, error) {
-	if endpoint, ok := os.LookupEnv("DYNAMODB"); ok {
-		cfg, err := external.LoadDefaultAWSConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		if endpoint != "" {
-			cfg.EndpointResolver = aws.ResolveWithEndpointURL(endpoint)
-		}
-
-		cfg.HTTPClient = &http.Client{Timeout: 2500 * time.Millisecond}
-		cfg.Retryer = aws.DefaultRetryer{NumMaxRetries: 2}
-
-		db := dynamodb.New(cfg)
-		return dynamostore.New(db), nil
-	}
-
-	db, err := bolt.Open("randomizer.db", os.ModePerm&0644, nil)
-	if err != nil {
-		return nil, err
-	}
-	return boltstore.New(db), nil
 }
