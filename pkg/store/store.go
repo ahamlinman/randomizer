@@ -74,27 +74,13 @@ func dynamoFactory(debug io.Writer, table, endpoint string) (Factory, error) {
 
 	db := dynamodb.New(cfg)
 
-	if table != "" {
-		fmt.Fprintln(debug, "\t-> Using table", table)
-	} else {
-		fmt.Fprintln(debug, "\t-> Using default table")
+	if table == "" {
+		table = "RandomizerGroups"
 	}
+	fmt.Fprintln(debug, "\t-> Using table", table)
 
 	return func(partition string) randomizer.Store {
-		var options []dynamostore.Option
-
-		if table == "" {
-			options = []dynamostore.Option{
-				dynamostore.WithPartition(partition),
-			}
-		} else {
-			options = []dynamostore.Option{
-				dynamostore.WithTable(table),
-				dynamostore.WithPartition(partition),
-			}
-		}
-
-		return dynamostore.New(db, options...)
+		return dynamostore.New(db, table, partition)
 	}, nil
 }
 

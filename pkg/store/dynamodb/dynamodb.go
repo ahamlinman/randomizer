@@ -5,12 +5,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DefaultTable is the default name of the DynamoDB table used by Stores.
-const DefaultTable = "RandomizerGroups"
-
-// DefaultPartition is the default value of the partition key used by Stores.
-const DefaultPartition = "Groups"
-
 const (
 	partitionKey = "Partition"
 	groupKey     = "Group"
@@ -29,39 +23,14 @@ type Store struct {
 	partition string
 }
 
-// Option represents a type for options that can be applied to a Store.
-type Option func(*Store)
-
 // New creates a new store, backed by the provided DynamoDB client, that writes
 // groups using the provided partition key. See the Store documentation for
 // details.
-func New(db *dynamodb.DynamoDB, options ...Option) Store {
-	store := Store{
+func New(db *dynamodb.DynamoDB, table, partition string) Store {
+	return Store{
 		db:        db,
-		table:     DefaultTable,
-		partition: DefaultPartition,
-	}
-
-	for _, opt := range options {
-		opt(&store)
-	}
-
-	return store
-}
-
-// WithTable creates a Store that uses the DynamoDB table with the provided
-// name, rather than DefaultTable.
-func WithTable(table string) Option {
-	return func(s *Store) {
-		s.table = table
-	}
-}
-
-// WithPartition creates a Store that uses the provided value for the partition
-// key in the DynamoDB table.
-func WithPartition(partition string) Option {
-	return func(s *Store) {
-		s.partition = partition
+		table:     table,
+		partition: partition,
 	}
 }
 

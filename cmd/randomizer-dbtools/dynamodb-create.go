@@ -42,10 +42,9 @@ func init() {
 }
 
 func runDynamoDBCreate(cmd *cobra.Command, args []string) {
-	store := dynamostore.New(getDynamoDB(), dynamostore.WithTable(dynamoDBTable))
+	store := dynamostore.New(getDynamoDB(), dynamoDBTable, "")
 
-	err := store.CreateTable(createReadCap, createWriteCap)
-	if err != nil {
+	if err := store.CreateTable(createReadCap, createWriteCap); err != nil {
 		fmt.Fprintf(os.Stderr, "creation failed: %+v\n", err)
 		os.Exit(1)
 	}

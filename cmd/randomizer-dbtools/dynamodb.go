@@ -8,8 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/spf13/cobra"
-
-	dynamostore "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
 )
 
 var dynamoDBCmd = &cobra.Command{
@@ -29,7 +27,7 @@ var (
 func init() {
 	dynamoDBCmd.PersistentFlags().StringVarP(
 		&dynamoDBTable,
-		"table", "t", dynamostore.DefaultTable,
+		"table", "t", "RandomizerGroups",
 		"name of the DynamoDB table to work with",
 	)
 
