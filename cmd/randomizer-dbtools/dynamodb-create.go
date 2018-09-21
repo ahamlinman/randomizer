@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/spf13/cobra"
-
-	dynamostore "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
 )
 
 var dynamoCreateCmd = &cobra.Command{
@@ -42,10 +41,46 @@ func init() {
 }
 
 func runDynamoDBCreate(cmd *cobra.Command, args []string) {
-	store := dynamostore.New(getDynamoDB(), dynamoDBTable, "")
+	db := getDynamoDB()
 
-	if err := store.CreateTable(createReadCap, createWriteCap); err != nil {
-		fmt.Fprintf(os.Stderr, "creation failed: %+v\n", err)
+	var (
+		partitionKey = "Partition"
+		groupKey     = "Group"
+	)
+
+	input := dynamodb.CreateTableInput{
+		TableName: &dynamoDBTable,
+
+		KeySchema: []dynamodb.KeySchemaElement{
+			{
+				AttributeName: &partitionKey,
+				KeyType:       dynamodb.KeyTypeHash,
+			},
+			{
+				AttributeName: &groupKey,
+				KeyType:       dynamodb.KeyTypeRange,
+			},
+		},
+
+		AttributeDefinitions: []dynamodb.AttributeDefinition{
+			{
+				AttributeName: &partitionKey,
+				AttributeType: dynamodb.ScalarAttributeTypeS, // String
+			},
+			{
+				AttributeName: &groupKey,
+				AttributeType: dynamodb.ScalarAttributeTypeS, // String
+			},
+		},
+
+		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  &createReadCap,
+			WriteCapacityUnits: &createWriteCap,
+		},
+	}
+
+	if _, err := db.CreateTableRequest(&input).Send(); err != nil {
+		fmt.Fprintf(os.Stderr, "creation failed: %v\n", err)
 		os.Exit(1)
 	}
 

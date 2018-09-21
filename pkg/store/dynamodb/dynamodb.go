@@ -34,56 +34,6 @@ func New(db *dynamodb.DynamoDB, table, partition string) Store {
 	}
 }
 
-// CreateTable requests the creation of a DynamoDB table, using this store's
-// table name and the expected schema for a Store, and the provided numbers of
-// read and write capacity units.
-//
-// Note that CreateTable returns when DynamoDB has accepted the request to
-// create a table, not necessarily when the table is ready to accept reads or
-// writes. CreateTable will fail if the table already exists. Generally
-// speaking, CreateTable is a helper method for use outside of a normal
-// application workflow.
-func (s Store) CreateTable(readCap, writeCap int64) error {
-	var (
-		partitionKey = partitionKey
-		groupKey     = groupKey
-	)
-
-	input := dynamodb.CreateTableInput{
-		TableName: &s.table,
-
-		KeySchema: []dynamodb.KeySchemaElement{
-			{
-				AttributeName: &partitionKey,
-				KeyType:       dynamodb.KeyTypeHash,
-			},
-			{
-				AttributeName: &groupKey,
-				KeyType:       dynamodb.KeyTypeRange,
-			},
-		},
-
-		AttributeDefinitions: []dynamodb.AttributeDefinition{
-			{
-				AttributeName: &partitionKey,
-				AttributeType: dynamodb.ScalarAttributeTypeS, // String
-			},
-			{
-				AttributeName: &groupKey,
-				AttributeType: dynamodb.ScalarAttributeTypeS, // String
-			},
-		},
-
-		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-			ReadCapacityUnits:  &readCap,
-			WriteCapacityUnits: &writeCap,
-		},
-	}
-
-	_, err := s.db.CreateTableRequest(&input).Send()
-	return errors.Wrap(err, "creating DynamoDB table")
-}
-
 // List obtains the list of stored groups for this Store's partition.
 func (s Store) List() ([]string, error) {
 	// Look up rows where the "Partition" attribute is equal to this Store's
