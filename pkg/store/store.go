@@ -1,4 +1,4 @@
-package store
+package store // import "go.alexhamlin.co/randomizer/pkg/store"
 
 import (
 	"fmt"

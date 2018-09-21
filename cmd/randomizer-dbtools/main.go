@@ -1,4 +1,4 @@
-package main
+package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-dbtools"
 
 import (
 	"fmt"

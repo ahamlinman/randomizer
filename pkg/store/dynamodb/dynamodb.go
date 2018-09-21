@@ -1,4 +1,4 @@
-package dynamodb // import "go.alexhamlin.co/pkg/randomizer/store/dynamodb"
+package dynamodb // import "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
 
 import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
