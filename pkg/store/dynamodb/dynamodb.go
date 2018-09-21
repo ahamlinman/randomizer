@@ -24,14 +24,26 @@ type Store struct {
 }
 
 // New creates a new store, backed by the provided DynamoDB client, that writes
-// groups using the provided partition key. See the Store documentation for
-// details.
-func New(db *dynamodb.DynamoDB, table, partition string) Store {
+// groups into the provided table using the provided partition key. See the
+// Store documentation for details.
+func New(db *dynamodb.DynamoDB, table, partition string) (Store, error) {
+	if db == nil {
+		return Store{}, errors.New("DynamoDB instance is required")
+	}
+
+	if table == "" {
+		return Store{}, errors.New("table is required")
+	}
+
+	if partition == "" {
+		return Store{}, errors.New("partition is required")
+	}
+
 	return Store{
 		db:        db,
 		table:     table,
 		partition: partition,
-	}
+	}, nil
 }
 
 // List obtains the list of stored groups for this Store's partition.

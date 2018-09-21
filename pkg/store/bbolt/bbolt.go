@@ -15,11 +15,19 @@ type Store struct {
 }
 
 // New creates a new store backed by the provided (pre-opened) bbolt database.
-func New(db *bolt.DB, bucket string) *Store {
+func New(db *bolt.DB, bucket string) (*Store, error) {
+	if db == nil {
+		return nil, errors.New("Bolt instance is required")
+	}
+
+	if bucket == "" {
+		return nil, errors.New("bucket is required")
+	}
+
 	return &Store{
 		db:     db,
 		bucket: bucket,
-	}
+	}, nil
 }
 
 // List obtains the set of stored groups.

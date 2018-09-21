@@ -83,11 +83,11 @@ func dynamoFactory(debug io.Writer, table, endpoint string) (Factory, error) {
 	fmt.Fprintln(debug, "\t-> Using table", table)
 
 	return func(partition string) randomizer.Store {
-		if partition == "" {
-			panic(errors.New("attempted to create DynamoDB store with blank partition"))
+		store, err := dynamostore.New(db, table, partition)
+		if err != nil {
+			panic(err)
 		}
-
-		return dynamostore.New(db, table, partition)
+		return store
 	}, nil
 }
 
@@ -103,10 +103,10 @@ func boltFactory(debug io.Writer, path string) (Factory, error) {
 	}
 
 	return func(partition string) randomizer.Store {
-		if partition == "" {
-			panic(errors.New("attempted to create Bolt store with blank partition"))
+		store, err := boltstore.New(db, partition)
+		if err != nil {
+			panic(err)
 		}
-
-		return boltstore.New(db, partition)
+		return store
 	}, nil
 }
