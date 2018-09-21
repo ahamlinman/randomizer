@@ -49,22 +49,22 @@ func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
 	err = boltDB.View(func(tx *bolt.Tx) error {
 		return tx.ForEach(func(partition []byte, b *bolt.Bucket) error {
 			return b.ForEach(func(group, itemsGob []byte) error {
+				var (
+					partitionStr = string(partition)
+					groupStr     = string(group)
+				)
+
 				var items []string
 				decoder := gob.NewDecoder(bytes.NewReader(itemsGob))
 				if err := decoder.Decode(&items); err != nil {
-					return errors.Wrapf(err, "decoding items for %q in %q", string(group), string(partition))
+					return errors.Wrapf(err, "decoding items for %q in %q", groupStr, partitionStr)
 				}
-
-				var (
-					partitionS = string(partition)
-					groupS     = string(group)
-				)
 
 				writeRequests = append(writeRequests, dynamodb.WriteRequest{
 					PutRequest: &dynamodb.PutRequest{
 						Item: map[string]dynamodb.AttributeValue{
-							"Partition": {S: &partitionS},
-							"Group":     {S: &groupS},
+							"Partition": {S: &partitionStr},
+							"Group":     {S: &groupStr},
 							"Items":     {SS: items},
 						},
 					},

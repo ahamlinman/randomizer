@@ -96,6 +96,6 @@ func boltFactory(debug io.Writer, path string) (Factory, error) {
 	}
 
 	return func(partition string) randomizer.Store {
-		return boltstore.New(db, boltstore.WithBucketName(partition))
+		return boltstore.New(db, partition)
 	}, nil
 }

@@ -8,38 +8,17 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// DefaultBucket is the default bucket in which groups are stored in the bbolt
-// database.
-const DefaultBucket = "Groups"
-
 // Store is a store backed by a bbolt database.
 type Store struct {
 	db     *bolt.DB
 	bucket string
 }
 
-// Option represents a type for options that can be applied to a Store.
-type Option func(*Store)
-
 // New creates a new store backed by the provided (pre-opened) bbolt database.
-func New(db *bolt.DB, options ...Option) *Store {
-	store := &Store{
+func New(db *bolt.DB, bucket string) *Store {
+	return &Store{
 		db:     db,
-		bucket: DefaultBucket,
-	}
-
-	for _, opt := range options {
-		opt(store)
-	}
-
-	return store
-}
-
-// WithBucketName creates a Store that stores groups in the named bucket in the
-// bbolt database, rather than the default "groups" bucket.
-func WithBucketName(name string) Option {
-	return func(b *Store) {
-		b.bucket = name
+		bucket: bucket,
 	}
 }
 
