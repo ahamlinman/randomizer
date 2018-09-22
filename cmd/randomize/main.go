@@ -15,7 +15,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	app := randomizer.NewApp("randomize", storeFactory("Groups"))
+	app := randomizer.NewApp(os.Args[0], storeFactory("Groups"))
 	result, err := app.Main(os.Args[1:])
 	if err != nil {
 		err := err.(randomizer.Error)
