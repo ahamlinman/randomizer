@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
-	"go.alexhamlin.co/randomizer/pkg/randomizer"
 	"go.alexhamlin.co/randomizer/pkg/slack"
 	"go.alexhamlin.co/randomizer/pkg/store"
 )
@@ -27,7 +25,11 @@ func main() {
 		os.Exit(2)
 	}
 
-	http.HandleFunc("/", rootHandler(token, storeFactory))
+	http.HandleFunc("/", rootHandler(slack.App{
+		Name:         "/randomize",
+		Token:        []byte(token),
+		StoreFactory: storeFactory,
+	}))
 
 	fmt.Println("Starting randomizer service")
 	err = http.ListenAndServe("0.0.0.0:7636", nil)
@@ -37,7 +39,7 @@ func main() {
 	}
 }
 
-func rootHandler(token string, storeFactory store.Factory) http.HandlerFunc {
+func rootHandler(app slack.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			logErr(err)
@@ -45,42 +47,29 @@ func rootHandler(token string, storeFactory store.Factory) http.HandlerFunc {
 			return
 		}
 
-		reqToken := r.PostForm.Get("token")
-		// TODO: Vulnerable to timing attacks, if it actually matters
-		// (I might fix it just for fun)
-		if reqToken != token {
-			w.WriteHeader(http.StatusForbidden)
+		response, err := app.Run(slack.Request{
+			Token:     r.PostForm.Get("token"),
+			SSLCheck:  r.PostForm.Get("ssl_check"),
+			ChannelID: r.PostForm.Get("channel_id"),
+			Text:      r.PostForm.Get("text"),
+		})
+
+		if err != nil {
+			logErr(err)
+
+			if err == slack.ErrIncorrectToken {
+				w.WriteHeader(http.StatusForbidden)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+
 			return
 		}
 
 		w.Header().Add("Content-Type", "application/json")
+		response.Send(w)
 
-		app := randomizer.NewApp("/randomize", storeFactory(r.PostForm.Get("channel_id")))
-		result, err := app.Main(strings.Split(r.PostForm.Get("text"), " "))
-		if err != nil {
-			logErr(err)
-			slack.Response{
-				Type: slack.TypeEphemeral,
-				Text: err.(randomizer.Error).HelpText(),
-			}.Send(w)
-			return
-		}
-
-		switch result.Type() {
-		case randomizer.ListedGroups, randomizer.ShowedGroup:
-			slack.Response{
-				Type: slack.TypeEphemeral,
-				Text: result.Message(),
-			}.Send(w)
-
-		default:
-			slack.Response{
-				Type: slack.TypeInChannel,
-				Text: result.Message(),
-			}.Send(w)
-		}
-
-		fmt.Printf("Handled command from %v at %v\n", r.PostForm.Get("user_name"), time.Now())
+		fmt.Printf("Finished command from %v at %v\n", r.PostForm.Get("user_name"), time.Now())
 	}
 }
 
