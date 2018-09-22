@@ -154,17 +154,40 @@ func (a App) Main(args []string) (result Result, err error) {
 		return a.saveGroup(fs.saveGroup, options)
 	}
 
+	if fs.count < 1 {
+		return Result{}, Error{
+			cause:    errors.New("count too small"),
+			helpText: "Whoops, I can't pick less than one option!",
+		}
+	}
+
+	if fs.count > len(options) {
+		return Result{}, Error{
+			cause:    errors.New("count too large"),
+			helpText: "Whoops, I can't pick more options than I was given!",
+		}
+	}
+
 	source := rand.NewSource(time.Now().UnixNano())
-	rander := rand.New(source)
-	selector := Selector(rander.Intn)
+	rand.New(source).Shuffle(len(options), func(i, j int) {
+		options[i], options[j] = options[j], options[i]
+	})
+	choices := options[:fs.count]
+
+	for i, choice := range choices {
+		choices[i] = "*" + choice + "*"
+	}
+
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I choose… *%s*", selector.PickString(options)),
+		message:    fmt.Sprintf("I choose… %s", strings.Join(choices, " and ")),
 	}, nil
 }
 
 type flagSet struct {
 	*flag.FlagSet
+
+	count int
 
 	listGroups  bool
 	showGroup   string
@@ -178,6 +201,8 @@ func buildFlagSet() *flagSet {
 	}
 	fs.SetOutput(ioutil.Discard)
 
+	fs.IntVar(&fs.count, "n", 1, "number of items to pick")
+
 	fs.BoolVar(&fs.listGroups, "list", false, "list all known groups")
 	fs.StringVar(&fs.showGroup, "show", "", "show the options in the specified group")
 	fs.StringVar(&fs.saveGroup, "save", "", "save options into the specified group")
@@ -187,16 +212,21 @@ func buildFlagSet() *flagSet {
 }
 
 var usageTmpl = template.Must(template.New("").Parse(
-	`{{.Name}} is a simple command that picks a random option from a list.
+	`{{.Name}} helps you pick options randomly out of a list.
 
 *Example:* {{.Name}} one two three
 > I choose… *three*
 
-You can also create *groups* for the current channel (or DM).
+You can choose more than one option at a time. The selected options will be given back in a random order.
+
+*Example:* {{.Name}} -n 2 one two three
+> I choose… *two* and *one*
+
+You can also create *groups* for the current channel or DM.
 
 *Save a group:* {{.Name}} -save first3 one two three
 *Randomize from a group:* {{.Name}} +first3
-*Combine groups with other options:* {{.Name}} +first3 +next3 seven eight
+*Combine groups with other options:* {{.Name}} -n 3 +first3 +next3 seven eight
 *List groups:* {{.Name}} -list
 *Show options in a group:* {{.Name}} -show first3
 *Delete a group:* {{.Name}} -delete first3
