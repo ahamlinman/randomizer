@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -119,5 +121,41 @@ func (a App) Run(r Request) (Response, error) {
 			Type: TypeInChannel,
 			Text: result.Message(),
 		}, nil
+	}
+}
+
+// ServeHTTP allows an App to be directly used as a HTTP handler. It supports
+// both GET and POST modes for a Slack slash command integration.
+func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var params url.Values
+	if r.Method == "POST" {
+		if err := r.ParseForm(); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		params = r.PostForm
+	} else {
+		params = r.URL.Query()
+	}
+
+	response, err := a.Run(Request{
+		Token:     params.Get("token"),
+		SSLCheck:  params.Get("ssl_check"),
+		ChannelID: params.Get("channel_id"),
+		Text:      params.Get("text"),
+	})
+
+	if err != nil {
+		if err == ErrIncorrectToken {
+			w.WriteHeader(http.StatusForbidden)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if response != (Response{}) {
+		w.Header().Add("Content-Type", "application/json")
+		response.Send(w)
 	}
 }
