@@ -1,6 +1,7 @@
 package main // import "go.alexhamlin.co/randomizer/cmd/slack-randomize-server"
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	var addr string
+	flag.StringVar(&addr, "addr", ":7636", "address to bind the server to")
+	flag.Parse()
+
 	token := os.Getenv("SLACK_TOKEN")
 	if token == "" {
 		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided")
@@ -28,8 +33,8 @@ func main() {
 		StoreFactory: storeFactory,
 	})
 
-	fmt.Println("Starting randomizer service on :7636")
-	err = http.ListenAndServe("0.0.0.0:7636", nil)
+	fmt.Println("Starting randomizer service on", addr)
+	err = http.ListenAndServe(addr, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to start server: %v\n", err)
 		os.Exit(1)
