@@ -121,7 +121,7 @@ func (a App) Main(args []string) (result Result, err error) {
 	err = fs.Parse(args)
 	if err != nil || (len(args) == 1 && args[0] == "help") {
 		return Result{}, Error{
-			cause:    err,
+			cause:    errors.New("help requested"),
 			helpText: a.buildUsage(),
 		}
 	}
