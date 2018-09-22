@@ -11,8 +11,13 @@ import (
 )
 
 func main() {
-	var addr string
+	var (
+		addr string
+		name string
+	)
+
 	flag.StringVar(&addr, "addr", ":7636", "address to bind the server to")
+	flag.StringVar(&name, "name", "/randomize", "name of the command to show in help text")
 	flag.Parse()
 
 	token := os.Getenv("SLACK_TOKEN")
@@ -28,7 +33,7 @@ func main() {
 	}
 
 	http.Handle("/", slack.App{
-		Name:         "/randomize",
+		Name:         name,
 		Token:        []byte(token),
 		StoreFactory: storeFactory,
 	})
