@@ -11,7 +11,7 @@ import (
 func main() {
 	storeFactory, err := store.FactoryFromEnv(nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
 		os.Exit(2)
 	}
 
@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		err := err.(randomizer.Error)
 		fmt.Fprintln(os.Stderr, err.HelpText())
-		fmt.Fprintf(os.Stderr, "\n%+v\n", err.Cause())
+		fmt.Fprintf(os.Stderr, "(%v)\n", err)
 		os.Exit(1)
 	}
 
