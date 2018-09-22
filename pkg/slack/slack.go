@@ -1,6 +1,7 @@
 package slack // import "go.alexhamlin.co/randomizer/pkg/slack"
 
 import (
+	"bytes"
 	"crypto/subtle"
 	"encoding/json"
 	"fmt"
@@ -67,6 +68,14 @@ func (r Response) Send(w io.Writer) {
 	}
 
 	json.NewEncoder(w).Encode(&r)
+}
+
+// String returns the JSON form of a Response. If the Response is empty, the
+// string will be empty.
+func (r Response) String() string {
+	var buf bytes.Buffer
+	r.Send(&buf)
+	return buf.String()
 }
 
 // ErrIncorrectToken indicates that the authentication token provided in the
