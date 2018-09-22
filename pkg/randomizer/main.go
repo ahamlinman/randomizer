@@ -180,7 +180,7 @@ func (a App) Main(args []string) (result Result, err error) {
 
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I choose… %s", strings.Join(choices, " and ")),
+		message:    fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")),
 	}, nil
 }
 
@@ -215,12 +215,12 @@ var usageTmpl = template.Must(template.New("").Parse(
 	`{{.Name}} helps you pick options randomly out of a list.
 
 *Example:* {{.Name}} one two three
-> I choose… *three*
+> I choose *three*!
 
 You can choose more than one option at a time. The selected options will be given back in a random order.
 
 *Example:* {{.Name}} -n 2 one two three
-> I choose… *two* and *one*
+> I choose *two* and *one*!
 
 You can also create *groups* for the current channel or DM.
 
