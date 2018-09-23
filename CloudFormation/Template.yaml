@@ -35,8 +35,8 @@ Resources:
         - AttributeName: Group
           AttributeType: S
       ProvisionedThroughput:
-        ReadCapacityUnits: {Ref: ReadCapacityUnits}
-        WriteCapacityUnits: {Ref: WriteCapacityUnits}
+        ReadCapacityUnits: !Ref ReadCapacityUnits
+        WriteCapacityUnits: !Ref WriteCapacityUnits
 
   LambdaFunction:
     Type: AWS::Serverless::Function
@@ -46,9 +46,9 @@ Resources:
       Handler: slack-lambda-handler
       Environment:
         Variables:
-          SLACK_TOKEN: {Ref: SlackToken}
-          SLACK_COMMAND_NAME: {Ref: SlackCommandName}
-          DYNAMODB_TABLE: {Ref: GroupsTable}
+          SLACK_TOKEN: !Ref SlackToken
+          SLACK_COMMAND_NAME: !Ref SlackCommandName
+          DYNAMODB_TABLE: !Ref GroupsTable
       Events:
         ApiGet:
           Type: Api
@@ -57,7 +57,7 @@ Resources:
             Method: GET
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: {Ref: GroupsTable}
+            TableName: !Ref GroupsTable
 
 Outputs:
   ApiUrl:
