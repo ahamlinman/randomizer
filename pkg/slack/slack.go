@@ -59,6 +59,9 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// From now on, we're going to return JSON no matter what.
+	w.Header().Add("Content-Type", "application/json")
+
 	app := randomizer.NewApp(a.Name, a.StoreFactory(params.Get("channel_id")))
 	result, err := app.Main(strings.Split(params.Get("text"), " "))
 	if err != nil {
@@ -67,7 +70,6 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
 	switch result.Type() {
 	case randomizer.ListedGroups, randomizer.ShowedGroup:
 		response{typeEphemeral, result.Message()}.Send(w)
