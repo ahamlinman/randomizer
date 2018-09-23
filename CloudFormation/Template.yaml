@@ -55,3 +55,6 @@ Resources:
           Properties:
             Path: '/'
             Method: GET
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: {Ref: GroupsTable}
