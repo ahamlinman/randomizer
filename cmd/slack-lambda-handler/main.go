@@ -1,7 +1,7 @@
 package main // import "go.alexhamlin.co/randomizer/cmd/slack-lambda-handler"
 
 import (
-	"errors"
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,41 +12,36 @@ import (
 	"go.alexhamlin.co/randomizer/pkg/store"
 )
 
-var (
-	token        []byte
-	name         string
-	storeFactory store.Factory
-)
-
-func init() {
-	token = []byte(os.Getenv("SLACK_TOKEN"))
-	if len(token) == 0 {
-		panic(errors.New("missing SLACK_TOKEN"))
-	}
-
-	name = os.Getenv("SLACK_COMMAND_NAME")
+func main() {
+	name := os.Getenv("SLACK_COMMAND_NAME")
 	if name == "" {
 		name = "/randomize"
 	}
 
-	var err error
-	storeFactory, err = store.DynamoDBFactoryFromEnv(os.Stderr)
-	if err != nil {
-		panic(err)
+	token := os.Getenv("SLACK_TOKEN")
+	if token == "" {
+		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided")
+		os.Exit(2)
 	}
-}
 
-func main() {
-	lambda.Start(handleEvent)
-}
+	storeFactory, err := store.DynamoDBFactoryFromEnv(os.Stderr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
+		os.Exit(2)
+	}
 
-func handleEvent(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	app := slack.App{
 		Name:         name,
-		Token:        token,
+		Token:        []byte(token),
 		StoreFactory: storeFactory,
 		DebugWriter:  os.Stderr,
 	}
 
-	return handlerfunc.New(app.ServeHTTP).Proxy(request)
+	proxy := handlerfunc.New(app.ServeHTTP)
+
+	lambda.Start(
+		func(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+			return proxy.Proxy(req)
+		},
+	)
 }
