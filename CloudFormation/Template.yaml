@@ -42,7 +42,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: go1.x
-      CodeUri: ./lambda-dist
+      CodeUri: ./dist
       Handler: slack-lambda-handler
       Environment:
         Variables:
