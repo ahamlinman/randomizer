@@ -24,6 +24,12 @@ $0 deploy <stack name> <S3 bucket> [args...]
   "--parameter-overrides SlackToken=<token>" to set the token used to
   authenticate requests from Slack.
 
+$0 clean-bucket <S3 bucket> [args...]
+  Remove all but the most recent 3 files from the provided S3 bucket. This is
+  useful for cleaning up old Lambda deployment packages created by the deploy
+  command. Additional arguments are passed directly to each instance of "aws s3
+  rm".
+
 $0 help
   Print this message.
 EOF
@@ -73,6 +79,20 @@ deploy () (
     --query 'Stacks[0].Outputs[0].OutputValue'
 )
 
+clean-bucket () {
+  bucket="$1"
+  shift
+
+  old_files="$(aws s3 ls "s3://$bucket" \
+    | sort | head -n-3 \
+    | awk "{ print \"s3://$bucket/\" \$4 }")"
+
+  set -x
+  for f in $old_files; do
+    aws s3 rm "$@" "$f"
+  done
+}
+
 cmd="${1:-help}"
 [ "$#" -gt 0 ] && shift
 
@@ -82,6 +102,9 @@ case "$cmd" in
     ;;
   deploy)
     deploy "$@"
+    ;;
+  clean-bucket)
+    clean-bucket "$@"
     ;;
   help)
     usage
