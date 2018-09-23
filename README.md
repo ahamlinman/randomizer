@@ -1,26 +1,42 @@
 # Randomizer
 
 ```
-go get go.alexhamlin.co/randomizer/...
+go get go.alexhamlin.co/randomizer
 ```
 
-The randomizer is, quite simply, a tool that chooses a random option from a
-list.
+The randomizer, quite simply, chooses random options out of lists.
 
-The most interesting thing about this particular randomizer is that it can work
-on the command line *and* as a Slack slash command, using the same underlying
-implementation (which is seriously great for testing).
+More specifically, it can:
 
-The second most interesting thing is that it lets you save groups of options
-for re-use later. So if you tend to randomize from the same set of things all
-the time, it's now way easier.
+* Choose one or more items randomly out of a list (obviously)
+* Save "groups" of items for later use, in a local database or Amazon DynamoDB
+* Run as a Slack slash command (on your own server or on AWS Lambda), or as a
+  CLI tool for local testing
 
-Right now this is in sort of a prototype / beta state.
+## Trying it Out
+
+From the root of this repository, simply run `go build ./cmd/randomize` to try
+out a local copy of the randomizer in your terminal. Start by running
+`./randomize help` to see what you can do.
+
+This is a good way to get a rough taste of what the command looks like in a
+Slack workspace, especially if you'd like to quickly test out changes.
+
+## Deploying to Your Server
+
+From the root of this repository, run `go build ./cmd/slack-randomize-server`.
+The resulting binary starts up a web server that provides a Slack slash command
+endpoint at its root path.
+
+The web server requires the `SLACK_TOKEN` environment variable to be set to the
+token obtained from the settings page for your slash command. Run with `-help`
+to see available options for the server.
+
+## Deploying to AWS Lambda
+
+See the README in the `CloudFormation/` directory for more information.
 
 ## Upcoming
 
-* Get feedback on the current implementation / usage patterns (e.g. is
-  per-channel really the best way to save groups, or is there a better option?)
-* Try to get the service running on AWS Lambda, just like the current
-  randomizer (makes maintenance easier, especially for others; the non-Lambda
-  HTTP server will still be available though)
+* Watch my co-workers use this thing, and see what I can do to make it great.
+* Write better READMEs, both here and for CloudFormation deployment.
