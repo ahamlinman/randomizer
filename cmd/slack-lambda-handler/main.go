@@ -22,16 +22,12 @@ func handleEvent(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 		return events.APIGatewayProxyResponse{}, errors.New("missing SLACK_TOKEN")
 	}
 
-	if os.Getenv("DYNAMODB_TABLE") == "" {
-		return events.APIGatewayProxyResponse{}, errors.New("missing DYNAMODB_TABLE")
-	}
-
 	name := os.Getenv("SLACK_COMMAND_NAME")
 	if name == "" {
 		name = "/randomize"
 	}
 
-	storeFactory, err := store.FactoryFromEnv(os.Stderr)
+	storeFactory, err := store.DynamoDBFactoryFromEnv(os.Stderr)
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, err
 	}
