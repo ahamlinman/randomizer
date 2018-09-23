@@ -1,10 +1,15 @@
 FROM golang:1.11 AS builder
 
-COPY . /tmp/randomizer
+COPY go.mod go.sum /tmp/randomizer/
+COPY cmd/ /tmp/randomizer/cmd/
+COPY pkg/ /tmp/randomizer/pkg/
 WORKDIR /tmp/randomizer
 
 ENV CGO_ENABLED=0
-RUN go install -mod=readonly -ldflags="-s -w" -v ./cmd/...
+RUN go install -mod=readonly -ldflags="-s -w" -v \
+  ./cmd/randomize \
+  ./cmd/slack-randomize-server \
+  ./cmd/randomizer-dbtools
 
 
 FROM alpine:latest
