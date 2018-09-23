@@ -19,10 +19,6 @@ Parameters:
     Description: The number of write capacity units to set on the DynamoDB table
     Type: Number
     Default: '10'
-  Tracing:
-    Description: The X-Ray tracing mode for the Lambda function
-    Type: String
-    Default: PassThrough
 
 Resources:
   GroupsTable:
@@ -49,7 +45,6 @@ Resources:
       Runtime: go1.x
       CodeUri: ./dist
       Handler: slack-lambda-handler
-      Tracing: !Ref Tracing
       Environment:
         Variables:
           SLACK_TOKEN: !Ref SlackToken
