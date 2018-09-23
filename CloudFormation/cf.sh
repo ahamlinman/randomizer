@@ -16,16 +16,13 @@ $0 build
 
 $0 deploy <stack name> <S3 bucket> [args...]
   Deploy the randomizer using CloudFormation. This will upload the built Go
-  binary to the provided S3 bucket, then run a deployment.
+  binary to the provided S3 bucket, run a deployment, and print the URL for the
+  deployed API.
 
   Additional arguments are passed directly to "aws cloudformation deploy". In
   particular, when deploying the stack for the first time, use
   "--parameter-overrides SlackToken=<token>" to set the token used to
   authenticate requests from Slack.
-
-$0 get-url <stack name>
-  Print the API Gateway URL that points to the stack with the given name. This
-  requires the "jq" tool.
 
 $0 help
   Print this message.
@@ -66,29 +63,15 @@ deploy () (
     --stack-name "$stack_name" \
     --no-fail-on-empty-changeset \
     "$@"
+
+  set +x
+
+  echo -e "\\nThe Slack webhook is available at the following URL:"
+  aws cloudformation describe-stacks \
+    --stack-name "$stack_name" \
+    --output text \
+    --query 'Stacks[0].Outputs[0].OutputValue'
 )
-
-get-url () {
-  if ! type jq >/dev/null 2>&1; then
-    echo "jq is required to get the deployment URL" 1>&2
-    return 1
-  fi
-
-  stack_name="$1"
-
-  region="$(aws configure get region)"
-  aws cloudformation describe-stack-resources --stack-name "$stack_name" \
-    | jq -r -f <(cat <<JQ
-[
-  .StackResources[]
-  | select(.ResourceType | contains("AWS::ApiGateway"))
-  | { (.ResourceType | split("::")[2]): .PhysicalResourceId }
-]
-| add
-| "https://" + .RestApi + ".execute-api.$region.amazonaws.com/" + .Stage + "/"
-JQ
-)
-}
 
 cmd="${1:-help}"
 [ "$#" -gt 0 ] && shift
@@ -99,9 +82,6 @@ case "$cmd" in
     ;;
   deploy)
     deploy "$@"
-    ;;
-  get-url)
-    get-url "$@"
     ;;
   help)
     usage
