@@ -1,6 +1,16 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
 Description: API for a Slack /randomizer command, with support for saving groups
 
 Parameters:
+  SlackToken:
+    Description: The authentication token created by Slack for the slash command
+    Type: String
+  SlackCommandName:
+    Description: The name of the command to display in help output in Slack
+    Type: String
+    Default: '/randomize'
   ReadCapacityUnits:
     Description: The number of read capacity units to set on the DynamoDB table
     Type: Number
@@ -27,3 +37,21 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: {Ref: ReadCapacityUnits}
         WriteCapacityUnits: {Ref: WriteCapacityUnits}
+
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: go1.x
+      CodeUri: ./lambda-dist
+      Handler: slack-lambda-handler
+      Environment:
+        Variables:
+          SLACK_TOKEN: {Ref: SlackToken}
+          SLACK_COMMAND_NAME: {Ref: SlackCommandName}
+          DYNAMODB_TABLE: {Ref: GroupsTable}
+      Events:
+        ApiGet:
+          Type: Api
+          Properties:
+            Path: '/'
+            Method: GET
