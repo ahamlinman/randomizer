@@ -25,9 +25,9 @@ type App struct {
 	// StoreFactory provides a Store for the Slack channel in which the request
 	// was made.
 	StoreFactory store.Factory
-	// LogFunc, if non-nil, will be called to print information about errors that
-	// occur while handling each request.
-	LogFunc func(format string, v ...interface{})
+	// DebugWriter, if non-nil, will be used to print information about errors
+	// that occur while handling each request.
+	DebugWriter io.Writer
 }
 
 // ServeHTTP handles the GET or POST request made by Slack when the randomizer
@@ -78,11 +78,11 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a App) log(format string, v ...interface{}) {
-	if a.LogFunc == nil {
+	if a.DebugWriter == nil {
 		return
 	}
 
-	a.LogFunc(format, v...)
+	fmt.Fprintf(a.DebugWriter, format, v...)
 }
 
 type responseType int
