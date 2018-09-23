@@ -45,21 +45,36 @@ func FactoryFromEnv(debug io.Writer) (Factory, error) {
 		debug = ioutil.Discard
 	}
 
-	var (
-		dynamo         = os.Getenv("DYNAMODB")
-		dynamoTable    = os.Getenv("DYNAMODB_TABLE")
-		dynamoEndpoint = os.Getenv("DYNAMODB_ENDPOINT")
-	)
-	if dynamo != "" || dynamoTable != "" || dynamoEndpoint != "" {
-		fmt.Fprintln(debug, "Using DynamoDB for storage")
-		return dynamoFactory(debug, dynamoTable, dynamoEndpoint)
+	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
+		return DynamoDBFactoryFromEnv(debug)
 	}
 
-	fmt.Fprintln(debug, "Using Bolt for storage")
-	return boltFactory(debug, os.Getenv("DB_PATH"))
+	return BoltFactoryFromEnv(debug)
 }
 
-func dynamoFactory(debug io.Writer, table, endpoint string) (Factory, error) {
+func envHasAny(names ...string) bool {
+	for _, name := range names {
+		if _, ok := os.LookupEnv(name); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// DynamoDBFactoryFromEnv constructs and returns a Factory for DynamoDB-backed
+// stores based on available environment variables. See FactoryFromEnv for more
+// information.
+func DynamoDBFactoryFromEnv(debug io.Writer) (Factory, error) {
+	return dynamoDBFactory(
+		debug,
+		os.Getenv("DYNAMODB_TABLE"),
+		os.Getenv("DYNAMODB_ENDPOINT"),
+	)
+}
+
+func dynamoDBFactory(debug io.Writer, table, endpoint string) (Factory, error) {
+	fmt.Fprintln(debug, "Using DynamoDB for storage")
+
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "loading AWS config")
@@ -69,10 +84,10 @@ func dynamoFactory(debug io.Writer, table, endpoint string) (Factory, error) {
 	cfg.Retryer = aws.DefaultRetryer{NumMaxRetries: 2}
 
 	if endpoint != "" {
-		fmt.Fprintln(debug, "\t-> Using endpoint", endpoint)
+		fmt.Fprintf(debug, "-> Endpoint: %s\n", endpoint)
 		cfg.EndpointResolver = aws.ResolveWithEndpointURL(endpoint)
 	} else {
-		fmt.Fprintln(debug, "\t-> Using AWS production endpoint")
+		fmt.Fprintf(debug, "-> Endpoint: AWS %s\n", cfg.Region)
 	}
 
 	db := dynamodb.New(cfg)
@@ -80,7 +95,7 @@ func dynamoFactory(debug io.Writer, table, endpoint string) (Factory, error) {
 	if table == "" {
 		table = "RandomizerGroups"
 	}
-	fmt.Fprintln(debug, "\t-> Using table", table)
+	fmt.Fprintf(debug, "-> Table: %s\n", table)
 
 	return func(partition string) randomizer.Store {
 		store, err := dynamostore.New(db, table, partition)
@@ -91,11 +106,20 @@ func dynamoFactory(debug io.Writer, table, endpoint string) (Factory, error) {
 	}, nil
 }
 
+// BoltFactoryFromEnv constructs and returns a Factory for Bolt-backed stores
+// based on available environment variables. See FactoryFromEnv for more
+// information.
+func BoltFactoryFromEnv(debug io.Writer) (Factory, error) {
+	return boltFactory(debug, os.Getenv("DB_PATH"))
+}
+
 func boltFactory(debug io.Writer, path string) (Factory, error) {
+	fmt.Fprintln(debug, "Using Bolt for storage")
+
 	if path == "" {
 		path = "randomizer.db"
 	}
-	fmt.Fprintln(debug, "\t-> Using database", path)
+	fmt.Fprintf(debug, "-> Database: %s\n", path)
 
 	db, err := bolt.Open(path, os.ModePerm&0644, nil)
 	if err != nil {
