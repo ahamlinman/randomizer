@@ -24,6 +24,9 @@ $0 deploy <stack name> <S3 bucket> [args...]
   "--parameter-overrides SlackToken=<token>" to set the token used to
   authenticate requests from Slack.
 
+$0 build-deploy <stack name> <S3 bucket> [args...]
+  Just run "build" and "deploy" together.
+
 $0 clean
   Clean up the Go binary and CloudFormation package template.
 
@@ -82,12 +85,17 @@ deploy () (
     --query 'Stacks[0].Outputs[0].OutputValue'
 )
 
-clean () {
-  set -x
-  rm -rf ./dist ./Package.yaml
+build-deploy () {
+  build
+  deploy "$@"
 }
 
-clean-bucket () {
+clean () (
+  set -x
+  rm -rf ./dist ./Package.yaml
+)
+
+clean-bucket () (
   bucket="$1"
   shift
 
@@ -99,17 +107,20 @@ clean-bucket () {
   for f in $old_files; do
     aws s3 rm "$@" "$f"
   done
-}
+)
 
 cmd="${1:-help}"
 [ "$#" -gt 0 ] && shift
 
 case "$cmd" in
   build)
-    build "$@"
+    build
     ;;
   deploy)
     deploy "$@"
+    ;;
+  build-deploy)
+    build-deploy "$@"
     ;;
   clean)
     clean
