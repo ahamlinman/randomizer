@@ -25,6 +25,9 @@ type App struct {
 	// StoreFactory provides a Store for the Slack channel in which the request
 	// was made.
 	StoreFactory store.Factory
+	// LogFunc, if non-nil, will be called to print information about errors that
+	// occur while handling each request.
+	LogFunc func(format string, v ...interface{})
 }
 
 // ServeHTTP handles the GET or POST request made by Slack when the randomizer
@@ -34,6 +37,7 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var params url.Values
 	if r.Method == "POST" {
 		if err := r.ParseForm(); err != nil {
+			a.log("Bad POST form data: %v\n", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -45,17 +49,20 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// This function "[requires] careful thought to use correctly." So hopefully
 	// I managed to do that.
 	if subtle.ConstantTimeCompare(a.Token, []byte(params.Get("token"))) != 1 {
+		a.log("Invalid token in request\n")
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
 	if params.Get("ssl_check") == "1" {
+		a.log("Handled SSL check\n")
 		return
 	}
 
 	app := randomizer.NewApp(a.Name, a.StoreFactory(params.Get("channel_id")))
 	result, err := app.Main(strings.Split(params.Get("text"), " "))
 	if err != nil {
+		a.log("Error from randomizer: %v\n", err.(randomizer.Error).Cause())
 		response{typeEphemeral, err.(randomizer.Error).HelpText()}.Send(w)
 		return
 	}
@@ -68,6 +75,14 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		response{typeInChannel, result.Message()}.Send(w)
 	}
+}
+
+func (a App) log(format string, v ...interface{}) {
+	if a.LogFunc == nil {
+		return
+	}
+
+	a.LogFunc(format, v...)
 }
 
 type responseType int

@@ -2,6 +2,7 @@ package main // import "go.alexhamlin.co/randomizer/cmd/slack-lambda-handler"
 
 import (
 	"errors"
+	"log"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -40,6 +41,7 @@ func handleEvent(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 		Name:         name,
 		Token:        []byte(token),
 		StoreFactory: storeFactory,
+		LogFunc:      log.New(os.Stderr, "", 0).Printf,
 	}
 
 	return handlerfunc.New(app.ServeHTTP).Proxy(request)

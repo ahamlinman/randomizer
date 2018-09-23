@@ -3,6 +3,7 @@ package main // import "go.alexhamlin.co/randomizer/cmd/slack-randomize-server"
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -36,6 +37,7 @@ func main() {
 		Name:         name,
 		Token:        []byte(token),
 		StoreFactory: storeFactory,
+		LogFunc:      log.New(os.Stderr, "", 0).Printf,
 	})
 
 	fmt.Println("Starting randomizer service on", addr)
