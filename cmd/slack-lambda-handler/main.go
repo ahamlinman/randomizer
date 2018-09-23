@@ -12,29 +12,38 @@ import (
 	"go.alexhamlin.co/randomizer/pkg/store"
 )
 
+var (
+	token        []byte
+	name         string
+	storeFactory store.Factory
+)
+
+func init() {
+	token = []byte(os.Getenv("SLACK_TOKEN"))
+	if len(token) == 0 {
+		panic(errors.New("missing SLACK_TOKEN"))
+	}
+
+	name = os.Getenv("SLACK_COMMAND_NAME")
+	if name == "" {
+		name = "/randomize"
+	}
+
+	var err error
+	storeFactory, err = store.DynamoDBFactoryFromEnv(os.Stderr)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	lambda.Start(handleEvent)
 }
 
 func handleEvent(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	token := os.Getenv("SLACK_TOKEN")
-	if token == "" {
-		return events.APIGatewayProxyResponse{}, errors.New("missing SLACK_TOKEN")
-	}
-
-	name := os.Getenv("SLACK_COMMAND_NAME")
-	if name == "" {
-		name = "/randomize"
-	}
-
-	storeFactory, err := store.DynamoDBFactoryFromEnv(os.Stderr)
-	if err != nil {
-		return events.APIGatewayProxyResponse{}, err
-	}
-
 	app := slack.App{
 		Name:         name,
-		Token:        []byte(token),
+		Token:        token,
 		StoreFactory: storeFactory,
 		DebugWriter:  os.Stderr,
 	}
