@@ -55,11 +55,16 @@ Resources:
           Properties:
             Path: '/'
             Method: GET
+        ApiPost:
+          Type: Api
+          Properties:
+            Path: '/'
+            Method: POST
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref GroupsTable
 
 Outputs:
   ApiUrl:
-    Description: URL for a Slash slack command integration in GET mode
+    Description: URL for the Slack slash command integration
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
