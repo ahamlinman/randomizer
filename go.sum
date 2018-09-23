@@ -2,6 +2,8 @@ github.com/aws/aws-lambda-go v1.6.0 h1:T+u/g79zPKw1oJM7xYhvpq7i4Sjc0iVsXZUaqRVVS
 github.com/aws/aws-lambda-go v1.6.0/go.mod h1:zUsUQhAUjYzR8AuduJPCfhBuKWUaDbQiPOG+ouzmE1A=
 github.com/aws/aws-sdk-go-v2 v2.0.0-preview.4+incompatible h1:9qh7ItVskIwDsCiQnqISqy8icJS4cc2yenagOUvXbd4=
 github.com/aws/aws-sdk-go-v2 v2.0.0-preview.4+incompatible/go.mod h1:5DmdJpM48aUShwAgzBfZDXP+O5nH9IYDqzpovC7q9Y4=
+github.com/awslabs/aws-lambda-go-api-proxy v0.0.0-20180713153304-3a4d35011e4a h1:XZOOxzHfxO5HASVEnS7Ktff9WUw2MF1sddlkIraDSeA=
+github.com/awslabs/aws-lambda-go-api-proxy v0.0.0-20180713153304-3a4d35011e4a/go.mod h1:1WYCl0lFZD+KAqdW+usdz46oShDhOEj3uTw09Qv++28=
 github.com/go-ini/ini v1.38.2 h1:6Hl/z3p3iFkA0dlDfzYxuFuUGD+kaweypF6btsR2/Q4=
 github.com/go-ini/ini v1.38.2/go.mod h1:ByCAeIL28uOIIG0E3PJtZPDL8WnHpFKFOtgjp+3Ies8=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
