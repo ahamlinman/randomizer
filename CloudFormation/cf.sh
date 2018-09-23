@@ -24,6 +24,9 @@ $0 deploy <stack name> <S3 bucket> [args...]
   "--parameter-overrides SlackToken=<token>" to set the token used to
   authenticate requests from Slack.
 
+$0 clean
+  Clean up the Go binary and CloudFormation package template.
+
 $0 clean-bucket <S3 bucket> [args...]
   Remove all but the most recent 3 files from the provided S3 bucket. This is
   useful for cleaning up old Lambda deployment packages created by the deploy
@@ -79,6 +82,11 @@ deploy () (
     --query 'Stacks[0].Outputs[0].OutputValue'
 )
 
+clean () {
+  set -x
+  rm -rf ./dist ./Package.yaml
+}
+
 clean-bucket () {
   bucket="$1"
   shift
@@ -102,6 +110,9 @@ case "$cmd" in
     ;;
   deploy)
     deploy "$@"
+    ;;
+  clean)
+    clean
     ;;
   clean-bucket)
     clean-bucket "$@"
