@@ -19,12 +19,12 @@ Finally, run the `cf.sh` script in this directory, filling in the various
 fields as necessary:
 
 ```
-./cf.sh build-deploy <stack name> <bucket name> --parameter-overrides SlackToken=<token>
+./cf.sh build-deploy <bucket name> <stack name> --parameter-overrides SlackToken=<token>
 ```
 
 When finished, the deployment script will print out a URL. Copy and paste it
 into the slash command configuration screen, then save the slash command.
 
-To re-deploy updated versions of the app, simply run `cf.sh` again with the
-stack name and S3 bucket name. CloudFormation remembers the value of the Slack
+To re-deploy updated versions of the app, simply run `cf.sh` again with the S3
+bucket name and stack name. CloudFormation remembers the value of the Slack
 authentication token on subsequent deployments.

@@ -14,9 +14,12 @@ https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 $0 build
   (Re)build the Go binary that will be deployed to AWS Lambda.
 
-$0 deploy <stack name> <S3 bucket> [args...]
-  Deploy the randomizer using CloudFormation. This will upload the built Go
-  binary to the provided S3 bucket, run a deployment, and print the URL for the
+$0 package <S3 bucket>
+  Upload the built Go binary to the provided S3 bucket, and create a deployable
+  CloudFormation template that refers to the uploaded file.
+
+$0 deploy <stack name> [args...]
+  Deploy a packaged template using CloudFormation, then print the URL for the
   deployed API.
 
   Additional arguments are passed directly to "aws cloudformation deploy". In
@@ -24,8 +27,8 @@ $0 deploy <stack name> <S3 bucket> [args...]
   "--parameter-overrides SlackToken=<token>" to set the token used to
   authenticate requests from Slack.
 
-$0 build-deploy <stack name> <S3 bucket> [args...]
-  Just run "build" and "deploy" together.
+$0 build-deploy <S3 bucket> <stack name> [args...]
+  Build, package, and deploy all in one step.
 
 $0 clean
   Clean up the Go binary and CloudFormation package template.
@@ -52,31 +55,39 @@ build () (
     ../cmd/slack-lambda-handler
 )
 
-deploy () (
+package () (
   if [ ! -d dist ]; then
-    echo "must build the handler binary before deployment" 1>&2
+    echo "must build the handler binary before packaging" 1>&2
     return 1
   fi
 
-  stack_name="$1"
-  s3_bucket="$2"
-  shift 2
+  s3_bucket="$1"
 
   set -x
-
   aws cloudformation package \
     --template-file Template.yaml \
     --output-template-file Package.yaml \
     --s3-bucket "$s3_bucket"
+)
 
-  aws cloudformation deploy \
-    --template-file Package.yaml \
-    --capabilities CAPABILITY_IAM \
-    --stack-name "$stack_name" \
-    --no-fail-on-empty-changeset \
-    "$@"
+deploy () (
+  if [ ! -f Package.yaml ]; then
+    echo "must package the CloudFormation template before deploying" 1>&2
+    return 1
+  fi
 
-  set +x
+  stack_name="$1"
+  shift
+
+  (
+    set -x
+    aws cloudformation deploy \
+      --template-file Package.yaml \
+      --capabilities CAPABILITY_IAM \
+      --stack-name "$stack_name" \
+      --no-fail-on-empty-changeset \
+      "$@"
+  )
 
   echo -e "\\nThe Slack webhook is available at the following URL:"
   aws cloudformation describe-stacks \
@@ -86,8 +97,13 @@ deploy () (
 )
 
 build-deploy () {
+  s3_bucket="$1"
+  stack_name="$2"
+  shift 2
+
   build
-  deploy "$@"
+  package "$s3_bucket"
+  deploy "$stack_name" "$@"
 }
 
 clean () (
@@ -115,6 +131,9 @@ cmd="${1:-help}"
 case "$cmd" in
   build)
     build
+    ;;
+  package)
+    package "$@"
     ;;
   deploy)
     deploy "$@"
