@@ -172,7 +172,13 @@ func (a App) Main(args []string) (result Result, err error) {
 	rand.New(source).Shuffle(len(options), func(i, j int) {
 		options[i], options[j] = options[j], options[i]
 	})
-	choices := options[:fs.count]
+
+	var choices []string
+	if fs.all {
+		choices = options
+	} else {
+		choices = options[:fs.count]
+	}
 
 	for i, choice := range choices {
 		choices[i] = "*" + choice + "*"
@@ -188,6 +194,7 @@ type flagSet struct {
 	*flag.FlagSet
 
 	count int
+	all   bool
 
 	listGroups  bool
 	showGroup   string
@@ -202,6 +209,7 @@ func buildFlagSet() *flagSet {
 	fs.SetOutput(ioutil.Discard)
 
 	fs.IntVar(&fs.count, "n", 1, "number of items to pick")
+	fs.BoolVar(&fs.all, "all", false, "pick all items in a random order")
 
 	fs.BoolVar(&fs.listGroups, "list", false, "list all known groups")
 	fs.StringVar(&fs.showGroup, "show", "", "show the options in the specified group")
@@ -221,6 +229,9 @@ You can choose more than one option at a time. The selected options will be give
 
 *Example:* {{.Name}} -n 2 one two three
 > I choose *two* and *one*!
+
+*Example:* {{.Name}} -all one two three
+> I choose *two* and *three* and *one*!
 
 You can also create *groups* for the current channel or DM.
 
