@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -138,7 +139,7 @@ func (a App) Main(args []string) (result Result, err error) {
 		return a.deleteGroup(fs.deleteGroup)
 	}
 
-	options, err := a.expandGroups(fs.Args())
+	options, err := a.expandOptions(fs.Args())
 	if err != nil {
 		return Result{}, err
 	}
@@ -238,6 +239,7 @@ You can also create *groups* for the current channel or DM.
 *Save a group:* {{.Name}} -save first3 one two three
 *Randomize from a group:* {{.Name}} +first3
 *Combine groups with other options:* {{.Name}} -n 3 +first3 +next3 seven eight
+*Remove some options from consideration:* {{.Name}} +first3 +next3 -two -five
 *List groups:* {{.Name}} -list
 *Show options in a group:* {{.Name}} -show first3
 *Delete a group:* {{.Name}} -delete first3
@@ -307,26 +309,46 @@ func (a App) deleteGroup(name string) (Result, error) {
 	}, nil
 }
 
-func (a App) expandGroups(argOpts []string) ([]string, error) {
+var optModifierRegexp = regexp.MustCompile("^[+-]")
+
+func (a App) expandOptions(argOpts []string) ([]string, error) {
 	options := make([]string, 0, len(argOpts))
 
+argsLoop:
 	for _, opt := range argOpts {
-		if !strings.HasPrefix(opt, "+") {
+		switch optModifierRegexp.FindString(opt) {
+		case "":
+			// No modifier; simply add this as a possible option
 			options = append(options, opt)
-			continue
-		}
 
-		groupName := opt[1:]
-		groupOpts, err := a.store.Get(groupName)
-		if err != nil {
-			return nil, Error{
-				cause:    err,
-				helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", groupName),
+		case "+":
+			// Modifier for a group name; add all elements from the group to the set
+			// of options
+			groupName := opt[1:]
+			groupOpts, err := a.store.Get(groupName)
+			if err != nil {
+				return nil, Error{
+					cause:    err,
+					helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", groupName),
+				}
 			}
-		}
+			options = append(options, groupOpts...)
 
-		for _, opt := range groupOpts {
-			options = append(options, opt)
+		case "-":
+			// Modifier for a removal; remove the first instance of this item from
+			// the option set
+			removeItem := opt[1:]
+			for i, opt := range options {
+				if opt == removeItem {
+					options = append(options[:i], options[i+1:]...)
+					continue argsLoop
+				}
+			}
+
+			return nil, Error{
+				cause:    errors.Errorf("option %q not found for removal", removeItem),
+				helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove! (Note that flags like -save need to go at the beginning, before any options.)", removeItem),
+			}
 		}
 	}
 
