@@ -5,6 +5,8 @@ import (
 	"flag"
 	"io/ioutil"
 	"text/template"
+
+	"github.com/pkg/errors"
 )
 
 type flagSet struct {
@@ -36,6 +38,25 @@ func buildFlagSet(name string) *flagSet {
 	fs.StringVar(&fs.deleteGroup, "delete", "", "delete the specified group")
 
 	return fs
+}
+
+func (fs *flagSet) Parse(args []string) error {
+	err := fs.FlagSet.Parse(args)
+
+	if err != nil || (len(args) == 1 && args[0] == "help") {
+		if err == nil {
+			err = errors.New("help requested in args")
+		} else {
+			err = errors.Wrap(err, "parsing flags")
+		}
+
+		return Error{
+			cause:    err,
+			helpText: fs.buildUsage(),
+		}
+	}
+
+	return nil
 }
 
 var usageTmpl = template.Must(template.New("").Parse(
