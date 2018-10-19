@@ -4,17 +4,71 @@ import (
 	"bytes"
 	"flag"
 	"io/ioutil"
+	"strconv"
 	"text/template"
 
 	"github.com/pkg/errors"
 )
 
+// countFlag represents the possible values of the "-n" flag, which may be an
+// integer count or the string "all" (representing as many options as are
+// available).
+type countFlag struct {
+	all   bool
+	count int
+}
+
+func (c *countFlag) String() string {
+	if c == nil {
+		return "0"
+	}
+
+	return strconv.Itoa(c.count)
+}
+
+func (c *countFlag) Set(val string) error {
+	if val == "all" {
+		*c = countFlag{all: true}
+		return nil
+	}
+
+	count, err := strconv.Atoi(val)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	*c = countFlag{count: count}
+	return nil
+}
+
+// validateRange ensures that the count provided by the user will work for the
+// given number of options.
+func (c *countFlag) validateRange(n int) error {
+	if c.all {
+		return nil
+	}
+
+	if c.count < 1 {
+		return Error{
+			cause:    errors.New("count too small"),
+			helpText: "Whoops, I can't pick less than one option!",
+		}
+	}
+
+	if c.count > n {
+		return Error{
+			cause:    errors.New("count too large"),
+			helpText: "Whoops, I can't pick more options than I was given!",
+		}
+	}
+
+	return nil
+}
+
 type flagSet struct {
 	*flag.FlagSet
 	name string
 
-	count int
-	all   bool
+	n countFlag
 
 	listGroups  bool
 	showGroup   string
@@ -29,8 +83,7 @@ func buildFlagSet(name string) *flagSet {
 	}
 	fs.SetOutput(ioutil.Discard)
 
-	fs.IntVar(&fs.count, "n", 1, "number of items to pick")
-	fs.BoolVar(&fs.all, "all", false, "pick all items in a random order")
+	fs.Var(&fs.n, "n", `number of items to pick (or "all" for all options)`)
 
 	fs.BoolVar(&fs.listGroups, "list", false, "list all known groups")
 	fs.StringVar(&fs.showGroup, "show", "", "show the options in the specified group")
@@ -70,7 +123,7 @@ You can choose more than one option at a time. The selected options will be give
 *Example:* {{.Name}} -n 2 one two three
 > I choose *two* and *one*!
 
-*Example:* {{.Name}} -all one two three
+*Example:* {{.Name}} -n all one two three
 > I choose *two* and *three* and *one*!
 
 You can also create *groups* for the current channel or DM.

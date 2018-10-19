@@ -149,18 +149,8 @@ func (a App) Main(args []string) (result Result, err error) {
 		return a.saveGroup(fs.saveGroup, options)
 	}
 
-	if fs.count < 1 {
-		return Result{}, Error{
-			cause:    errors.New("count too small"),
-			helpText: "Whoops, I can't pick less than one option!",
-		}
-	}
-
-	if fs.count > len(options) {
-		return Result{}, Error{
-			cause:    errors.New("count too large"),
-			helpText: "Whoops, I can't pick more options than I was given!",
-		}
+	if err := fs.n.validateRange(len(options)); err != nil {
+		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())
@@ -169,10 +159,10 @@ func (a App) Main(args []string) (result Result, err error) {
 	})
 
 	var choices []string
-	if fs.all {
+	if fs.n.all {
 		choices = options
 	} else {
-		choices = options[:fs.count]
+		choices = options[:fs.n.count]
 	}
 
 	for i, choice := range choices {
