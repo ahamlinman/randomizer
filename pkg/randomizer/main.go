@@ -121,8 +121,14 @@ func (a App) Main(args []string) (result Result, err error) {
 	fs := buildFlagSet()
 	err = fs.Parse(args)
 	if err != nil || (len(args) == 1 && args[0] == "help") {
+		if err == nil {
+			err = errors.New("help requested")
+		} else {
+			err = errors.Wrap(err, "parsing flags")
+		}
+
 		return Result{}, Error{
-			cause:    errors.New("help requested"),
+			cause:    err,
 			helpText: a.buildUsage(),
 		}
 	}
