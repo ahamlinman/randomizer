@@ -66,10 +66,17 @@ func isResult(expectedType ResultType, contains ...string) validator {
 			t.Errorf("got result type %v, want %v", res.Type(), expectedType)
 		}
 
+		// Ensure that expected substrings appear *in order* in the response
+		message := res.Message()
 		for _, c := range contains {
-			if !strings.Contains(res.Message(), c) {
-				t.Errorf("result missing substring %q", c)
+			i := strings.Index(message, c)
+
+			if i < 0 {
+				t.Errorf("result missing %q in expected position\n%v", c, res.Message())
+				continue
 			}
+
+			message = message[i+len(c):]
 		}
 	}
 }
@@ -228,7 +235,7 @@ var testCases = []struct {
 		description: "showing a group",
 		store:       mockStore{"test": {"one", "two", "three"}},
 		args:        []string{"-show", "test"},
-		validIf:     isResult(ShowedGroup, "• one", "• two", "• three"),
+		validIf:     isResult(ShowedGroup, "• one", "• three", "• two"),
 	},
 
 	{
