@@ -81,6 +81,9 @@ func (e Error) HelpText() string {
 type App struct {
 	name  string
 	store Store
+
+	// May be overridden in unit tests for more predictable behavior
+	shuffle func([]string)
 }
 
 // Store represents an object that provides persistence for "groups" of
@@ -97,6 +100,13 @@ func NewApp(name string, store Store) App {
 	return App{
 		name:  name,
 		store: store,
+
+		shuffle: func(options []string) {
+			source := rand.NewSource(time.Now().UnixNano())
+			rand.New(source).Shuffle(len(options), func(i, j int) {
+				options[i], options[j] = options[j], options[i]
+			})
+		},
 	}
 }
 
@@ -153,10 +163,7 @@ func (a App) Main(args []string) (result Result, err error) {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	source := rand.NewSource(time.Now().UnixNano())
-	rand.New(source).Shuffle(len(options), func(i, j int) {
-		options[i], options[j] = options[j], options[i]
-	})
+	a.shuffle(options)
 
 	var choices []string
 	if fs.n.all {
