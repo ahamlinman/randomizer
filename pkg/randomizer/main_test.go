@@ -12,6 +12,10 @@ import (
 type mockStore map[string][]string
 
 func (ms mockStore) List() ([]string, error) {
+	if ms == nil {
+		return nil, errors.New("mock store list error")
+	}
+
 	keys := make([]string, 0, len(ms))
 	for k := range ms {
 		keys = append(keys, k)
@@ -21,6 +25,10 @@ func (ms mockStore) List() ([]string, error) {
 }
 
 func (ms mockStore) Get(name string) ([]string, error) {
+	if ms == nil {
+		return nil, errors.New("mock store get error")
+	}
+
 	options, ok := ms[name]
 	if !ok {
 		return nil, errors.Errorf("group %q not found", name)
@@ -29,11 +37,19 @@ func (ms mockStore) Get(name string) ([]string, error) {
 }
 
 func (ms mockStore) Put(name string, options []string) error {
+	if ms == nil {
+		return errors.New("mock store put error")
+	}
+
 	ms[name] = options
 	return nil
 }
 
 func (ms mockStore) Delete(name string) error {
+	if ms == nil {
+		return errors.New("mock store delete error")
+	}
+
 	delete(ms, name)
 	return nil
 }
@@ -196,8 +212,16 @@ var testCases = []struct {
 
 	{
 		description: "listing groups when there are none",
+		store:       mockStore{},
 		args:        []string{"-list"},
 		validIf:     isResult(ListedGroups, "No groups are available"),
+	},
+
+	{
+		description: "unable to list groups",
+		store:       nil,
+		args:        []string{"-list"},
+		validIf:     isError("trouble getting this channel's groups"),
 	},
 
 	{
@@ -209,8 +233,17 @@ var testCases = []struct {
 
 	{
 		description: "showing a group that does not exist",
+		store:       mockStore{},
 		args:        []string{"-show", "test"},
 		validIf:     isError("couldn't find that group"),
+	},
+
+	{
+		description: "unable to show a group",
+		store:       nil,
+		args:        []string{"-show", "test"},
+		// TODO: Should look into separating this from the above
+		validIf: isError("couldn't find that group"),
 	},
 
 	{
@@ -222,11 +255,25 @@ var testCases = []struct {
 	},
 
 	{
+		description: "unable to save a group",
+		store:       nil,
+		args:        []string{"-save", "test", "one", "two"},
+		validIf:     isError("trouble saving that group"),
+	},
+
+	{
 		description:   "deleting a group",
 		store:         mockStore{"test": {"one", "two"}},
 		args:          []string{"-delete", "test"},
 		validIf:       isResult(DeletedGroup, `The "test" group was deleted`),
 		expectedStore: mockStore{},
+	},
+
+	{
+		description: "unable to delete a group",
+		store:       nil,
+		args:        []string{"-delete", "test"},
+		validIf:     isError("trouble deleting that group"),
 	},
 
 	// Requesting help
