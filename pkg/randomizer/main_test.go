@@ -76,6 +76,10 @@ func isError(contains string) validator {
 	}
 }
 
+func isHelpMessageError(t *testing.T, res Result, err error) {
+	isError("helps you pick options randomly out of a list")(t, res, err)
+}
+
 var testCases = []struct {
 	description   string
 	store         mockStore
@@ -172,13 +176,13 @@ var testCases = []struct {
 	{
 		description: "non-integer options count",
 		args:        []string{"-n", "2.1", "one", "two"},
-		validIf:     isError("helps you pick options randomly"), // usage message
+		validIf:     isHelpMessageError,
 	},
 
 	{
 		description: "invalid options count",
 		args:        []string{"-n", "wat", "one", "two"},
-		validIf:     isError("helps you pick options randomly"), // usage message
+		validIf:     isHelpMessageError,
 	},
 
 	// Group CRUD operations
@@ -223,6 +227,20 @@ var testCases = []struct {
 		args:          []string{"-delete", "test"},
 		validIf:       isResult(DeletedGroup, `The "test" group was deleted`),
 		expectedStore: mockStore{},
+	},
+
+	// Requesting help
+
+	{
+		description: "help as an argument",
+		args:        []string{"help"},
+		validIf:     isHelpMessageError,
+	},
+
+	{
+		description: "help as a flag",
+		args:        []string{"-help"},
+		validIf:     isHelpMessageError,
 	},
 }
 
