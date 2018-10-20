@@ -107,7 +107,7 @@ var testCases = []struct {
 	description   string
 	store         mockStore
 	args          []string
-	validIf       validator
+	check         validator
 	expectedStore mockStore
 }{
 	// Basic functionality
@@ -115,13 +115,13 @@ var testCases = []struct {
 	{
 		description: "providing no options",
 		args:        []string{},
-		validIf:     isError("need at least two options"),
+		check:       isError("need at least two options"),
 	},
 
 	{
 		description: "choosing one of a set of options",
 		args:        []string{"three", "two", "one"},
-		validIf:     isResult(Selection, "*one*"),
+		check:       isResult(Selection, "*one*"),
 	},
 
 	// Selecting from groups
@@ -130,14 +130,14 @@ var testCases = []struct {
 		description: "choosing one option from a group",
 		store:       mockStore{"test": {"three", "two", "one"}},
 		args:        []string{"+test"},
-		validIf:     isResult(Selection, "*one*"),
+		check:       isResult(Selection, "*one*"),
 	},
 
 	{
 		description: "combining groups with literal options",
 		store:       mockStore{"test": {"three", "two", "one"}},
 		args:        []string{"+test", "four"},
-		validIf:     isResult(Selection, "*four*"),
+		check:       isResult(Selection, "*four*"),
 	},
 
 	{
@@ -146,28 +146,28 @@ var testCases = []struct {
 			"first":  {"one", "two", "three"},
 			"second": {"four", "five", "six"},
 		},
-		args:    []string{"+first", "+second"},
-		validIf: isResult(Selection, "*five*"),
+		args:  []string{"+first", "+second"},
+		check: isResult(Selection, "*five*"),
 	},
 
 	{
 		description: "choosing from a group that does not exist",
 		args:        []string{"+test"},
-		validIf:     isError(`couldn't find the "test" group`),
+		check:       isError(`couldn't find the "test" group`),
 	},
 
 	{
 		description: "removing an option from consideration",
 		store:       mockStore{"test": {"three", "two", "one"}},
 		args:        []string{"+test", "-one"},
-		validIf:     isResult(Selection, "*three*"),
+		check:       isResult(Selection, "*three*"),
 	},
 
 	{
 		description: "removing an option that does not exist",
 		store:       mockStore{"test": {"three", "two", "one"}},
 		args:        []string{"+test", "-four"},
-		validIf:     isError(`"four" wasn't available for me to remove`),
+		check:       isError(`"four" wasn't available for me to remove`),
 	},
 
 	// Multiple selections
@@ -175,37 +175,37 @@ var testCases = []struct {
 	{
 		description: "choosing multiple options",
 		args:        []string{"-n", "2", "one", "two", "three", "four"},
-		validIf:     isResult(Selection, "*four*", "*one*"),
+		check:       isResult(Selection, "*four*", "*one*"),
 	},
 
 	{
 		description: "choosing all options",
 		args:        []string{"-n", "all", "one", "two", "three", "four"},
-		validIf:     isResult(Selection, "*four*", "*one*", "*three*", "*two*"),
+		check:       isResult(Selection, "*four*", "*one*", "*three*", "*two*"),
 	},
 
 	{
 		description: "choosing too few options",
 		args:        []string{"-n", "0", "one", "two"},
-		validIf:     isError("can't pick less than one option"),
+		check:       isError("can't pick less than one option"),
 	},
 
 	{
 		description: "choosing too many options",
 		args:        []string{"-n", "3", "one", "two"},
-		validIf:     isError("can't pick more options than I was given"),
+		check:       isError("can't pick more options than I was given"),
 	},
 
 	{
 		description: "non-integer options count",
 		args:        []string{"-n", "2.1", "one", "two"},
-		validIf:     isHelpMessageError,
+		check:       isHelpMessageError,
 	},
 
 	{
 		description: "invalid options count",
 		args:        []string{"-n", "wat", "one", "two"},
-		validIf:     isHelpMessageError,
+		check:       isHelpMessageError,
 	},
 
 	// Group CRUD operations
@@ -214,35 +214,35 @@ var testCases = []struct {
 		description: "listing groups",
 		store:       mockStore{"first": {"one"}, "second": {"two"}},
 		args:        []string{"-list"},
-		validIf:     isResult(ListedGroups, "• first", "• second"),
+		check:       isResult(ListedGroups, "• first", "• second"),
 	},
 
 	{
 		description: "listing groups when there are none",
 		store:       mockStore{},
 		args:        []string{"-list"},
-		validIf:     isResult(ListedGroups, "No groups are available"),
+		check:       isResult(ListedGroups, "No groups are available"),
 	},
 
 	{
 		description: "unable to list groups",
 		store:       nil,
 		args:        []string{"-list"},
-		validIf:     isError("trouble getting this channel's groups"),
+		check:       isError("trouble getting this channel's groups"),
 	},
 
 	{
 		description: "showing a group",
 		store:       mockStore{"test": {"one", "two", "three"}},
 		args:        []string{"-show", "test"},
-		validIf:     isResult(ShowedGroup, "• one", "• three", "• two"),
+		check:       isResult(ShowedGroup, "• one", "• three", "• two"),
 	},
 
 	{
 		description: "showing a group that does not exist",
 		store:       mockStore{},
 		args:        []string{"-show", "test"},
-		validIf:     isError("couldn't find that group"),
+		check:       isError("couldn't find that group"),
 	},
 
 	{
@@ -250,14 +250,14 @@ var testCases = []struct {
 		store:       nil,
 		args:        []string{"-show", "test"},
 		// TODO: Should look into separating this from the above
-		validIf: isError("couldn't find that group"),
+		check: isError("couldn't find that group"),
 	},
 
 	{
 		description:   "saving a group",
 		store:         mockStore{},
 		args:          []string{"-save", "test", "one", "two"},
-		validIf:       isResult(SavedGroup, `The "test" group was saved`, "• one", "• two"),
+		check:         isResult(SavedGroup, `The "test" group was saved`, "• one", "• two"),
 		expectedStore: mockStore{"test": {"one", "two"}},
 	},
 
@@ -265,14 +265,14 @@ var testCases = []struct {
 		description: "unable to save a group",
 		store:       nil,
 		args:        []string{"-save", "test", "one", "two"},
-		validIf:     isError("trouble saving that group"),
+		check:       isError("trouble saving that group"),
 	},
 
 	{
 		description:   "deleting a group",
 		store:         mockStore{"test": {"one", "two"}},
 		args:          []string{"-delete", "test"},
-		validIf:       isResult(DeletedGroup, `The "test" group was deleted`),
+		check:         isResult(DeletedGroup, `The "test" group was deleted`),
 		expectedStore: mockStore{},
 	},
 
@@ -280,7 +280,7 @@ var testCases = []struct {
 		description: "unable to delete a group",
 		store:       nil,
 		args:        []string{"-delete", "test"},
-		validIf:     isError("trouble deleting that group"),
+		check:       isError("trouble deleting that group"),
 	},
 
 	// Requesting help
@@ -288,13 +288,13 @@ var testCases = []struct {
 	{
 		description: "help as an argument",
 		args:        []string{"help"},
-		validIf:     isHelpMessageError,
+		check:       isHelpMessageError,
 	},
 
 	{
 		description: "help as a flag",
 		args:        []string{"-help"},
-		validIf:     isHelpMessageError,
+		check:       isHelpMessageError,
 	},
 }
 
@@ -307,10 +307,10 @@ func TestMain(t *testing.T) {
 			}
 
 			res, err := app.Main(tc.args)
-			tc.validIf(t, res, err)
+			tc.check(t, res, err)
 
 			if tc.expectedStore != nil && !reflect.DeepEqual(tc.store, tc.expectedStore) {
-				t.Errorf("unexpected store state\n  got %v\n  want %v", tc.store, tc.expectedStore)
+				t.Errorf("unexpected store state\ngot:  %v\nwant: %v", tc.store, tc.expectedStore)
 			}
 		})
 	}
