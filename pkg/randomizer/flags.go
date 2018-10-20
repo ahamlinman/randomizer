@@ -80,6 +80,7 @@ func buildFlagSet(name string) *flagSet {
 	fs := &flagSet{
 		FlagSet: flag.NewFlagSet("", flag.ContinueOnError),
 		name:    name,
+		n:       countFlag{count: 1},
 	}
 	fs.SetOutput(ioutil.Discard)
 
