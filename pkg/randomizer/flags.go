@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"io/ioutil"
+	"regexp"
 	"strconv"
 	"text/template"
 
@@ -94,8 +95,17 @@ func buildFlagSet(name string) *flagSet {
 	return fs
 }
 
+// Replace "slashy" (a.k.a. "Windows-style") flags with POSIX-like flags. This
+// is a transitional implementation; a new parser will likely be implemented
+// once the new functionality is tested.
+var flagReformatRegexp = regexp.MustCompile(`/(n|list|show|save|delete|help)`)
+
 func (fs *flagSet) Parse(args []string) error {
-	err := fs.FlagSet.Parse(args)
+	posixStyleArgs := make([]string, len(args))
+	for i, arg := range args {
+		posixStyleArgs[i] = flagReformatRegexp.ReplaceAllString(arg, "-$1")
+	}
+	err := fs.FlagSet.Parse(posixStyleArgs)
 
 	if err != nil || (len(args) == 1 && args[0] == "help") {
 		if err == nil {
@@ -121,21 +131,21 @@ var usageTmpl = template.Must(template.New("").Parse(
 
 You can choose more than one option at a time. The selected options will be given back in a random order.
 
-*Example:* {{.Name}} -n 2 one two three
+*Example:* {{.Name}} /n 2 one two three
 > I choose *two* and *one*!
 
-*Example:* {{.Name}} -n all one two three
+*Example:* {{.Name}} /n all one two three
 > I choose *two* and *three* and *one*!
 
 You can also create *groups* for the current channel or DM.
 
-*Save a group:* {{.Name}} -save first3 one two three
+*Save a group:* {{.Name}} /save first3 one two three
 *Randomize from a group:* {{.Name}} +first3
-*Combine groups with other options:* {{.Name}} -n 3 +first3 +next3 seven eight
+*Combine groups with other options:* {{.Name}} /n 3 +first3 +next3 seven eight
 *Remove some options from consideration:* {{.Name}} +first3 +next3 -two -five
-*List groups:* {{.Name}} -list
-*Show options in a group:* {{.Name}} -show first3
-*Delete a group:* {{.Name}} -delete first3
+*List groups:* {{.Name}} /list
+*Show options in a group:* {{.Name}} /show first3
+*Delete a group:* {{.Name}} /delete first3
 
 Note that the selection is weighted. An option is more likely to be picked if it is given multiple times. This also applies when multiple groups are given, and an option is in more than one of them.`))
 

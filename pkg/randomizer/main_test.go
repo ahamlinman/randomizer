@@ -174,37 +174,37 @@ var testCases = []struct {
 
 	{
 		description: "choosing multiple options",
-		args:        []string{"-n", "2", "one", "two", "three", "four"},
+		args:        []string{"/n", "2", "one", "two", "three", "four"},
 		check:       isResult(Selection, "*four*", "*one*"),
 	},
 
 	{
 		description: "choosing all options",
-		args:        []string{"-n", "all", "one", "two", "three", "four"},
+		args:        []string{"/n", "all", "one", "two", "three", "four"},
 		check:       isResult(Selection, "*four*", "*one*", "*three*", "*two*"),
 	},
 
 	{
 		description: "choosing too few options",
-		args:        []string{"-n", "0", "one", "two"},
+		args:        []string{"/n", "0", "one", "two"},
 		check:       isError("can't pick less than one option"),
 	},
 
 	{
 		description: "choosing too many options",
-		args:        []string{"-n", "3", "one", "two"},
+		args:        []string{"/n", "3", "one", "two"},
 		check:       isError("can't pick more options than I was given"),
 	},
 
 	{
 		description: "non-integer options count",
-		args:        []string{"-n", "2.1", "one", "two"},
+		args:        []string{"/n", "2.1", "one", "two"},
 		check:       isHelpMessageError,
 	},
 
 	{
 		description: "invalid options count",
-		args:        []string{"-n", "wat", "one", "two"},
+		args:        []string{"/n", "wat", "one", "two"},
 		check:       isHelpMessageError,
 	},
 
@@ -213,42 +213,42 @@ var testCases = []struct {
 	{
 		description: "listing groups",
 		store:       mockStore{"first": {"one"}, "second": {"two"}},
-		args:        []string{"-list"},
+		args:        []string{"/list"},
 		check:       isResult(ListedGroups, "• first", "• second"),
 	},
 
 	{
 		description: "listing groups when there are none",
 		store:       mockStore{},
-		args:        []string{"-list"},
+		args:        []string{"/list"},
 		check:       isResult(ListedGroups, "No groups are available"),
 	},
 
 	{
 		description: "unable to list groups",
 		store:       nil,
-		args:        []string{"-list"},
+		args:        []string{"/list"},
 		check:       isError("trouble getting this channel's groups"),
 	},
 
 	{
 		description: "showing a group",
 		store:       mockStore{"test": {"one", "two", "three"}},
-		args:        []string{"-show", "test"},
+		args:        []string{"/show", "test"},
 		check:       isResult(ShowedGroup, "• one", "• three", "• two"),
 	},
 
 	{
 		description: "showing a group that does not exist",
 		store:       mockStore{},
-		args:        []string{"-show", "test"},
+		args:        []string{"/show", "test"},
 		check:       isError("couldn't find that group"),
 	},
 
 	{
 		description: "unable to show a group",
 		store:       nil,
-		args:        []string{"-show", "test"},
+		args:        []string{"/show", "test"},
 		// TODO: Should look into separating this from the above
 		check: isError("couldn't find that group"),
 	},
@@ -256,7 +256,7 @@ var testCases = []struct {
 	{
 		description:   "saving a group",
 		store:         mockStore{},
-		args:          []string{"-save", "test", "one", "two"},
+		args:          []string{"/save", "test", "one", "two"},
 		check:         isResult(SavedGroup, `The "test" group was saved`, "• one", "• two"),
 		expectedStore: mockStore{"test": {"one", "two"}},
 	},
@@ -264,14 +264,14 @@ var testCases = []struct {
 	{
 		description: "unable to save a group",
 		store:       nil,
-		args:        []string{"-save", "test", "one", "two"},
+		args:        []string{"/save", "test", "one", "two"},
 		check:       isError("trouble saving that group"),
 	},
 
 	{
 		description:   "deleting a group",
 		store:         mockStore{"test": {"one", "two"}},
-		args:          []string{"-delete", "test"},
+		args:          []string{"/delete", "test"},
 		check:         isResult(DeletedGroup, `The "test" group was deleted`),
 		expectedStore: mockStore{},
 	},
@@ -279,7 +279,7 @@ var testCases = []struct {
 	{
 		description: "unable to delete a group",
 		store:       nil,
-		args:        []string{"-delete", "test"},
+		args:        []string{"/delete", "test"},
 		check:       isError("trouble deleting that group"),
 	},
 
@@ -293,7 +293,7 @@ var testCases = []struct {
 
 	{
 		description: "help as a flag",
-		args:        []string{"-help"},
+		args:        []string{"/help"},
 		check:       isHelpMessageError,
 	},
 }
