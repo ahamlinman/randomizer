@@ -178,7 +178,7 @@ func (a App) Main(args []string) (result Result, err error) {
 
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")),
+		message:    fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")), // TODO: More "proper" formatting
 	}, nil
 }
 
