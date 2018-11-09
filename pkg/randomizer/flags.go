@@ -2,8 +2,6 @@ package randomizer
 
 import (
 	"bytes"
-	"flag"
-	"io/ioutil"
 	"regexp"
 	"strconv"
 	"text/template"
@@ -66,61 +64,104 @@ func (c *countFlag) validateRange(n int) error {
 }
 
 type flagSet struct {
-	*flag.FlagSet
 	name string
 
-	n countFlag
-
+	n           countFlag
 	listGroups  bool
 	showGroup   string
 	saveGroup   string
 	deleteGroup string
+
+	args []string
 }
 
 func buildFlagSet(name string) *flagSet {
-	fs := &flagSet{
-		FlagSet: flag.NewFlagSet("", flag.ContinueOnError),
-		name:    name,
-		n:       countFlag{count: 1},
+	return &flagSet{
+		name: name,
+		n:    countFlag{count: 1},
 	}
-	fs.SetOutput(ioutil.Discard)
-
-	fs.Var(&fs.n, "n", `number of items to pick (or "all" for all options)`)
-
-	fs.BoolVar(&fs.listGroups, "list", false, "list all known groups")
-	fs.StringVar(&fs.showGroup, "show", "", "show the options in the specified group")
-	fs.StringVar(&fs.saveGroup, "save", "", "save options into the specified group")
-	fs.StringVar(&fs.deleteGroup, "delete", "", "delete the specified group")
-
-	return fs
 }
 
-// Replace "slashy" (a.k.a. "Windows-style") flags with POSIX-like flags. This
-// is a transitional implementation; a new parser will likely be implemented
-// once the new functionality is tested.
-var flagReformatRegexp = regexp.MustCompile(`/(n|list|show|save|delete|help)`)
+var flagRegexp = regexp.MustCompile(`^/(help|n|list|show|save|delete)$`)
 
-func (fs *flagSet) Parse(args []string) error {
-	posixStyleArgs := make([]string, len(args))
-	for i, arg := range args {
-		posixStyleArgs[i] = flagReformatRegexp.ReplaceAllString(arg, "-$1")
-	}
-	err := fs.FlagSet.Parse(posixStyleArgs)
+func (fs *flagSet) Parse(args []string) (err error) {
+	// TODO: This function is an almost 60-line crappy hack to allow
+	// experimentation with the new options style. Clean it up if it seems like
+	// it's going to work out.
 
-	if err != nil || (len(args) == 1 && args[0] == "help") {
-		if err == nil {
-			err = errors.New("help requested in args")
-		} else {
-			err = errors.Wrap(err, "parsing flags")
+	fs.args = nil
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = Error{
+				cause:    errors.Errorf("recovered from panic: %v", r),
+				helpText: fs.buildUsage(),
+			}
 		}
+	}()
 
+	consume := func(n int) {
+		args = args[n:]
+	}
+
+	for len(args) > 0 {
+		match := flagRegexp.FindStringSubmatch(args[0])
+		switch {
+		case match == nil:
+			fs.args = append(fs.args, args[0])
+			consume(1)
+
+		case match[1] == "help":
+			return Error{
+				cause:    errors.New("help requested"),
+				helpText: fs.buildUsage(),
+			}
+
+		case match[1] == "n":
+			if err := fs.n.Set(args[1]); err != nil {
+				return Error{
+					cause:    err,
+					helpText: fs.buildUsage(),
+				}
+			}
+			consume(2)
+
+		case match[1] == "save":
+			// TODO: Make this more robust
+			fs.saveGroup = args[1]
+			consume(2)
+
+		case match[1] == "list":
+			fs.listGroups = true
+			return nil
+
+		case match[1] == "show":
+			// TODO: Make this more robust
+			fs.showGroup = args[1]
+			return nil
+
+		case match[1] == "delete":
+			// TODO: Make this more robust
+			fs.deleteGroup = args[1]
+			return nil
+
+		default:
+			panic("wtf")
+		}
+	}
+
+	if len(fs.args) == 1 && fs.args[0] == "help" {
 		return Error{
-			cause:    err,
+			cause:    errors.New("help requested"),
 			helpText: fs.buildUsage(),
 		}
 	}
 
 	return nil
+}
+
+func (fs *flagSet) Args() []string {
+	return fs.args
 }
 
 var usageTmpl = template.Must(template.New("").Parse(

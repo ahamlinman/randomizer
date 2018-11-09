@@ -194,7 +194,7 @@ func (a App) listGroups() (Result, error) {
 	if len(groups) == 0 {
 		return Result{
 			resultType: ListedGroups,
-			message:    "No groups are available in this channel. (Use the -save option to create one!)",
+			message:    "No groups are available in this channel. (Use the /save flag to create one!)",
 		}, nil
 	}
 
@@ -277,7 +277,7 @@ argsLoop:
 
 			return nil, Error{
 				cause:    errors.Errorf("option %q not found for removal", removeItem),
-				helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove! (Note that flags like -save need to go at the beginning, before any options.)", removeItem),
+				helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove!", removeItem),
 			}
 		}
 	}
