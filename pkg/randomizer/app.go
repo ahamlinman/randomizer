@@ -50,7 +50,11 @@ func NewApp(name string, store Store) App {
 
 type appHandler func(App, request) (Result, error)
 
+// appHandlers maps every possible mode of operation for the randomizer to a
+// handler method, which processes a request from the user and returns an
+// appropriate result.
 var appHandlers = map[operation]appHandler{
+	selection:   App.selection,
 	showHelp:    App.showHelp,
 	listGroups:  App.listGroups,
 	showGroup:   App.showGroup,
@@ -78,11 +82,15 @@ func (a App) Main(args []string) (result Result, err error) {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	if handler := appHandlers[request.Operation]; handler != nil {
-		return handler(a, request)
+	handler := appHandlers[request.Operation]
+	if handler == nil {
+		panic(errors.Errorf("invalid request: %+v", request))
 	}
+	return handler(a, request)
+}
 
-	options, err := a.expandList(request.Args)
+func (a App) selection(request request) (Result, error) {
+	options, err := a.expandArgs(request.Args)
 	if err != nil {
 		return Result{}, err
 	}
@@ -90,7 +98,7 @@ func (a App) Main(args []string) (result Result, err error) {
 	if len(options) < 2 {
 		return Result{}, Error{
 			cause:    errors.New("too few options"),
-			helpText: "Whoops, I need at least two options to work with!",
+			helpText: "Whoops, I need at least two options to pick from!",
 		}
 	}
 
@@ -123,7 +131,8 @@ func (a App) Main(args []string) (result Result, err error) {
 
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")), // TODO: More "proper" formatting
+		// TODO: More "proper" formatting
+		message: fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")),
 	}, nil
 }
 
@@ -181,7 +190,7 @@ func (a App) showGroup(request request) (Result, error) {
 
 func (a App) saveGroup(request request) (Result, error) {
 	name := request.GroupName
-	options, err := a.expandList(request.Args)
+	options, err := a.expandArgs(request.Args)
 	if err != nil {
 		return Result{}, err
 	}

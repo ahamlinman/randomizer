@@ -7,21 +7,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-var expandModifiers = regexp.MustCompile("^[+-]")
+var expandArgModifiers = regexp.MustCompile("^[+-]")
 
-func (a App) expandList(items []string) ([]string, error) {
-	result := make([]string, 0, len(items))
+func (a App) expandArgs(args []string) ([]string, error) {
+	result := make([]string, 0, len(args))
 
-	for _, item := range items {
-		switch expandModifiers.FindString(item) {
+	for _, arg := range args {
+		switch expandArgModifiers.FindString(arg) {
 		case "":
 			// No modifier; simply add this as a possible option
-			result = append(result, item)
+			result = append(result, arg)
 
 		case "+":
 			// Modifier for a group name; add all elements from the group to the set
 			// of options
-			group := item[1:]
+			group := arg[1:]
 			expansion, err := a.store.Get(group)
 			if err != nil {
 				return nil, Error{
@@ -32,9 +32,9 @@ func (a App) expandList(items []string) ([]string, error) {
 			result = append(result, expansion...)
 
 		case "-":
-			// Modifier for a removal; remove the first instance of this item from
+			// Modifier for a removal; remove the first instance of this arg from
 			// the option set
-			option := item[1:]
+			option := arg[1:]
 			var ok bool
 			result, ok = remove(result, option)
 			if !ok {
