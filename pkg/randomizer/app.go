@@ -54,6 +54,7 @@ var appHandlers = map[operation]appHandler{
 	showHelp:    App.showHelp,
 	listGroups:  App.listGroups,
 	showGroup:   App.showGroup,
+	saveGroup:   App.saveGroup,
 	deleteGroup: App.deleteGroup,
 }
 
@@ -91,10 +92,6 @@ func (a App) Main(args []string) (result Result, err error) {
 			cause:    errors.New("too few options"),
 			helpText: "Whoops, I need at least two options to work with!",
 		}
-	}
-
-	if request.Operation == saveGroup {
-		return a.saveGroup(request.GroupName, options)
 	}
 
 	a.shuffle(options)
@@ -182,6 +179,41 @@ func (a App) showGroup(request request) (Result, error) {
 	}, nil
 }
 
+func (a App) saveGroup(request request) (Result, error) {
+	name := request.GroupName
+	options, err := a.expandList(request.Args)
+	if err != nil {
+		return Result{}, err
+	}
+
+	if len(options) < 2 {
+		return Result{}, Error{
+			cause:    errors.New("too few options to save"),
+			helpText: "Whoops, I need at least two options to save a group!",
+		}
+	}
+
+	if err := a.store.Put(name, options); err != nil {
+		return Result{}, Error{
+			cause:    err,
+			helpText: "Whoops, I had trouble saving that group. Please try again later!",
+		}
+	}
+
+	resultBuf := bytes.NewBufferString(
+		fmt.Sprintf(
+			"Done! The %q group was saved in this channel with the following options:\n",
+			name,
+		),
+	)
+	a.formatList(resultBuf, options)
+
+	return Result{
+		resultType: SavedGroup,
+		message:    resultBuf.String()[:resultBuf.Len()-1],
+	}, nil
+}
+
 func (a App) deleteGroup(request request) (Result, error) {
 	name := request.GroupName
 
@@ -195,23 +227,6 @@ func (a App) deleteGroup(request request) (Result, error) {
 	return Result{
 		resultType: DeletedGroup,
 		message:    fmt.Sprintf("Done! The %q group was deleted.", name),
-	}, nil
-}
-
-func (a App) saveGroup(name string, options []string) (Result, error) {
-	if err := a.store.Put(name, options); err != nil {
-		return Result{}, Error{
-			cause:    err,
-			helpText: "Whoops, I had trouble saving that group. Please try again later!",
-		}
-	}
-
-	result := bytes.NewBufferString(fmt.Sprintf("Done! The %q group was saved in this channel with the following options:\n", name))
-	a.formatList(result, options)
-
-	return Result{
-		resultType: SavedGroup,
-		message:    result.String()[:result.Len()-1],
 	}, nil
 }
 
