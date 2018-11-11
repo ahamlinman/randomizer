@@ -71,7 +71,7 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch result.Type() {
-	case randomizer.ListedGroups, randomizer.ShowedGroup:
+	case randomizer.ShowedHelp, randomizer.ListedGroups, randomizer.ShowedGroup:
 		response{typeEphemeral, result.Message()}.Send(w)
 
 	default:

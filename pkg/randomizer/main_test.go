@@ -227,13 +227,13 @@ var testCases = []struct {
 	{
 		description: "help as an argument",
 		args:        []string{"help"},
-		check:       isHelpMessageError,
+		check:       isHelpMessageResult,
 	},
 
 	{
 		description: "help as a flag",
 		args:        []string{"/help"},
-		check:       isHelpMessageError,
+		check:       isHelpMessageResult,
 	},
 }
 
@@ -300,8 +300,8 @@ func isError(contains string) validator {
 	}
 }
 
-func isHelpMessageError(t *testing.T, res Result, err error) {
-	isError("helps you pick options randomly out of a list")(t, res, err)
+func isHelpMessageResult(t *testing.T, res Result, err error) {
+	isResult(ShowedHelp, "helps you pick options randomly out of a list")(t, res, err)
 }
 
 type mockStore map[string][]string

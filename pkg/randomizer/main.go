@@ -21,6 +21,8 @@ const (
 	// Selection indicates that the randomizer made a random selection from input
 	// options.
 	Selection ResultType = iota
+	// ShowedHelp indicates that the randomizer displayed its help output.
+	ShowedHelp
 	// ListedGroups indicates that a group list was successfully obtained.
 	ListedGroups
 	// ShowedGroup indicates that the options of a single group were successfully obtained.
@@ -138,10 +140,7 @@ func (a App) Main(args []string) (result Result, err error) {
 
 	switch request.Operation {
 	case showHelp:
-		return Result{}, Error{
-			cause:    errors.New("help requested"),
-			helpText: buildHelpMessage(a.name),
-		}
+		return a.showHelp()
 
 	case listGroups:
 		return a.listGroups()
@@ -199,6 +198,13 @@ func (a App) Main(args []string) (result Result, err error) {
 	return Result{
 		resultType: Selection,
 		message:    fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")), // TODO: More "proper" formatting
+	}, nil
+}
+
+func (a App) showHelp() (Result, error) {
+	return Result{
+		resultType: ShowedHelp,
+		message:    buildHelpMessage(a.name),
 	}, nil
 }
 
