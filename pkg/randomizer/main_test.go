@@ -246,13 +246,13 @@ var testCases = []struct {
 	{
 		description: "help as a flag",
 		args:        []string{"/help"},
-		check:       isHelpMessageResult,
+		check:       isResult(ShowedHelp),
 	},
 
 	{
 		description: "help as a standalone argument",
 		args:        []string{"help"},
-		check:       isHelpMessageResult,
+		check:       isResult(ShowedHelp),
 	},
 
 	{
@@ -321,10 +321,6 @@ func isError(contains string) validator {
 			t.Errorf("error help text missing substring %q", contains)
 		}
 	}
-}
-
-func isHelpMessageResult(t *testing.T, res Result, err error) {
-	isResult(ShowedHelp, "helps you pick options randomly out of a list")(t, res, err)
 }
 
 func (ms mockStore) List() ([]string, error) {
