@@ -125,25 +125,35 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}()
 
-	fs := buildFlagSet(a.name)
-	err = fs.Parse(args)
+	opts, err := parseArgs(args)
 	if err != nil {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	if fs.listGroups {
+	// Special case: Allow users to omit the slash on "help" if it's the only
+	// option
+	if len(opts.Args) == 1 && opts.Args[0] == "help" {
+		opts.Operation = showHelp
+	}
+
+	switch opts.Operation {
+	case showHelp:
+		return Result{}, Error{
+			cause:    errors.New("help requested"),
+			helpText: buildHelpMessage(a.name),
+		}
+
+	case listGroups:
 		return a.listGroups()
+
+	case showGroup:
+		return a.showGroup(opts.Operand)
+
+	case deleteGroup:
+		return a.deleteGroup(opts.Operand)
 	}
 
-	if fs.showGroup != "" {
-		return a.showGroup(fs.showGroup)
-	}
-
-	if fs.deleteGroup != "" {
-		return a.deleteGroup(fs.deleteGroup)
-	}
-
-	options, err := a.expandOptions(fs.Args())
+	options, err := a.expandOptions(opts.Args)
 	if err != nil {
 		return Result{}, err
 	}
@@ -155,21 +165,31 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}
 
-	if fs.saveGroup != "" {
-		return a.saveGroup(fs.saveGroup, options)
-	}
-
-	if err := fs.n.validateRange(len(options)); err != nil {
-		return Result{}, err // Comes from this package, no re-wrapping needed
+	if opts.Operation == saveGroup {
+		return a.saveGroup(opts.Operand, options)
 	}
 
 	a.shuffle(options)
 
 	var choices []string
-	if fs.n.all {
+	switch {
+	case opts.All:
 		choices = options
-	} else {
-		choices = options[:fs.n.count]
+
+	case opts.Count < 1:
+		return Result{}, Error{
+			cause:    errors.New("count too small"),
+			helpText: "Whoops, I can't pick less than one option!",
+		}
+
+	case opts.Count > len(options):
+		return Result{}, Error{
+			cause:    errors.New("count too large"),
+			helpText: "Whoops, I can't pick more options than I was given!",
+		}
+
+	default:
+		choices = options[:opts.Count]
 	}
 
 	for i, choice := range choices {
@@ -194,7 +214,7 @@ func (a App) listGroups() (Result, error) {
 	if len(groups) == 0 {
 		return Result{
 			resultType: ListedGroups,
-			message:    "No groups are available in this channel. (Use the -save option to create one!)",
+			message:    "No groups are available in this channel. (Use the /save flag to create one!)",
 		}, nil
 	}
 
@@ -277,7 +297,7 @@ argsLoop:
 
 			return nil, Error{
 				cause:    errors.Errorf("option %q not found for removal", removeItem),
-				helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove! (Note that flags like -save need to go at the beginning, before any options.)", removeItem),
+				helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove!", removeItem),
 			}
 		}
 	}

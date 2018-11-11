@@ -9,100 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type mockStore map[string][]string
-
-func (ms mockStore) List() ([]string, error) {
-	if ms == nil {
-		return nil, errors.New("mock store list error")
-	}
-
-	keys := make([]string, 0, len(ms))
-	for k := range ms {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
-}
-
-func (ms mockStore) Get(name string) ([]string, error) {
-	if ms == nil {
-		return nil, errors.New("mock store get error")
-	}
-
-	options, ok := ms[name]
-	if !ok {
-		return nil, errors.Errorf("group %q not found", name)
-	}
-	return options, nil
-}
-
-func (ms mockStore) Put(name string, options []string) error {
-	if ms == nil {
-		return errors.New("mock store put error")
-	}
-
-	ms[name] = options
-	return nil
-}
-
-func (ms mockStore) Delete(name string) error {
-	if ms == nil {
-		return errors.New("mock store delete error")
-	}
-
-	delete(ms, name)
-	return nil
-}
-
-type validator func(*testing.T, Result, error)
-
-func isResult(expectedType ResultType, contains ...string) validator {
-	return func(t *testing.T, res Result, err error) {
-		if err != nil {
-			t.Fatalf("unexpected error %v", err)
-		}
-
-		if res.Type() != expectedType {
-			t.Errorf("got result type %v, want %v", res.Type(), expectedType)
-		}
-
-		// Ensure that expected substrings appear *in order* in the response
-		message := res.Message()
-		for _, c := range contains {
-			i := strings.Index(message, c)
-
-			if i < 0 {
-				t.Errorf("result missing %q in expected position\n%v", c, res.Message())
-				continue
-			}
-
-			message = message[i+len(c):]
-		}
-	}
-}
-
-func isError(contains string) validator {
-	return func(t *testing.T, res Result, err error) {
-		if err == nil {
-			t.Fatalf("unexpected result %v", res)
-		}
-
-		if _, ok := err.(Error); !ok {
-			t.Fatalf("unexpected error type %T", err)
-		}
-
-		rerr := err.(Error)
-
-		if !strings.Contains(rerr.HelpText(), contains) {
-			t.Errorf("error help text missing substring %q", contains)
-		}
-	}
-}
-
-func isHelpMessageError(t *testing.T, res Result, err error) {
-	isError("helps you pick options randomly out of a list")(t, res, err)
-}
-
 var testCases = []struct {
 	description   string
 	store         mockStore
@@ -173,39 +79,51 @@ var testCases = []struct {
 	// Multiple selections
 
 	{
-		description: "choosing multiple options",
-		args:        []string{"-n", "2", "one", "two", "three", "four"},
+		description: "choosing multiple options (prefixed flag)",
+		args:        []string{"/n", "2", "one", "two", "three", "four"},
+		check:       isResult(Selection, "*four*", "*one*"),
+	},
+
+	{
+		description: "choosing multiple options (postfixed flag)",
+		args:        []string{"one", "two", "three", "four", "/n", "2"},
 		check:       isResult(Selection, "*four*", "*one*"),
 	},
 
 	{
 		description: "choosing all options",
-		args:        []string{"-n", "all", "one", "two", "three", "four"},
+		args:        []string{"/n", "all", "one", "two", "three", "four"},
 		check:       isResult(Selection, "*four*", "*one*", "*three*", "*two*"),
 	},
 
 	{
 		description: "choosing too few options",
-		args:        []string{"-n", "0", "one", "two"},
+		args:        []string{"/n", "0", "one", "two"},
 		check:       isError("can't pick less than one option"),
 	},
 
 	{
 		description: "choosing too many options",
-		args:        []string{"-n", "3", "one", "two"},
+		args:        []string{"/n", "3", "one", "two"},
 		check:       isError("can't pick more options than I was given"),
 	},
 
 	{
 		description: "non-integer options count",
-		args:        []string{"-n", "2.1", "one", "two"},
-		check:       isHelpMessageError,
+		args:        []string{"/n", "2.1", "one", "two"},
+		check:       isError("isn't a valid count"),
 	},
 
 	{
 		description: "invalid options count",
-		args:        []string{"-n", "wat", "one", "two"},
-		check:       isHelpMessageError,
+		args:        []string{"/n", "wat", "one", "two"},
+		check:       isError("isn't a valid count"),
+	},
+
+	{
+		description: "no options count provided",
+		args:        []string{"one", "two", "/n"},
+		check:       isError("requires an argument"),
 	},
 
 	// Group CRUD operations
@@ -213,50 +131,57 @@ var testCases = []struct {
 	{
 		description: "listing groups",
 		store:       mockStore{"first": {"one"}, "second": {"two"}},
-		args:        []string{"-list"},
+		args:        []string{"/list"},
 		check:       isResult(ListedGroups, "• first", "• second"),
 	},
 
 	{
 		description: "listing groups when there are none",
 		store:       mockStore{},
-		args:        []string{"-list"},
+		args:        []string{"/list"},
 		check:       isResult(ListedGroups, "No groups are available"),
 	},
 
 	{
 		description: "unable to list groups",
 		store:       nil,
-		args:        []string{"-list"},
+		args:        []string{"/list"},
 		check:       isError("trouble getting this channel's groups"),
 	},
 
 	{
 		description: "showing a group",
 		store:       mockStore{"test": {"one", "two", "three"}},
-		args:        []string{"-show", "test"},
+		args:        []string{"/show", "test"},
 		check:       isResult(ShowedGroup, "• one", "• three", "• two"),
 	},
 
 	{
 		description: "showing a group that does not exist",
 		store:       mockStore{},
-		args:        []string{"-show", "test"},
+		args:        []string{"/show", "test"},
 		check:       isError("couldn't find that group"),
 	},
 
 	{
 		description: "unable to show a group",
 		store:       nil,
-		args:        []string{"-show", "test"},
+		args:        []string{"/show", "test"},
 		// TODO: Should look into separating this from the above
 		check: isError("couldn't find that group"),
 	},
 
 	{
+		description: "no group provided to show",
+		store:       mockStore{},
+		args:        []string{"/show"},
+		check:       isError("requires an argument"),
+	},
+
+	{
 		description:   "saving a group",
 		store:         mockStore{},
-		args:          []string{"-save", "test", "one", "two"},
+		args:          []string{"/save", "test", "one", "two"},
 		check:         isResult(SavedGroup, `The "test" group was saved`, "• one", "• two"),
 		expectedStore: mockStore{"test": {"one", "two"}},
 	},
@@ -264,14 +189,21 @@ var testCases = []struct {
 	{
 		description: "unable to save a group",
 		store:       nil,
-		args:        []string{"-save", "test", "one", "two"},
+		args:        []string{"/save", "test", "one", "two"},
 		check:       isError("trouble saving that group"),
+	},
+
+	{
+		description: "no options provided to save",
+		store:       mockStore{},
+		args:        []string{"/save", "test"},
+		check:       isError("need at least two options"),
 	},
 
 	{
 		description:   "deleting a group",
 		store:         mockStore{"test": {"one", "two"}},
-		args:          []string{"-delete", "test"},
+		args:          []string{"/delete", "test"},
 		check:         isResult(DeletedGroup, `The "test" group was deleted`),
 		expectedStore: mockStore{},
 	},
@@ -279,8 +211,15 @@ var testCases = []struct {
 	{
 		description: "unable to delete a group",
 		store:       nil,
-		args:        []string{"-delete", "test"},
+		args:        []string{"/delete", "test"},
 		check:       isError("trouble deleting that group"),
+	},
+
+	{
+		description: "no group provided to delete",
+		store:       mockStore{},
+		args:        []string{"/delete"},
+		check:       isError("requires an argument"),
 	},
 
 	// Requesting help
@@ -293,7 +232,7 @@ var testCases = []struct {
 
 	{
 		description: "help as a flag",
-		args:        []string{"-help"},
+		args:        []string{"/help"},
 		check:       isHelpMessageError,
 	},
 }
@@ -314,4 +253,98 @@ func TestMain(t *testing.T) {
 			}
 		})
 	}
+}
+
+type validator func(*testing.T, Result, error)
+
+func isResult(expectedType ResultType, contains ...string) validator {
+	return func(t *testing.T, res Result, err error) {
+		if err != nil {
+			t.Fatalf("unexpected error %v", err)
+		}
+
+		if res.Type() != expectedType {
+			t.Errorf("got result type %v, want %v", res.Type(), expectedType)
+		}
+
+		// Ensure that expected substrings appear *in order* in the response
+		message := res.Message()
+		for _, c := range contains {
+			i := strings.Index(message, c)
+
+			if i < 0 {
+				t.Errorf("result missing %q in expected position\n%v", c, res.Message())
+				continue
+			}
+
+			message = message[i+len(c):]
+		}
+	}
+}
+
+func isError(contains string) validator {
+	return func(t *testing.T, res Result, err error) {
+		if err == nil {
+			t.Fatalf("unexpected result %v", res)
+		}
+
+		if _, ok := err.(Error); !ok {
+			t.Fatalf("unexpected error type %T", err)
+		}
+
+		rerr := err.(Error)
+
+		if !strings.Contains(rerr.HelpText(), contains) {
+			t.Errorf("error help text missing substring %q", contains)
+		}
+	}
+}
+
+func isHelpMessageError(t *testing.T, res Result, err error) {
+	isError("helps you pick options randomly out of a list")(t, res, err)
+}
+
+type mockStore map[string][]string
+
+func (ms mockStore) List() ([]string, error) {
+	if ms == nil {
+		return nil, errors.New("mock store list error")
+	}
+
+	keys := make([]string, 0, len(ms))
+	for k := range ms {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys, nil
+}
+
+func (ms mockStore) Get(name string) ([]string, error) {
+	if ms == nil {
+		return nil, errors.New("mock store get error")
+	}
+
+	options, ok := ms[name]
+	if !ok {
+		return nil, errors.Errorf("group %q not found", name)
+	}
+	return options, nil
+}
+
+func (ms mockStore) Put(name string, options []string) error {
+	if ms == nil {
+		return errors.New("mock store put error")
+	}
+
+	ms[name] = options
+	return nil
+}
+
+func (ms mockStore) Delete(name string) error {
+	if ms == nil {
+		return errors.New("mock store delete error")
+	}
+
+	delete(ms, name)
+	return nil
 }
