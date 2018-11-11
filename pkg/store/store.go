@@ -65,6 +65,10 @@ func envHasAny(names ...string) bool {
 // stores based on available environment variables. See FactoryFromEnv for more
 // information.
 func DynamoDBFactoryFromEnv(debug io.Writer) (Factory, error) {
+	if debug == nil {
+		debug = ioutil.Discard
+	}
+
 	return dynamoDBFactory(
 		debug,
 		os.Getenv("DYNAMODB_TABLE"),
