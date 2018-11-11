@@ -9,100 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type mockStore map[string][]string
-
-func (ms mockStore) List() ([]string, error) {
-	if ms == nil {
-		return nil, errors.New("mock store list error")
-	}
-
-	keys := make([]string, 0, len(ms))
-	for k := range ms {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
-}
-
-func (ms mockStore) Get(name string) ([]string, error) {
-	if ms == nil {
-		return nil, errors.New("mock store get error")
-	}
-
-	options, ok := ms[name]
-	if !ok {
-		return nil, errors.Errorf("group %q not found", name)
-	}
-	return options, nil
-}
-
-func (ms mockStore) Put(name string, options []string) error {
-	if ms == nil {
-		return errors.New("mock store put error")
-	}
-
-	ms[name] = options
-	return nil
-}
-
-func (ms mockStore) Delete(name string) error {
-	if ms == nil {
-		return errors.New("mock store delete error")
-	}
-
-	delete(ms, name)
-	return nil
-}
-
-type validator func(*testing.T, Result, error)
-
-func isResult(expectedType ResultType, contains ...string) validator {
-	return func(t *testing.T, res Result, err error) {
-		if err != nil {
-			t.Fatalf("unexpected error %v", err)
-		}
-
-		if res.Type() != expectedType {
-			t.Errorf("got result type %v, want %v", res.Type(), expectedType)
-		}
-
-		// Ensure that expected substrings appear *in order* in the response
-		message := res.Message()
-		for _, c := range contains {
-			i := strings.Index(message, c)
-
-			if i < 0 {
-				t.Errorf("result missing %q in expected position\n%v", c, res.Message())
-				continue
-			}
-
-			message = message[i+len(c):]
-		}
-	}
-}
-
-func isError(contains string) validator {
-	return func(t *testing.T, res Result, err error) {
-		if err == nil {
-			t.Fatalf("unexpected result %v", res)
-		}
-
-		if _, ok := err.(Error); !ok {
-			t.Fatalf("unexpected error type %T", err)
-		}
-
-		rerr := err.(Error)
-
-		if !strings.Contains(rerr.HelpText(), contains) {
-			t.Errorf("error help text missing substring %q", contains)
-		}
-	}
-}
-
-func isHelpMessageError(t *testing.T, res Result, err error) {
-	isError("helps you pick options randomly out of a list")(t, res, err)
-}
-
 var testCases = []struct {
 	description   string
 	store         mockStore
@@ -347,4 +253,98 @@ func TestMain(t *testing.T) {
 			}
 		})
 	}
+}
+
+type validator func(*testing.T, Result, error)
+
+func isResult(expectedType ResultType, contains ...string) validator {
+	return func(t *testing.T, res Result, err error) {
+		if err != nil {
+			t.Fatalf("unexpected error %v", err)
+		}
+
+		if res.Type() != expectedType {
+			t.Errorf("got result type %v, want %v", res.Type(), expectedType)
+		}
+
+		// Ensure that expected substrings appear *in order* in the response
+		message := res.Message()
+		for _, c := range contains {
+			i := strings.Index(message, c)
+
+			if i < 0 {
+				t.Errorf("result missing %q in expected position\n%v", c, res.Message())
+				continue
+			}
+
+			message = message[i+len(c):]
+		}
+	}
+}
+
+func isError(contains string) validator {
+	return func(t *testing.T, res Result, err error) {
+		if err == nil {
+			t.Fatalf("unexpected result %v", res)
+		}
+
+		if _, ok := err.(Error); !ok {
+			t.Fatalf("unexpected error type %T", err)
+		}
+
+		rerr := err.(Error)
+
+		if !strings.Contains(rerr.HelpText(), contains) {
+			t.Errorf("error help text missing substring %q", contains)
+		}
+	}
+}
+
+func isHelpMessageError(t *testing.T, res Result, err error) {
+	isError("helps you pick options randomly out of a list")(t, res, err)
+}
+
+type mockStore map[string][]string
+
+func (ms mockStore) List() ([]string, error) {
+	if ms == nil {
+		return nil, errors.New("mock store list error")
+	}
+
+	keys := make([]string, 0, len(ms))
+	for k := range ms {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys, nil
+}
+
+func (ms mockStore) Get(name string) ([]string, error) {
+	if ms == nil {
+		return nil, errors.New("mock store get error")
+	}
+
+	options, ok := ms[name]
+	if !ok {
+		return nil, errors.Errorf("group %q not found", name)
+	}
+	return options, nil
+}
+
+func (ms mockStore) Put(name string, options []string) error {
+	if ms == nil {
+		return errors.New("mock store put error")
+	}
+
+	ms[name] = options
+	return nil
+}
+
+func (ms mockStore) Delete(name string) error {
+	if ms == nil {
+		return errors.New("mock store delete error")
+	}
+
+	delete(ms, name)
+	return nil
 }
