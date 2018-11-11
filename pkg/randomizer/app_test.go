@@ -253,6 +253,13 @@ var testCases = []struct {
 	},
 
 	{
+		description: "deleting a group that does not exist",
+		store:       mockStore{},
+		args:        []string{"/delete", "test"},
+		check:       isError("can't find that group"),
+	},
+
+	{
 		description: "unable to delete a group",
 		store:       nil,
 		args:        []string{"/delete", "test"},
@@ -380,11 +387,12 @@ func (ms mockStore) Put(name string, options []string) error {
 	return nil
 }
 
-func (ms mockStore) Delete(name string) error {
+func (ms mockStore) Delete(name string) (existed bool, err error) {
 	if ms == nil {
-		return errors.New("mock store delete error")
+		return false, errors.New("mock store delete error")
 	}
 
+	_, existed = ms[name]
 	delete(ms, name)
-	return nil
+	return
 }

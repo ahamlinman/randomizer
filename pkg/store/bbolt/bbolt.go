@@ -88,13 +88,19 @@ func (b Store) Put(name string, options []string) error {
 }
 
 // Delete removes the named group from the store.
-func (b Store) Delete(name string) error {
-	return b.db.Update(func(tx *bolt.Tx) error {
+func (b Store) Delete(name string) (existed bool, err error) {
+	err = b.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucket))
 		if bucket == nil {
-			return errors.Errorf("group %q does not exist", name)
+			return nil
 		}
 
+		if bucket.Get([]byte(name)) == nil {
+			return nil
+		}
+
+		existed = true
 		return errors.Wrapf(bucket.Delete([]byte(name)), "deleting group %q", name)
 	})
+	return
 }

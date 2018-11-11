@@ -24,11 +24,10 @@ type Store interface {
 	// overwriting any previous group of that name.
 	Put(group string, options []string) error
 
-	// Delete should delete the named group if it exists. (TODO: There should be
-	// a mechanism to indicate whether the group previously existed, in case the
-	// user just mistyped the name. This will probably mean returning a bool in
-	// addition to an error.)
-	Delete(group string) error
+	// Delete should ensure that the named group no longer exists, returning true
+	// or false to indicate whether the group existed prior to this deletion
+	// attempt.
+	Delete(group string) (bool, error)
 }
 
 // App represents a randomizer app that can accept commands.
@@ -230,11 +229,18 @@ func (a App) saveGroup(request request) (Result, error) {
 
 func (a App) deleteGroup(request request) (Result, error) {
 	name := request.GroupName
-
-	if err := a.store.Delete(name); err != nil {
+	existed, err := a.store.Delete(name)
+	if err != nil {
 		return Result{}, Error{
 			cause:    err,
 			helpText: "Whoops, I had trouble deleting that group. Please try again later!",
+		}
+	}
+
+	if !existed {
+		return Result{}, Error{
+			cause:    errors.New("group does not exist"),
+			helpText: "Whoops, I can't find that group in this channel!",
 		}
 	}
 
