@@ -21,8 +21,10 @@ const (
 type options struct {
 	Operation operation
 	Operand   string
-	Args      []string
-	Count     int
+
+	Args  []string
+	All   bool
+	Count int
 }
 
 var parseHandlers = map[string]func(*options, []string) (int, error){
@@ -132,7 +134,7 @@ func (opts *options) parseN(args []string) (consumed int, err error) {
 	}
 
 	if value == "all" {
-		opts.Count = -5000 // TODO: Magic number
+		opts.All = true
 		return
 	}
 

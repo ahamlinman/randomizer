@@ -173,7 +173,7 @@ func (a App) Main(args []string) (result Result, err error) {
 
 	var choices []string
 	switch {
-	case opts.Count == -5000: // TODO: Magic number
+	case opts.All:
 		choices = options
 
 	case opts.Count < 1:
