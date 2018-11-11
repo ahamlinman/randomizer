@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -82,7 +81,7 @@ func (a App) Main(args []string) (result Result, err error) {
 		return handler(a, request)
 	}
 
-	options, err := a.expandOptions(request.Args)
+	options, err := a.expandList(request.Args)
 	if err != nil {
 		return Result{}, err
 	}
@@ -197,52 +196,6 @@ func (a App) deleteGroup(request request) (Result, error) {
 		resultType: DeletedGroup,
 		message:    fmt.Sprintf("Done! The %q group was deleted.", name),
 	}, nil
-}
-
-var optModifierRegexp = regexp.MustCompile("^[+-]")
-
-func (a App) expandOptions(argOpts []string) ([]string, error) {
-	options := make([]string, 0, len(argOpts))
-
-argsLoop:
-	for _, opt := range argOpts {
-		switch optModifierRegexp.FindString(opt) {
-		case "":
-			// No modifier; simply add this as a possible option
-			options = append(options, opt)
-
-		case "+":
-			// Modifier for a group name; add all elements from the group to the set
-			// of options
-			groupName := opt[1:]
-			groupOpts, err := a.store.Get(groupName)
-			if err != nil {
-				return nil, Error{
-					cause:    err,
-					helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", groupName),
-				}
-			}
-			options = append(options, groupOpts...)
-
-		case "-":
-			// Modifier for a removal; remove the first instance of this item from
-			// the option set
-			removeItem := opt[1:]
-			for i, opt := range options {
-				if opt == removeItem {
-					options = append(options[:i], options[i+1:]...)
-					continue argsLoop
-				}
-			}
-
-			return nil, Error{
-				cause:    errors.Errorf("option %q not found for removal", removeItem),
-				helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove!", removeItem),
-			}
-		}
-	}
-
-	return options, nil
 }
 
 func (a App) saveGroup(name string, options []string) (Result, error) {
