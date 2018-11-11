@@ -225,15 +225,21 @@ var testCases = []struct {
 	// Requesting help
 
 	{
-		description: "help as an argument",
+		description: "help as a flag",
+		args:        []string{"/help"},
+		check:       isHelpMessageResult,
+	},
+
+	{
+		description: "help as a standalone argument",
 		args:        []string{"help"},
 		check:       isHelpMessageResult,
 	},
 
 	{
-		description: "help as a flag",
-		args:        []string{"/help"},
-		check:       isHelpMessageResult,
+		description: "help as an option to be randomized",
+		args:        []string{"help", "me"},
+		check:       isResult(Selection, "*help*"),
 	},
 }
 

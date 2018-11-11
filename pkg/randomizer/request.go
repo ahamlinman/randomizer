@@ -42,7 +42,11 @@ type flagHandler func(*request, []string) (int, error)
 // start of the argument list. Operations are alternate modes of behavior that
 // do not involve randomly selecting from lists of items.
 var operationFlagHandlers = map[string]flagHandler{
-	"/help":   (*request).parseHelp,
+	// As a special case, show the help message if "help" is the only argument
+	// provided by the user (in case they don't yet know the flag syntax)
+	"help":  (*request).parseHelp,
+	"/help": (*request).parseHelp,
+
 	"/list":   (*request).parseList,
 	"/show":   (*request).parseShow,
 	"/save":   (*request).parseSave,
@@ -114,7 +118,13 @@ func splitArgsAtNextModifier(args []string) (nonFlags []string, rest []string) {
 	return
 }
 
-func (opts *request) parseHelp(_ []string) (int, error) {
+func (opts *request) parseHelp(args []string) (int, error) {
+	if args[0] == "help" && len(args) > 1 {
+		// If "help" isn't the only argument given, treat it as a normal option to
+		// be randomized
+		return 0, nil
+	}
+
 	opts.Operation = showHelp
 	return 1, nil
 }

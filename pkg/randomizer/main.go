@@ -132,12 +132,6 @@ func (a App) Main(args []string) (result Result, err error) {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	// Special hack: Allow users to omit the slash on "help" if it's the only
-	// option
-	if len(request.Args) == 1 && request.Args[0] == "help" {
-		request.Operation = showHelp
-	}
-
 	switch request.Operation {
 	case showHelp:
 		return a.showHelp()
