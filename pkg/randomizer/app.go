@@ -12,12 +12,22 @@ import (
 // Store represents an object that provides persistence for "groups" of
 // options.
 type Store interface {
+	// List should return a list of all available groups. If no groups have been
+	// saved, an empty list should be returned.
 	List() (groups []string, err error)
 
+	// Get should return the list of options in the named group. If the group
+	// does not exist, an empty list should be returned.
 	Get(group string) (options []string, err error)
 
+	// Put should save the provided options as a named group, completely
+	// overwriting any previous group of that name.
 	Put(group string, options []string) error
 
+	// Delete should delete the named group if it exists. (TODO: There should be
+	// a mechanism to indicate whether the group previously existed, in case the
+	// user just mistyped the name. This will probably mean returning a bool in
+	// addition to an error.)
 	Delete(group string) error
 }
 
@@ -140,7 +150,7 @@ func (a App) listGroups(_ request) (Result, error) {
 	if len(groups) == 0 {
 		return Result{
 			resultType: ListedGroups,
-			message:    "No groups are available in this channel. (Use the /save flag to create one!)",
+			message:    "Whoops, no groups are available in this channel. (Use the /save flag to create one!)",
 		}, nil
 	}
 
@@ -162,7 +172,14 @@ func (a App) showGroup(request request) (Result, error) {
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
-			helpText: "Whoops, I couldn't find that group in this channel!",
+			helpText: "Whoops, I had trouble getting that group. Please try again later!",
+		}
+	}
+
+	if len(group) == 0 {
+		return Result{}, Error{
+			cause:    errors.New("group does not exist"),
+			helpText: "Whoops, I can't find that group in this channel. (Use the /save flag to create it!)",
 		}
 	}
 

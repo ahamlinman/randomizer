@@ -51,12 +51,12 @@ func (b Store) Get(name string) (options []string, err error) {
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucket))
 		if bucket == nil {
-			return errors.Errorf("group %q does not exist", name)
+			return nil
 		}
 
 		result := bucket.Get([]byte(name))
 		if result == nil {
-			return errors.Errorf("group %q does not exist", name)
+			return nil
 		}
 
 		decoder := gob.NewDecoder(bytes.NewReader(result))

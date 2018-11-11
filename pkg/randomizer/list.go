@@ -27,10 +27,21 @@ func (a App) expandArgs(args []string) ([]string, error) {
 			expansion, err := a.store.Get(group)
 			if err != nil {
 				return nil, Error{
+					cause: err,
+					helpText: fmt.Sprintf(
+						"Whoops, I had trouble getting the %q group. Please try again later!",
+						group,
+					),
+				}
+			}
+
+			if len(expansion) == 0 {
+				return nil, Error{
 					cause:    err,
 					helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", group),
 				}
 			}
+
 			result = append(result, expansion...)
 
 		case "-":

@@ -77,8 +77,16 @@ var testCases = []struct {
 
 	{
 		description: "choosing from a group that does not exist",
+		store:       mockStore{},
 		args:        []string{"+test"},
 		check:       isError(`couldn't find the "test" group`),
+	},
+
+	{
+		description: "error while getting a group",
+		store:       nil,
+		args:        []string{"+test"},
+		check:       isError(`had trouble getting the "test" group`),
 	},
 
 	{
@@ -158,7 +166,7 @@ var testCases = []struct {
 		description: "listing groups when there are none",
 		store:       mockStore{},
 		args:        []string{"/list"},
-		check:       isResult(ListedGroups, "No groups are available"),
+		check:       isResult(ListedGroups, "no groups are available"),
 	},
 
 	{
@@ -179,15 +187,14 @@ var testCases = []struct {
 		description: "showing a group that does not exist",
 		store:       mockStore{},
 		args:        []string{"/show", "test"},
-		check:       isError("couldn't find that group"),
+		check:       isError("can't find that group"),
 	},
 
 	{
 		description: "unable to show a group",
 		store:       nil,
 		args:        []string{"/show", "test"},
-		// TODO: Should look into separating this from the above
-		check: isError("couldn't find that group"),
+		check:       isError("had trouble getting that group"),
 	},
 
 	{
@@ -359,11 +366,7 @@ func (ms mockStore) Get(name string) ([]string, error) {
 		return nil, errors.New("mock store get error")
 	}
 
-	options, ok := ms[name]
-	if !ok {
-		return nil, errors.Errorf("group %q not found", name)
-	}
-	return options, nil
+	return ms[name], nil
 }
 
 func (ms mockStore) Put(name string, options []string) error {
