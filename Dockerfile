@@ -1,11 +1,13 @@
 FROM golang:1.11 AS builder
 
+WORKDIR /tmp/randomizer
+ENV CGO_ENABLED=0
+
 COPY go.mod go.sum /tmp/randomizer/
+RUN go mod download
+
 COPY cmd/ /tmp/randomizer/cmd/
 COPY pkg/ /tmp/randomizer/pkg/
-WORKDIR /tmp/randomizer
-
-ENV CGO_ENABLED=0
 RUN go install -mod=readonly -ldflags="-s -w" -v \
   ./cmd/randomize \
   ./cmd/slack-randomize-server \
