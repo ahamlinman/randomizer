@@ -115,7 +115,7 @@ func (opts *options) parseList(_ []string) (int, error) {
 func (options) parseFlagValue(args []string) (string, error) {
 	if len(args) < 2 {
 		return "", Error{
-			cause:    errors.Errorf("%q option requires an argument", args[0]),
+			cause:    errors.Errorf("%q flag requires an argument", args[0]),
 			helpText: fmt.Sprintf("Whoops, %q requires an argument!", args[0]),
 		}
 	}

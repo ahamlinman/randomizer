@@ -173,8 +173,14 @@ var testCases = []struct {
 	// Multiple selections
 
 	{
-		description: "choosing multiple options",
+		description: "choosing multiple options (prefixed flag)",
 		args:        []string{"/n", "2", "one", "two", "three", "four"},
+		check:       isResult(Selection, "*four*", "*one*"),
+	},
+
+	{
+		description: "choosing multiple options (postfixed flag)",
+		args:        []string{"one", "two", "three", "four", "/n", "2"},
 		check:       isResult(Selection, "*four*", "*one*"),
 	},
 
@@ -206,6 +212,12 @@ var testCases = []struct {
 		description: "invalid options count",
 		args:        []string{"/n", "wat", "one", "two"},
 		check:       isError("isn't a valid count"),
+	},
+
+	{
+		description: "no options count provided",
+		args:        []string{"one", "two", "/n"},
+		check:       isError("requires an argument"),
 	},
 
 	// Group CRUD operations
@@ -254,6 +266,13 @@ var testCases = []struct {
 	},
 
 	{
+		description: "no group provided to show",
+		store:       mockStore{},
+		args:        []string{"/show"},
+		check:       isError("requires an argument"),
+	},
+
+	{
 		description:   "saving a group",
 		store:         mockStore{},
 		args:          []string{"/save", "test", "one", "two"},
@@ -269,6 +288,13 @@ var testCases = []struct {
 	},
 
 	{
+		description: "no options provided to save",
+		store:       mockStore{},
+		args:        []string{"/save", "test"},
+		check:       isError("need at least two options"),
+	},
+
+	{
 		description:   "deleting a group",
 		store:         mockStore{"test": {"one", "two"}},
 		args:          []string{"/delete", "test"},
@@ -281,6 +307,13 @@ var testCases = []struct {
 		store:       nil,
 		args:        []string{"/delete", "test"},
 		check:       isError("trouble deleting that group"),
+	},
+
+	{
+		description: "no group provided to delete",
+		store:       mockStore{},
+		args:        []string{"/delete"},
+		check:       isError("requires an argument"),
 	},
 
 	// Requesting help
