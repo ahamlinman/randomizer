@@ -125,18 +125,18 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}()
 
-	opts, err := parseArgs(args)
+	request, err := newRequestFromArgs(args)
 	if err != nil {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	// Special case: Allow users to omit the slash on "help" if it's the only
+	// Special hack: Allow users to omit the slash on "help" if it's the only
 	// option
-	if len(opts.Args) == 1 && opts.Args[0] == "help" {
-		opts.Operation = showHelp
+	if len(request.Args) == 1 && request.Args[0] == "help" {
+		request.Operation = showHelp
 	}
 
-	switch opts.Operation {
+	switch request.Operation {
 	case showHelp:
 		return Result{}, Error{
 			cause:    errors.New("help requested"),
@@ -147,13 +147,13 @@ func (a App) Main(args []string) (result Result, err error) {
 		return a.listGroups()
 
 	case showGroup:
-		return a.showGroup(opts.Operand)
+		return a.showGroup(request.GroupName)
 
 	case deleteGroup:
-		return a.deleteGroup(opts.Operand)
+		return a.deleteGroup(request.GroupName)
 	}
 
-	options, err := a.expandOptions(opts.Args)
+	options, err := a.expandOptions(request.Args)
 	if err != nil {
 		return Result{}, err
 	}
@@ -165,31 +165,31 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}
 
-	if opts.Operation == saveGroup {
-		return a.saveGroup(opts.Operand, options)
+	if request.Operation == saveGroup {
+		return a.saveGroup(request.GroupName, options)
 	}
 
 	a.shuffle(options)
 
 	var choices []string
 	switch {
-	case opts.All:
+	case request.All:
 		choices = options
 
-	case opts.Count < 1:
+	case request.Count < 1:
 		return Result{}, Error{
 			cause:    errors.New("count too small"),
 			helpText: "Whoops, I can't pick less than one option!",
 		}
 
-	case opts.Count > len(options):
+	case request.Count > len(options):
 		return Result{}, Error{
 			cause:    errors.New("count too large"),
 			helpText: "Whoops, I can't pick more options than I was given!",
 		}
 
 	default:
-		choices = options[:opts.Count]
+		choices = options[:request.Count]
 	}
 
 	for i, choice := range choices {

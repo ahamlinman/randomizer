@@ -10,7 +10,7 @@ import (
 type operation int
 
 const (
-	noOp operation = iota
+	selection operation = iota
 	showHelp
 	listGroups
 	showGroup
@@ -18,9 +18,11 @@ const (
 	deleteGroup
 )
 
-type options struct {
+// request represents a single user request to a randomizer instance, created
+// from raw user input.
+type request struct {
 	Operation operation
-	Operand   string
+	GroupName string
 
 	Args  []string
 	All   bool
@@ -28,34 +30,34 @@ type options struct {
 }
 
 // flagHandler is a type for functions that can parse a flag and its value(s)
-// from an argument list into an options struct.
+// from an argument list into a request struct.
 //
 // The argument slice provided to the handler starts at the argument containing
 // the flag itself. If the returned error is nil, the returned int is the total
 // number of arguments (1 or more) consumed by parsing this flag and its
 // value(s).
-type flagHandler func(*options, []string) (int, error)
+type flagHandler func(*request, []string) (int, error)
 
 // operationFlagHandlers represents "operation" flags, which must appear at the
 // start of the argument list. Operations are alternate modes of behavior that
 // do not involve randomly selecting from lists of items.
 var operationFlagHandlers = map[string]flagHandler{
-	"/help":   (*options).parseHelp,
-	"/list":   (*options).parseList,
-	"/show":   (*options).parseShow,
-	"/save":   (*options).parseSave,
-	"/delete": (*options).parseDelete,
+	"/help":   (*request).parseHelp,
+	"/list":   (*request).parseList,
+	"/show":   (*request).parseShow,
+	"/save":   (*request).parseSave,
+	"/delete": (*request).parseDelete,
 }
 
 // modifierFlagHandlers represents "modifier" flags, which may appear anywhere
 // in the argument list. Modifiers affect the behavior of an operation,
 // particularly the normal operation of selecting randomly from a list.
 var modifierFlagHandlers = map[string]flagHandler{
-	"/n": (*options).parseN,
+	"/n": (*request).parseN,
 }
 
-func parseArgs(args []string) (options, error) {
-	opts := options{
+func newRequestFromArgs(args []string) (request, error) {
+	opts := request{
 		Count: 1,
 	}
 
@@ -112,32 +114,32 @@ func splitArgsAtNextModifier(args []string) (nonFlags []string, rest []string) {
 	return
 }
 
-func (opts *options) parseHelp(_ []string) (int, error) {
+func (opts *request) parseHelp(_ []string) (int, error) {
 	opts.Operation = showHelp
 	return 1, nil
 }
 
-func (opts *options) parseList(_ []string) (int, error) {
+func (opts *request) parseList(_ []string) (int, error) {
 	opts.Operation = listGroups
 	return 1, nil
 }
 
-func (opts *options) parseShow(args []string) (int, error) {
+func (opts *request) parseShow(args []string) (int, error) {
 	opts.Operation = showGroup
-	return 2, opts.parseOperand(args)
+	return 2, opts.parseGroupName(args)
 }
 
-func (opts *options) parseSave(args []string) (int, error) {
+func (opts *request) parseSave(args []string) (int, error) {
 	opts.Operation = saveGroup
-	return 2, opts.parseOperand(args)
+	return 2, opts.parseGroupName(args)
 }
 
-func (opts *options) parseDelete(args []string) (int, error) {
+func (opts *request) parseDelete(args []string) (int, error) {
 	opts.Operation = deleteGroup
-	return 2, opts.parseOperand(args)
+	return 2, opts.parseGroupName(args)
 }
 
-func (opts *options) parseN(args []string) (consumed int, err error) {
+func (opts *request) parseN(args []string) (consumed int, err error) {
 	consumed = 2
 
 	value, err := parseFlagValue(args)
@@ -160,8 +162,8 @@ func (opts *options) parseN(args []string) (consumed int, err error) {
 	return
 }
 
-func (opts *options) parseOperand(args []string) (err error) {
-	opts.Operand, err = parseFlagValue(args)
+func (opts *request) parseGroupName(args []string) (err error) {
+	opts.GroupName, err = parseFlagValue(args)
 	return
 }
 
