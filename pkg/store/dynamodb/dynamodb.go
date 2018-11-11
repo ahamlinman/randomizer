@@ -132,9 +132,10 @@ func (s Store) Delete(name string) (bool, error) {
 			partitionKey: {S: &s.partition},
 			groupKey:     {S: &name},
 		},
+		ReturnValues: dynamodb.ReturnValueAllOld,
 	}
 
-	_, err := s.db.DeleteItemRequest(&input).Send()
-	// TODO: Indicate whether the group previously existed
-	return true, errors.Wrapf(err, "deleting %q for %q from table %q", name, s.partition, s.table)
+	result, err := s.db.DeleteItemRequest(&input).Send()
+	existed := len(result.Attributes) > 0
+	return existed, errors.Wrapf(err, "deleting %q for %q from table %q", name, s.partition, s.table)
 }
