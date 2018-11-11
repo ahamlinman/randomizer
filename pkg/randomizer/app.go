@@ -49,6 +49,15 @@ func NewApp(name string, store Store) App {
 	}
 }
 
+type appHandler func(App, request) (Result, error)
+
+var appHandlers = map[operation]appHandler{
+	showHelp:    App.showHelp,
+	listGroups:  App.listGroups,
+	showGroup:   App.showGroup,
+	deleteGroup: App.deleteGroup,
+}
+
 // Main is the entrypoint to the randomizer tool.
 //
 // Note that all errors returned from this function will be of this package's
@@ -69,18 +78,8 @@ func (a App) Main(args []string) (result Result, err error) {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	switch request.Operation {
-	case showHelp:
-		return a.showHelp()
-
-	case listGroups:
-		return a.listGroups()
-
-	case showGroup:
-		return a.showGroup(request.GroupName)
-
-	case deleteGroup:
-		return a.deleteGroup(request.GroupName)
+	if handler := appHandlers[request.Operation]; handler != nil {
+		return handler(a, request)
 	}
 
 	options, err := a.expandOptions(request.Args)
@@ -132,14 +131,14 @@ func (a App) Main(args []string) (result Result, err error) {
 	}, nil
 }
 
-func (a App) showHelp() (Result, error) {
+func (a App) showHelp(_ request) (Result, error) {
 	return Result{
 		resultType: ShowedHelp,
 		message:    buildHelpMessage(a.name),
 	}, nil
 }
 
-func (a App) listGroups() (Result, error) {
+func (a App) listGroups(_ request) (Result, error) {
 	groups, err := a.store.List()
 	if err != nil {
 		return Result{}, Error{
@@ -164,7 +163,9 @@ func (a App) listGroups() (Result, error) {
 	}, nil
 }
 
-func (a App) showGroup(name string) (Result, error) {
+func (a App) showGroup(request request) (Result, error) {
+	name := request.GroupName
+
 	group, err := a.store.Get(name)
 	if err != nil {
 		return Result{}, Error{
@@ -182,7 +183,9 @@ func (a App) showGroup(name string) (Result, error) {
 	}, nil
 }
 
-func (a App) deleteGroup(name string) (Result, error) {
+func (a App) deleteGroup(request request) (Result, error) {
+	name := request.GroupName
+
 	if err := a.store.Delete(name); err != nil {
 		return Result{}, Error{
 			cause:    err,
