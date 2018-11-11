@@ -206,10 +206,28 @@ var testCases = []struct {
 	},
 
 	{
+		description: "saving a group with expanded arguments",
+		store:       mockStore{"test": {"one", "two"}},
+		args:        []string{"/save", "new", "+test", "three"},
+		check:       isResult(SavedGroup, `The "new" group was saved`, "• one", "• three", "• two"),
+		expectedStore: mockStore{
+			"test": {"one", "two"},
+			"new":  {"one", "two", "three"},
+		},
+	},
+
+	{
 		description: "unable to save a group",
 		store:       nil,
 		args:        []string{"/save", "test", "one", "two"},
 		check:       isError("trouble saving that group"),
+	},
+
+	{
+		description: "unable to expand arguments when saving a group",
+		store:       mockStore{},
+		args:        []string{"/save", "new", "+test", "three"},
+		check:       isError(`couldn't find the "test" group`),
 	},
 
 	{
@@ -353,7 +371,9 @@ func (ms mockStore) Put(name string, options []string) error {
 		return errors.New("mock store put error")
 	}
 
-	ms[name] = options
+	copied := make([]string, len(options))
+	copy(copied, options)
+	ms[name] = copied
 	return nil
 }
 
