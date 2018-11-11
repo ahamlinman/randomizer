@@ -27,13 +27,18 @@ type options struct {
 	Count int
 }
 
-var parseHandlers = map[string]func(*options, []string) (int, error){
+type flagHandler func(*options, []string) (int, error)
+
+var operationFlagHandlers = map[string]flagHandler{
 	"/help":   (*options).parseHelp,
 	"/list":   (*options).parseList,
 	"/show":   (*options).parseShow,
 	"/save":   (*options).parseSave,
 	"/delete": (*options).parseDelete,
-	"/n":      (*options).parseN,
+}
+
+var modifierFlagHandlers = map[string]flagHandler{
+	"/n": (*options).parseN,
 }
 
 func parseArgs(args []string) (options, error) {
@@ -41,32 +46,50 @@ func parseArgs(args []string) (options, error) {
 		Count: 1,
 	}
 
+	if len(args) < 1 {
+		return opts, nil
+	}
+
+	consumeFlag := func(handler flagHandler) error {
+		consumed, err := handler(&opts, args)
+		if err != nil {
+			return err
+		}
+
+		args = args[consumed:]
+		return nil
+	}
+
+	if handler := operationFlagHandlers[args[0]]; handler != nil {
+		if err := consumeFlag(handler); err != nil {
+			return opts, err
+		}
+	}
+
 	for len(args) > 0 {
-		if handler := parseHandlers[args[0]]; handler != nil {
-			consumed, err := handler(&opts, args)
-			if err != nil {
+		if handler := modifierFlagHandlers[args[0]]; handler != nil {
+			if err := consumeFlag(handler); err != nil {
 				return opts, err
 			}
-
-			args = args[consumed:]
 			continue
 		}
 
 		var nonFlagArgs []string
-		nonFlagArgs, args = splitArgsAtNextFlag(args)
+		nonFlagArgs, args = splitArgsAtNextModifier(args)
 		opts.Args = append(opts.Args, nonFlagArgs...)
 	}
 
 	return opts, nil
 }
 
-func splitArgsAtNextFlag(args []string) (nonFlags []string, rest []string) {
+func splitArgsAtNextModifier(args []string) (nonFlags []string, rest []string) {
 	// Start by assuming that none of the remaining arguments have flags.
 	nonFlags = args
+	// rest = nil
 
 	// Run through the array and check this assumption.
 	for i, arg := range args {
-		if _, ok := parseHandlers[arg]; !ok {
+		if _, ok := modifierFlagHandlers[arg]; !ok {
 			continue
 		}
 
@@ -84,7 +107,7 @@ func (opts *options) parseHelp(_ []string) (int, error) {
 	return 1, nil
 }
 
-func (opts *options) parseList(args []string) (int, error) {
+func (opts *options) parseList(_ []string) (int, error) {
 	opts.Operation = listGroups
 	return 1, nil
 }
