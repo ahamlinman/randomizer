@@ -1,9 +1,7 @@
 package randomizer
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"math/rand"
 	"sort"
 	"strings"
@@ -125,9 +123,7 @@ func (a App) selection(request request) (Result, error) {
 		choices = options[:request.Count]
 	}
 
-	for i, choice := range choices {
-		choices[i] = "*" + choice + "*"
-	}
+	choices = embolden(choices)
 
 	return Result{
 		resultType: Selection,
@@ -159,12 +155,14 @@ func (a App) listGroups(_ request) (Result, error) {
 		}, nil
 	}
 
-	result := bytes.NewBufferString("The following groups are available in this channel:\n")
-	a.formatList(result, groups)
+	sort.Strings(groups)
 
 	return Result{
 		resultType: ListedGroups,
-		message:    result.String()[:result.Len()-1],
+		message: fmt.Sprintf(
+			"The following groups are available in this channel:\n%s",
+			bulletize(groups),
+		),
 	}, nil
 }
 
@@ -179,12 +177,15 @@ func (a App) showGroup(request request) (Result, error) {
 		}
 	}
 
-	result := bytes.NewBufferString(fmt.Sprintf("The %q group has the following options:\n", name))
-	a.formatList(result, group)
+	sort.Strings(group)
 
 	return Result{
 		resultType: ShowedGroup,
-		message:    result.String()[:result.Len()-1],
+		message: fmt.Sprintf(
+			"The %q group has the following options:\n%s",
+			name,
+			bulletize(group),
+		),
 	}, nil
 }
 
@@ -209,17 +210,15 @@ func (a App) saveGroup(request request) (Result, error) {
 		}
 	}
 
-	resultBuf := bytes.NewBufferString(
-		fmt.Sprintf(
-			"Done! The %q group was saved in this channel with the following options:\n",
-			name,
-		),
-	)
-	a.formatList(resultBuf, options)
+	sort.Strings(options)
 
 	return Result{
 		resultType: SavedGroup,
-		message:    resultBuf.String()[:resultBuf.Len()-1],
+		message: fmt.Sprintf(
+			"Done! The %q group was saved in this channel with the following options:\n%s",
+			name,
+			bulletize(options),
+		),
 	}, nil
 }
 
@@ -237,14 +236,4 @@ func (a App) deleteGroup(request request) (Result, error) {
 		resultType: DeletedGroup,
 		message:    fmt.Sprintf("Done! The %q group was deleted.", name),
 	}, nil
-}
-
-func (App) formatList(w io.Writer, items []string) {
-	sorted := make([]string, len(items))
-	copy(sorted, items)
-	sort.Strings(sorted)
-
-	for _, g := range sorted {
-		w.Write([]byte(fmt.Sprintf("• %s\n", g)))
-	}
 }
