@@ -125,25 +125,23 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}()
 
-	fs := buildFlagSet(a.name)
-	err = fs.Parse(args)
+	opts, err := parseArgs(a.name, args)
 	if err != nil {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
-	if fs.listGroups {
+	switch opts.Operation {
+	case listGroups:
 		return a.listGroups()
+
+	case showGroup:
+		return a.showGroup(opts.Operand)
+
+	case deleteGroup:
+		return a.deleteGroup(opts.Operand)
 	}
 
-	if fs.showGroup != "" {
-		return a.showGroup(fs.showGroup)
-	}
-
-	if fs.deleteGroup != "" {
-		return a.deleteGroup(fs.deleteGroup)
-	}
-
-	options, err := a.expandOptions(fs.Args())
+	options, err := a.expandOptions(opts.Args)
 	if err != nil {
 		return Result{}, err
 	}
@@ -155,21 +153,31 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}
 
-	if fs.saveGroup != "" {
-		return a.saveGroup(fs.saveGroup, options)
-	}
-
-	if err := fs.n.validateRange(len(options)); err != nil {
-		return Result{}, err // Comes from this package, no re-wrapping needed
+	if opts.Operation == saveGroup {
+		return a.saveGroup(opts.Operand, options)
 	}
 
 	a.shuffle(options)
 
 	var choices []string
-	if fs.n.all {
+	switch {
+	case opts.Count == -5000: // TODO: Magic number
 		choices = options
-	} else {
-		choices = options[:fs.n.count]
+
+	case opts.Count < 1:
+		return Result{}, Error{
+			cause:    errors.New("count too small"),
+			helpText: "Whoops, I can't pick less than one option!",
+		}
+
+	case opts.Count > len(options):
+		return Result{}, Error{
+			cause:    errors.New("count too large"),
+			helpText: "Whoops, I can't pick more options than I was given!",
+		}
+
+	default:
+		choices = options[:opts.Count]
 	}
 
 	for i, choice := range choices {

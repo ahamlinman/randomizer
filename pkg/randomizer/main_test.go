@@ -199,13 +199,13 @@ var testCases = []struct {
 	{
 		description: "non-integer options count",
 		args:        []string{"/n", "2.1", "one", "two"},
-		check:       isHelpMessageError,
+		check:       isError("isn't a valid count"),
 	},
 
 	{
 		description: "invalid options count",
 		args:        []string{"/n", "wat", "one", "two"},
-		check:       isHelpMessageError,
+		check:       isError("isn't a valid count"),
 	},
 
 	// Group CRUD operations
