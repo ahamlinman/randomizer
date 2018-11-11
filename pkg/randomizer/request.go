@@ -61,16 +61,16 @@ var modifierFlagHandlers = map[string]flagHandler{
 }
 
 func newRequestFromArgs(args []string) (request, error) {
-	opts := request{
+	request := request{
 		Count: 1,
 	}
 
 	if len(args) < 1 {
-		return opts, nil
+		return request, nil
 	}
 
 	consumeFlag := func(handler flagHandler) error {
-		consumed, err := handler(&opts, args)
+		consumed, err := handler(&request, args)
 		if err != nil {
 			return err
 		}
@@ -82,7 +82,7 @@ func newRequestFromArgs(args []string) (request, error) {
 	// Consume an operation flag, if we have one.
 	if handler := operationFlagHandlers[args[0]]; handler != nil {
 		if err := consumeFlag(handler); err != nil {
-			return opts, err
+			return request, err
 		}
 	}
 
@@ -90,17 +90,17 @@ func newRequestFromArgs(args []string) (request, error) {
 	for len(args) > 0 {
 		if handler := modifierFlagHandlers[args[0]]; handler != nil {
 			if err := consumeFlag(handler); err != nil {
-				return opts, err
+				return request, err
 			}
 			continue
 		}
 
 		var nonFlags []string
 		nonFlags, args = splitArgsAtNextModifier(args)
-		opts.Args = append(opts.Args, nonFlags...)
+		request.Args = append(request.Args, nonFlags...)
 	}
 
-	return opts, nil
+	return request, nil
 }
 
 func splitArgsAtNextModifier(args []string) (nonFlags []string, rest []string) {
@@ -118,38 +118,38 @@ func splitArgsAtNextModifier(args []string) (nonFlags []string, rest []string) {
 	return
 }
 
-func (opts *request) parseHelp(args []string) (int, error) {
+func (r *request) parseHelp(args []string) (int, error) {
 	if args[0] == "help" && len(args) > 1 {
 		// If "help" isn't the only argument given, treat it as a normal option to
 		// be randomized
 		return 0, nil
 	}
 
-	opts.Operation = showHelp
+	r.Operation = showHelp
 	return 1, nil
 }
 
-func (opts *request) parseList(_ []string) (int, error) {
-	opts.Operation = listGroups
+func (r *request) parseList(_ []string) (int, error) {
+	r.Operation = listGroups
 	return 1, nil
 }
 
-func (opts *request) parseShow(args []string) (int, error) {
-	opts.Operation = showGroup
-	return 2, opts.parseGroupName(args)
+func (r *request) parseShow(args []string) (int, error) {
+	r.Operation = showGroup
+	return 2, r.parseGroupName(args)
 }
 
-func (opts *request) parseSave(args []string) (int, error) {
-	opts.Operation = saveGroup
-	return 2, opts.parseGroupName(args)
+func (r *request) parseSave(args []string) (int, error) {
+	r.Operation = saveGroup
+	return 2, r.parseGroupName(args)
 }
 
-func (opts *request) parseDelete(args []string) (int, error) {
-	opts.Operation = deleteGroup
-	return 2, opts.parseGroupName(args)
+func (r *request) parseDelete(args []string) (int, error) {
+	r.Operation = deleteGroup
+	return 2, r.parseGroupName(args)
 }
 
-func (opts *request) parseN(args []string) (consumed int, err error) {
+func (r *request) parseN(args []string) (consumed int, err error) {
 	consumed = 2
 
 	value, err := parseFlagValue(args)
@@ -158,11 +158,11 @@ func (opts *request) parseN(args []string) (consumed int, err error) {
 	}
 
 	if value == "all" {
-		opts.All = true
+		r.All = true
 		return
 	}
 
-	opts.Count, err = strconv.Atoi(value)
+	r.Count, err = strconv.Atoi(value)
 	if err != nil {
 		err = Error{
 			cause:    err,
@@ -172,8 +172,8 @@ func (opts *request) parseN(args []string) (consumed int, err error) {
 	return
 }
 
-func (opts *request) parseGroupName(args []string) (err error) {
-	opts.GroupName, err = parseFlagValue(args)
+func (r *request) parseGroupName(args []string) (err error) {
+	r.GroupName, err = parseFlagValue(args)
 	return
 }
 
