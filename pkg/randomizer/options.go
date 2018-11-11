@@ -1,10 +1,8 @@
 package randomizer
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
-	"text/template"
 
 	"github.com/pkg/errors"
 )
@@ -13,6 +11,7 @@ type operation int
 
 const (
 	noOp operation = iota
+	showHelp
 	listGroups
 	showGroup
 	saveGroup
@@ -20,7 +19,6 @@ const (
 )
 
 type options struct {
-	Name      string
 	Operation operation
 	Operand   string
 	Args      []string
@@ -28,24 +26,17 @@ type options struct {
 }
 
 var parseHandlers = map[string]func(*options, []string) (int, error){
+	"/help":   (*options).parseHelp,
 	"/list":   (*options).parseList,
 	"/show":   (*options).parseShow,
 	"/save":   (*options).parseSave,
 	"/delete": (*options).parseDelete,
 	"/n":      (*options).parseN,
-	"/help":   (*options).parseHelp,
 }
 
-func parseArgs(name string, args []string) (options, error) {
+func parseArgs(args []string) (options, error) {
 	opts := options{
-		Name:  name, // TODO: Weird that options has to know about this
 		Count: 1,
-	}
-
-	// TODO: This is such a terrible special case.
-	if len(args) == 1 && args[0] == "help" {
-		_, err := opts.parseHelp(args)
-		return opts, err
 	}
 
 	for len(args) > 0 {
@@ -84,6 +75,11 @@ func splitArgsAtNextFlag(args []string) (nonFlags []string, rest []string) {
 	}
 
 	return
+}
+
+func (opts *options) parseHelp(_ []string) (int, error) {
+	opts.Operation = showHelp
+	return 1, nil
 }
 
 func (opts *options) parseList(args []string) (int, error) {
@@ -149,38 +145,3 @@ func (opts *options) parseN(args []string) (consumed int, err error) {
 	}
 	return
 }
-
-func (opts *options) parseHelp(_ []string) (int, error) {
-	var buf bytes.Buffer
-	usageTmpl.Execute(&buf, struct{ Name string }{opts.Name})
-	return 1, Error{
-		cause:    errors.New("help requested"),
-		helpText: buf.String(),
-	}
-}
-
-var usageTmpl = template.Must(template.New("").Parse(
-	`{{.Name}} helps you pick options randomly out of a list.
-
-*Example:* {{.Name}} one two three
-> I choose *three*!
-
-You can choose more than one option at a time. The selected options will be given back in a random order.
-
-*Example:* {{.Name}} /n 2 one two three
-> I choose *two* and *one*!
-
-*Example:* {{.Name}} /n all one two three
-> I choose *two* and *three* and *one*!
-
-You can also create *groups* for the current channel or DM.
-
-*Save a group:* {{.Name}} /save first3 one two three
-*Randomize from a group:* {{.Name}} +first3
-*Combine groups with other options:* {{.Name}} /n 3 +first3 +next3 seven eight
-*Remove some options from consideration:* {{.Name}} +first3 +next3 -two -five
-*List groups:* {{.Name}} /list
-*Show options in a group:* {{.Name}} /show first3
-*Delete a group:* {{.Name}} /delete first3
-
-Note that the selection is weighted. An option is more likely to be picked if it is given multiple times. This also applies when multiple groups are given, and an option is in more than one of them.`))

@@ -125,12 +125,24 @@ func (a App) Main(args []string) (result Result, err error) {
 		}
 	}()
 
-	opts, err := parseArgs(a.name, args)
+	opts, err := parseArgs(args)
 	if err != nil {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}
 
+	// Special case: Allow users to omit the slash on "help" if it's the only
+	// option
+	if len(opts.Args) == 1 && opts.Args[0] == "help" {
+		opts.Operation = showHelp
+	}
+
 	switch opts.Operation {
+	case showHelp:
+		return Result{}, Error{
+			cause:    errors.New("help requested"),
+			helpText: buildHelpMessage(a.name),
+		}
+
 	case listGroups:
 		return a.listGroups()
 
