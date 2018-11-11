@@ -9,6 +9,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+type mockStore map[string][]string
+
+type validator func(*testing.T, Result, error)
+
+// testCases defines, through various examples, the expected behavior of the
+// randomizer.
+//
+// All cases require a human-readable description, an argument list to give to
+// the randomizer as input, and a "check" on the output. For checks, consider
+// using the isResult and isError helper functions, each of which returns an
+// appropriate validator.
+//
+// In the tests, "randomization" is performed by sorting the input items rather
+// than shuffling them. This allows for consistent assertions on output across
+// test runs.
+//
+// The provided store will be used to build the randomizer app instance. If an
+// expectedStore is defined, the store will be compared against it after the
+// randomizer finishes. Nil stores return an error on every operation.
 var testCases = []struct {
 	description   string
 	store         mockStore
@@ -261,8 +280,6 @@ func TestMain(t *testing.T) {
 	}
 }
 
-type validator func(*testing.T, Result, error)
-
 func isResult(expectedType ResultType, contains ...string) validator {
 	return func(t *testing.T, res Result, err error) {
 		if err != nil {
@@ -309,8 +326,6 @@ func isError(contains string) validator {
 func isHelpMessageResult(t *testing.T, res Result, err error) {
 	isResult(ShowedHelp, "helps you pick options randomly out of a list")(t, res, err)
 }
-
-type mockStore map[string][]string
 
 func (ms mockStore) List() ([]string, error) {
 	if ms == nil {
