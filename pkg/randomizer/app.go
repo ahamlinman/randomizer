@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -69,7 +68,7 @@ func (a App) Main(args []string) (result Result, err error) {
 	defer func() {
 		if err != nil {
 			if _, ok := err.(Error); !ok {
-				// Just in case…
+				// Just in case...
 				err = Error{cause: err}
 			}
 		}
@@ -127,8 +126,7 @@ func (a App) selection(request request) (Result, error) {
 
 	return Result{
 		resultType: Selection,
-		// TODO: More "proper" formatting
-		message: fmt.Sprintf("I choose %s!", strings.Join(choices, " and ")),
+		message:    fmt.Sprintf("I choose %s!", listify(choices)),
 	}, nil
 }
 
