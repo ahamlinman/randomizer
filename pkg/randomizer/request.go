@@ -114,7 +114,6 @@ func (a App) newRequestFromArgs(args []string) (request, error) {
 			if err := consumeFlag(handler); err != nil {
 				return request, err
 			}
-			continue
 		}
 
 		var nonFlags []string
