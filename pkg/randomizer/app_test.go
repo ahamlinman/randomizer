@@ -288,6 +288,12 @@ var testCases = []struct {
 	},
 
 	{
+		description: "help in a category",
+		args:        []string{"/help", "groups"},
+		check:       isResult(ShowedHelp, "lets you save *groups*"),
+	},
+
+	{
 		description: "help as an option to be randomized",
 		args:        []string{"help", "me"},
 		check:       isResult(Selection, "*help*"),

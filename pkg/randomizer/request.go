@@ -23,7 +23,7 @@ const (
 // from raw user input.
 type request struct {
 	Operation operation
-	GroupName string
+	Operand   string
 
 	Args  []string
 	All   bool
@@ -147,6 +147,14 @@ func (r *request) parseHelp(args []string) (int, error) {
 	}
 
 	r.Operation = showHelp
+
+	// Consume a help category if one was provided
+	if err := r.parseOperand(args); err == nil {
+		return 2, nil
+	}
+
+	// Otherwise, show the default help
+	r.Operand = ""
 	return 1, nil
 }
 
@@ -157,17 +165,17 @@ func (r *request) parseList(_ []string) (int, error) {
 
 func (r *request) parseShow(args []string) (int, error) {
 	r.Operation = showGroup
-	return 2, r.parseGroupName(args)
+	return 2, r.parseOperand(args)
 }
 
 func (r *request) parseSave(args []string) (int, error) {
 	r.Operation = saveGroup
-	return 2, r.parseGroupName(args)
+	return 2, r.parseOperand(args)
 }
 
 func (r *request) parseDelete(args []string) (int, error) {
 	r.Operation = deleteGroup
-	return 2, r.parseGroupName(args)
+	return 2, r.parseOperand(args)
 }
 
 func (r *request) parseN(args []string) (consumed int, err error) {
@@ -193,8 +201,8 @@ func (r *request) parseN(args []string) (consumed int, err error) {
 	return
 }
 
-func (r *request) parseGroupName(args []string) (err error) {
-	r.GroupName, err = parseFlagValue(args)
+func (r *request) parseOperand(args []string) (err error) {
+	r.Operand, err = parseFlagValue(args)
 	return
 }
 

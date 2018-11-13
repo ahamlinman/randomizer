@@ -130,10 +130,10 @@ func (a App) selection(request request) (Result, error) {
 	}, nil
 }
 
-func (a App) showHelp(_ request) (Result, error) {
+func (a App) showHelp(request request) (Result, error) {
 	return Result{
 		resultType: ShowedHelp,
-		message:    buildHelpMessage(a.name),
+		message:    a.getHelpMessage(request.Operand),
 	}, nil
 }
 
@@ -165,7 +165,7 @@ func (a App) listGroups(_ request) (Result, error) {
 }
 
 func (a App) showGroup(request request) (Result, error) {
-	name := request.GroupName
+	name := request.Operand
 
 	group, err := a.store.Get(name)
 	if err != nil {
@@ -195,7 +195,7 @@ func (a App) showGroup(request request) (Result, error) {
 }
 
 func (a App) saveGroup(request request) (Result, error) {
-	name := request.GroupName
+	name := request.Operand
 	options, err := a.expandArgs(request.Args)
 	if err != nil {
 		return Result{}, err
@@ -228,7 +228,7 @@ func (a App) saveGroup(request request) (Result, error) {
 }
 
 func (a App) deleteGroup(request request) (Result, error) {
-	name := request.GroupName
+	name := request.Operand
 	existed, err := a.store.Delete(name)
 	if err != nil {
 		return Result{}, Error{
