@@ -292,6 +292,14 @@ var testCases = []struct {
 		args:        []string{"help", "me"},
 		check:       isResult(Selection, "*help*"),
 	},
+
+	// Invalid operations
+
+	{
+		description: "using an invalid operation flag",
+		args:        []string{"/svae", "group", "one", "two"},
+		check:       isError("isn't a valid flag"),
+	},
 }
 
 func TestMain(t *testing.T) {

@@ -74,7 +74,7 @@ var appHandlers = map[operation]appHandler{
 // Error type. This provides the HelpText method for user-friendly output
 // formatting.
 func (a App) Main(args []string) (result Result, err error) {
-	request, err := newRequestFromArgs(args)
+	request, err := a.newRequestFromArgs(args)
 	if err != nil {
 		return Result{}, err // Comes from this package, no re-wrapping needed
 	}

@@ -3,6 +3,7 @@ package randomizer
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -53,6 +54,11 @@ var operationFlagHandlers = map[string]flagHandler{
 	"/delete": (*request).parseDelete,
 }
 
+func isOperation(flag string) bool {
+	_, ok := operationFlagHandlers[flag]
+	return ok
+}
+
 // modifierFlagHandlers represents "modifier" flags, which may appear anywhere
 // in the argument list. Modifiers affect the behavior of an operation,
 // particularly the normal operation of selecting randomly from a list.
@@ -60,7 +66,12 @@ var modifierFlagHandlers = map[string]flagHandler{
 	"/n": (*request).parseN,
 }
 
-func newRequestFromArgs(args []string) (request, error) {
+func isModifier(flag string) bool {
+	_, ok := modifierFlagHandlers[flag]
+	return ok
+}
+
+func (a App) newRequestFromArgs(args []string) (request, error) {
 	request := request{
 		Count: 1,
 	}
@@ -79,10 +90,21 @@ func newRequestFromArgs(args []string) (request, error) {
 		return nil
 	}
 
-	// Consume an operation flag, if we have one.
-	if handler := operationFlagHandlers[args[0]]; handler != nil {
+	if flag := args[0]; isOperation(flag) {
+		// Consume an operation flag
+		handler := operationFlagHandlers[flag]
 		if err := consumeFlag(handler); err != nil {
 			return request, err
+		}
+	} else if strings.HasPrefix(flag, "/") && !isModifier(flag) {
+		// The user may have mistyped a flag; let them know about the error.
+		return request, Error{
+			cause: errors.Errorf("unknown flag %q", args[0]),
+			helpText: fmt.Sprintf(
+				`Whoops, %q isn't a valid flag. (Try "%s /help" to learn more about flags!)`,
+				args[0],
+				a.name,
+			),
 		}
 	}
 
