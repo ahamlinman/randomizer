@@ -23,7 +23,7 @@ You can choose more than one option at a time. The selected options will be give
 > I choose *two* and *one*!
 
 *Example:* {{.Name}} /n all one two three
-> I choose *two* and *three* and *one*!
+> I choose *two*, *three*, and *one*!
 
 You can also create *groups* for the current channel or DM.
 
