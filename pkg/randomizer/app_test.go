@@ -219,7 +219,7 @@ var testCases = []struct {
 		check:       isResult(SavedGroup, `The "new" group was saved`, "• one", "• three", "• two"),
 		expectedStore: mockStore{
 			"test": {"one", "two"},
-			"new":  {"one", "two", "three"},
+			"new":  {"one", "three", "two"},
 		},
 	},
 
@@ -397,6 +397,7 @@ func (ms mockStore) Put(name string, options []string) error {
 
 	copied := make([]string, len(options))
 	copy(copied, options)
+	sort.Strings(copied)
 	ms[name] = copied
 	return nil
 }
