@@ -20,7 +20,9 @@ func (a App) getHelpMessage(category string) string {
 }
 
 var helpMessageTemplate = template.Must(template.New("").Parse(
-	`{{.Name}} helps you pick options randomly out of a list.
+	`*{{.Name}}*
+
+{{.Name}} helps you pick options randomly out of a list.
 
 *Example:* {{.Name}} one two three
 > I choose *three*!
@@ -38,7 +40,9 @@ If you use a set of options a lot (say, the names of your team members), try sav
 Note that the selection is weighted. An option is more likely to be picked if it is given multiple times. This also applies when multiple groups are given, and an option is in more than one of them.`))
 
 var groupHelpMessageTemplate = template.Must(template.New("").Parse(
-	`{{.Name}} lets you save *groups* in the current channel or DM.
+	`*Groups*
+
+{{.Name}} lets you save *groups* in the current channel or DM.
 
 Never sure where to eat? Save some local restaurants into your personal DM! Need to request a code review? Save your team members' names into your team's channel! With groups, your most common choices are always at hand.
 
