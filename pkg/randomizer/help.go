@@ -6,17 +6,28 @@ import (
 	"text/template"
 )
 
-var groupsHelpRegexp = regexp.MustCompile("groups?")
+func (a App) showHelp(request request) (Result, error) {
+	return Result{
+		resultType: ShowedHelp,
+		message:    a.getHelpMessage(request.Operand),
+	}, nil
+}
 
 func (a App) getHelpMessage(category string) string {
-	template := helpMessageTemplate
-	if groupsHelpRegexp.MatchString(category) {
-		template = groupHelpMessageTemplate
-	}
-
 	var buf bytes.Buffer
+	template := a.getHelpMessageTemplate(category)
 	template.Execute(&buf, struct{ Name string }{a.name})
 	return buf.String()
+}
+
+var groupsHelpRegexp = regexp.MustCompile("groups?")
+
+func (a App) getHelpMessageTemplate(category string) *template.Template {
+	if groupsHelpRegexp.MatchString(category) {
+		return groupHelpMessageTemplate
+	}
+
+	return helpMessageTemplate
 }
 
 var helpMessageTemplate = template.Must(template.New("").Parse(

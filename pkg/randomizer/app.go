@@ -130,13 +130,6 @@ func (a App) makeSelection(request request) (Result, error) {
 	}, nil
 }
 
-func (a App) showHelp(request request) (Result, error) {
-	return Result{
-		resultType: ShowedHelp,
-		message:    a.getHelpMessage(request.Operand),
-	}, nil
-}
-
 func (a App) listGroups(_ request) (Result, error) {
 	groups, err := a.store.List()
 	if err != nil {
