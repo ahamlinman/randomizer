@@ -11,7 +11,7 @@ import (
 type operation int
 
 const (
-	selection operation = iota
+	makeSelection operation = iota
 	showHelp
 	listGroups
 	showGroup

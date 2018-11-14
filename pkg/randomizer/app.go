@@ -60,12 +60,12 @@ type appHandler func(App, request) (Result, error)
 // handler method, which processes a request from the user and returns an
 // appropriate result.
 var appHandlers = map[operation]appHandler{
-	selection:   App.selection,
-	showHelp:    App.showHelp,
-	listGroups:  App.listGroups,
-	showGroup:   App.showGroup,
-	saveGroup:   App.saveGroup,
-	deleteGroup: App.deleteGroup,
+	makeSelection: App.makeSelection,
+	showHelp:      App.showHelp,
+	listGroups:    App.listGroups,
+	showGroup:     App.showGroup,
+	saveGroup:     App.saveGroup,
+	deleteGroup:   App.deleteGroup,
 }
 
 // Main is the entrypoint to the randomizer tool.
@@ -86,7 +86,7 @@ func (a App) Main(args []string) (result Result, err error) {
 	return handler(a, request)
 }
 
-func (a App) selection(request request) (Result, error) {
+func (a App) makeSelection(request request) (Result, error) {
 	options, err := a.expandArgs(request.Args)
 	if err != nil {
 		return Result{}, err
