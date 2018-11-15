@@ -86,50 +86,6 @@ func (a App) Main(args []string) (result Result, err error) {
 	return handler(a, request)
 }
 
-func (a App) makeSelection(request request) (Result, error) {
-	options, err := a.expandArgs(request.Args)
-	if err != nil {
-		return Result{}, err
-	}
-
-	if len(options) < 2 {
-		return Result{}, Error{
-			cause:    errors.New("too few options"),
-			helpText: "Whoops, I need at least two options to pick from!",
-		}
-	}
-
-	a.shuffle(options)
-
-	var choices []string
-	switch {
-	case request.All:
-		choices = options
-
-	case request.Count < 1:
-		return Result{}, Error{
-			cause:    errors.New("count too small"),
-			helpText: "Whoops, I can't pick less than one option!",
-		}
-
-	case request.Count > len(options):
-		return Result{}, Error{
-			cause:    errors.New("count too large"),
-			helpText: "Whoops, I can't pick more options than I was given!",
-		}
-
-	default:
-		choices = options[:request.Count]
-	}
-
-	choices = embolden(choices)
-
-	return Result{
-		resultType: Selection,
-		message:    fmt.Sprintf("I choose %s!", listify(choices)),
-	}, nil
-}
-
 func (a App) listGroups(_ request) (Result, error) {
 	groups, err := a.store.List()
 	if err != nil {
