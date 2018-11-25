@@ -103,56 +103,6 @@ var testCases = []struct {
 		check:       isError(`"four" wasn't available for me to remove`),
 	},
 
-	// Multiple selections
-
-	{
-		description: "choosing multiple options (prefixed flag)",
-		args:        []string{"/n", "2", "one", "two", "three", "four"},
-		check:       isResult(Selection, "*four*", "*one*"),
-	},
-
-	{
-		description: "choosing multiple options (postfixed flag)",
-		args:        []string{"one", "two", "three", "four", "/n", "2"},
-		check:       isResult(Selection, "*four*", "*one*"),
-	},
-
-	{
-		description: "choosing all options",
-		args:        []string{"/n", "all", "one", "two", "three", "four"},
-		check:       isResult(Selection, "*four*", "*one*", "*three*", "*two*"),
-	},
-
-	{
-		description: "choosing too few options",
-		args:        []string{"/n", "0", "one", "two"},
-		check:       isError("can't pick less than one option"),
-	},
-
-	{
-		description: "choosing too many options",
-		args:        []string{"/n", "3", "one", "two"},
-		check:       isError("can't pick more options than I was given"),
-	},
-
-	{
-		description: "non-integer options count",
-		args:        []string{"/n", "2.1", "one", "two"},
-		check:       isError("isn't a valid count"),
-	},
-
-	{
-		description: "invalid options count",
-		args:        []string{"/n", "wat", "one", "two"},
-		check:       isError("isn't a valid count"),
-	},
-
-	{
-		description: "no options count provided",
-		args:        []string{"one", "two", "/n"},
-		check:       isError("requires an argument"),
-	},
-
 	// Group CRUD operations
 
 	{

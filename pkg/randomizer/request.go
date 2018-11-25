@@ -2,7 +2,6 @@ package randomizer
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -24,10 +23,7 @@ const (
 type request struct {
 	Operation operation
 	Operand   string
-
-	Args  []string
-	All   bool
-	Count int
+	Args      []string
 }
 
 // flagHandler is a type for functions that can parse a flag and its value(s)
@@ -59,22 +55,8 @@ func isOperation(flag string) bool {
 	return ok
 }
 
-// modifierFlagHandlers represents "modifier" flags, which may appear anywhere
-// in the argument list. Modifiers affect the behavior of an operation,
-// particularly the normal operation of selecting randomly from a list.
-var modifierFlagHandlers = map[string]flagHandler{
-	"/n": (*request).parseN,
-}
-
-func isModifier(flag string) bool {
-	_, ok := modifierFlagHandlers[flag]
-	return ok
-}
-
 func (a App) newRequestFromArgs(args []string) (request, error) {
-	request := request{
-		Count: 1,
-	}
+	request := request{}
 
 	if len(args) < 1 {
 		return request, nil
@@ -96,7 +78,7 @@ func (a App) newRequestFromArgs(args []string) (request, error) {
 		if err := consumeFlag(handler); err != nil {
 			return request, err
 		}
-	} else if strings.HasPrefix(flag, "/") && !isModifier(flag) {
+	} else if strings.HasPrefix(flag, "/") {
 		// The user may have mistyped a flag; let them know about the error.
 		return request, Error{
 			cause: errors.Errorf("unknown flag %q", args[0]),
@@ -108,35 +90,8 @@ func (a App) newRequestFromArgs(args []string) (request, error) {
 		}
 	}
 
-	// Process all remaining arguments, consuming modifiers as they appear.
-	for len(args) > 0 {
-		if handler := modifierFlagHandlers[args[0]]; handler != nil {
-			if err := consumeFlag(handler); err != nil {
-				return request, err
-			}
-		}
-
-		var nonFlags []string
-		nonFlags, args = splitArgsAtNextModifier(args)
-		request.Args = append(request.Args, nonFlags...)
-	}
-
+	request.Args = append(request.Args, args...)
 	return request, nil
-}
-
-func splitArgsAtNextModifier(args []string) (nonFlags []string, rest []string) {
-	// Look for modifier flags in the argument list. If we find one, split the
-	// list so it becomes the first item in rest.
-	for i, arg := range args {
-		if _, ok := modifierFlagHandlers[arg]; ok {
-			nonFlags, rest = args[:i], args[i:]
-			return
-		}
-	}
-
-	// Otherwise, all arguments are non-flag arguments.
-	nonFlags, rest = args, nil
-	return
 }
 
 func (r *request) parseHelp(args []string) (int, error) {
@@ -176,29 +131,6 @@ func (r *request) parseSave(args []string) (int, error) {
 func (r *request) parseDelete(args []string) (int, error) {
 	r.Operation = deleteGroup
 	return 2, r.parseOperand(args)
-}
-
-func (r *request) parseN(args []string) (consumed int, err error) {
-	consumed = 2
-
-	value, err := parseFlagValue(args)
-	if err != nil {
-		return
-	}
-
-	if value == "all" {
-		r.All = true
-		return
-	}
-
-	r.Count, err = strconv.Atoi(value)
-	if err != nil {
-		err = Error{
-			cause:    err,
-			helpText: fmt.Sprintf("Whoops, %q isn't a valid count!", value),
-		}
-	}
-	return
 }
 
 func (r *request) parseOperand(args []string) (err error) {

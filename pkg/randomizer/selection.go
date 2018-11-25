@@ -21,14 +21,10 @@ func (a App) makeSelection(request request) (Result, error) {
 	}
 
 	a.shuffle(options)
-	choices, err := getRequestedChoiceSubset(request, options)
-	if err != nil {
-		return Result{}, err
-	}
 
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I choose %s!", listify(embolden(choices))),
+		message:    fmt.Sprintf("I choose *%s*!", options[0]),
 	}, nil
 }
 
@@ -101,26 +97,4 @@ func remove(options []string, option string) ([]string, error) {
 		cause:    errors.Errorf("option %q not found for removal", option),
 		helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove!", option),
 	}
-}
-
-func getRequestedChoiceSubset(request request, options []string) ([]string, error) {
-	if request.All {
-		return options, nil
-	}
-
-	if request.Count < 1 {
-		return nil, Error{
-			cause:    errors.New("count too small"),
-			helpText: "Whoops, I can't pick less than one option!",
-		}
-	}
-
-	if request.Count > len(options) {
-		return nil, Error{
-			cause:    errors.New("count too large"),
-			helpText: "Whoops, I can't pick more options than I was given!",
-		}
-	}
-
-	return options[:request.Count], nil
 }
