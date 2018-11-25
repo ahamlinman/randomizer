@@ -54,53 +54,22 @@ var testCases = []struct {
 	{
 		description: "choosing one option from a group",
 		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test"},
+		args:        []string{"test"},
 		check:       isResult(Selection, "*one*"),
-	},
-
-	{
-		description: "combining groups with literal options",
-		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test", "four"},
-		check:       isResult(Selection, "*four*"),
-	},
-
-	{
-		description: "combining multiple groups",
-		store: mockStore{
-			"first":  {"one", "two", "three"},
-			"second": {"four", "five", "six"},
-		},
-		args:  []string{"+first", "+second"},
-		check: isResult(Selection, "*five*"),
 	},
 
 	{
 		description: "choosing from a group that does not exist",
 		store:       mockStore{},
-		args:        []string{"+test"},
+		args:        []string{"test"},
 		check:       isError(`couldn't find the "test" group`),
 	},
 
 	{
 		description: "error while getting a group",
 		store:       nil,
-		args:        []string{"+test"},
+		args:        []string{"test"},
 		check:       isError(`had trouble getting the "test" group`),
-	},
-
-	{
-		description: "removing an option from consideration",
-		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test", "-one"},
-		check:       isResult(Selection, "*three*"),
-	},
-
-	{
-		description: "removing an option that does not exist",
-		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test", "-four"},
-		check:       isError(`"four" wasn't available for me to remove`),
 	},
 
 	// Group CRUD operations
@@ -163,28 +132,10 @@ var testCases = []struct {
 	},
 
 	{
-		description: "saving a group with expanded arguments",
-		store:       mockStore{"test": {"one", "two"}},
-		args:        []string{"/save", "new", "+test", "three"},
-		check:       isResult(SavedGroup, `The "new" group was saved`, "• one", "• three", "• two"),
-		expectedStore: mockStore{
-			"test": {"one", "two"},
-			"new":  {"one", "three", "two"},
-		},
-	},
-
-	{
 		description: "unable to save a group",
 		store:       nil,
 		args:        []string{"/save", "test", "one", "two"},
 		check:       isError("trouble saving that group"),
-	},
-
-	{
-		description: "unable to expand arguments when saving a group",
-		store:       mockStore{},
-		args:        []string{"/save", "new", "+test", "three"},
-		check:       isError(`couldn't find the "test" group`),
 	},
 
 	{

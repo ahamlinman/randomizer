@@ -2,7 +2,6 @@ package randomizer
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/pkg/errors"
 )
@@ -28,46 +27,18 @@ func (a App) makeSelection(request request) (Result, error) {
 	}, nil
 }
 
-var expandArgModifiers = regexp.MustCompile("^[+-]")
-
 func (a App) expandArgs(args []string) ([]string, error) {
-	result := make([]string, 0, len(args))
-
-	for _, arg := range args {
-		var err error
-
-		switch expandArgModifiers.FindString(arg) {
-		case "":
-			// No modifier; simply add this as a possible option
-			result = append(result, arg)
-
-		case "+":
-			// Modifier for a group name; add all elements from the group to the set
-			// of options
-			group := arg[1:]
-			result, err = a.appendGroup(result, group)
-			if err != nil {
-				return nil, err
-			}
-
-		case "-":
-			// Modifier for a removal; remove the first instance of this arg from
-			// the option set
-			option := arg[1:]
-			result, err = remove(result, option)
-			if err != nil {
-				return nil, err
-			}
-		}
+	if len(args) == 1 {
+		return a.expandGroup(args[0])
 	}
 
-	return result, nil
+	return args, nil
 }
 
-func (a App) appendGroup(options []string, group string) ([]string, error) {
+func (a App) expandGroup(group string) ([]string, error) {
 	expansion, err := a.store.Get(group)
 	if err != nil {
-		return options, Error{
+		return nil, Error{
 			cause: err,
 			helpText: fmt.Sprintf(
 				"Whoops, I had trouble getting the %q group. Please try again later!",
@@ -77,24 +48,11 @@ func (a App) appendGroup(options []string, group string) ([]string, error) {
 	}
 
 	if len(expansion) == 0 {
-		return options, Error{
+		return nil, Error{
 			cause:    err,
 			helpText: fmt.Sprintf("Whoops, I couldn't find the %q group in this channel!", group),
 		}
 	}
 
-	return append(options, expansion...), nil
-}
-
-func remove(options []string, option string) ([]string, error) {
-	for i, item := range options {
-		if item == option {
-			return append(options[:i], options[i+1:]...), nil
-		}
-	}
-
-	return options, Error{
-		cause:    errors.Errorf("option %q not found for removal", option),
-		helpText: fmt.Sprintf("Whoops, %q wasn't available for me to remove!", option),
-	}
+	return expansion, nil
 }
