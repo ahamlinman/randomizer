@@ -24,19 +24,5 @@ func bulletize(items []string) string {
 }
 
 func listify(items []string) string {
-	switch len(items) {
-	case 0:
-		return "nothing" // Though in practice this should never happen...
-
-	case 1:
-		return items[0]
-
-	case 2:
-		return fmt.Sprintf("%s and %s", items[0], items[1])
-
-	default:
-		last := len(items) - 1
-		return fmt.Sprintf("%s, and %s", strings.Join(items[:last], ", "), items[last])
-		//                    ^ Oxford comma - VERY IMPORTANT
-	}
+	return strings.Join(items, ", ")
 }

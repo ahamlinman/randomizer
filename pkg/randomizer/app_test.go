@@ -44,22 +44,22 @@ var testCases = []struct {
 	},
 
 	{
-		description: "choosing one of a set of options",
+		description: "randomizing a set of options",
 		args:        []string{"three", "two", "one"},
-		check:       isResult(Selection, "*one*"),
+		check:       isResult(Selection, "*one*", "*three*", "*two*"),
 	},
 
 	// Selecting from groups
 
 	{
-		description: "choosing one option from a group",
+		description: "randomizing a group",
 		store:       mockStore{"test": {"three", "two", "one"}},
 		args:        []string{"test"},
-		check:       isResult(Selection, "*one*"),
+		check:       isResult(Selection, "*one*", "*three*", "*two*"),
 	},
 
 	{
-		description: "choosing from a group that does not exist",
+		description: "randomizing a group that does not exist",
 		store:       mockStore{},
 		args:        []string{"test"},
 		check:       isError(`couldn't find the "test" group`),

@@ -23,7 +23,7 @@ func (a App) makeSelection(request request) (Result, error) {
 
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I choose *%s*!", options[0]),
+		message:    fmt.Sprintf("I randomized and got: %s.", listify(embolden(options))),
 	}, nil
 }
 
