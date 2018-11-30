@@ -68,7 +68,7 @@ func (a App) saveGroup(request request) (Result, error) {
 	name := request.Operand
 	options := request.Args
 
-	if isOperation(name) {
+	if isFlag(name) {
 		return Result{}, Error{
 			cause:    errors.New("used operation as group name"),
 			helpText: "Whoops, that name has a special meaning and can't be used as a group name.",

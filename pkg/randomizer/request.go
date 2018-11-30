@@ -25,6 +25,44 @@ type request struct {
 	Args      []string
 }
 
+func (a App) newRequestFromArgs(args []string) (request, error) {
+	if len(args) < 1 {
+		return request{}, nil
+	}
+
+	r := request{}
+	err := r.parseArgs(args)
+	return r, err
+}
+
+func (r *request) parseArgs(args []string) error {
+	if isFlag(args[0]) {
+		var err error
+		args, err = r.consumeFlag(args)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Args = args
+	return nil
+}
+
+func isFlag(flag string) bool {
+	_, ok := flagHandlers[flag]
+	return ok
+}
+
+func (r *request) consumeFlag(args []string) ([]string, error) {
+	handler := flagHandlers[args[0]]
+	consumed, err := handler(r, args)
+	if err != nil {
+		return args, err
+	}
+
+	return args[consumed:], nil
+}
+
 // flagHandler is a type for functions that can parse a flag and its value(s)
 // from an argument list into a request struct.
 //
@@ -34,10 +72,7 @@ type request struct {
 // value(s).
 type flagHandler func(*request, []string) (int, error)
 
-// operationFlagHandlers represents "operation" flags, which must appear at the
-// start of the argument list. Operations are alternate modes of behavior that
-// do not involve randomly selecting from lists of items.
-var operationFlagHandlers = map[string]flagHandler{
+var flagHandlers = map[string]flagHandler{
 	// As a special case, show the help message if "help" is the only argument
 	// provided by the user (in case they don't yet know the flag syntax)
 	"help":  (*request).parseHelp,
@@ -47,40 +82,6 @@ var operationFlagHandlers = map[string]flagHandler{
 	"/show":   (*request).parseShow,
 	"/save":   (*request).parseSave,
 	"/delete": (*request).parseDelete,
-}
-
-func isOperation(flag string) bool {
-	_, ok := operationFlagHandlers[flag]
-	return ok
-}
-
-func (a App) newRequestFromArgs(args []string) (request, error) {
-	request := request{}
-
-	if len(args) < 1 {
-		return request, nil
-	}
-
-	consumeFlag := func(handler flagHandler) error {
-		consumed, err := handler(&request, args)
-		if err != nil {
-			return err
-		}
-
-		args = args[consumed:]
-		return nil
-	}
-
-	if flag := args[0]; isOperation(flag) {
-		// Consume an operation flag
-		handler := operationFlagHandlers[flag]
-		if err := consumeFlag(handler); err != nil {
-			return request, err
-		}
-	}
-
-	request.Args = args
-	return request, nil
 }
 
 func (r *request) parseHelp(args []string) (int, error) {
