@@ -102,14 +102,6 @@ func (r *request) parseHelp(args []string) (int, error) {
 	}
 
 	r.Operation = showHelp
-
-	// Consume a help category if one was provided
-	if err := r.parseOperand(args); err == nil {
-		return 2, nil
-	}
-
-	// Otherwise, show the default help
-	r.Operand = ""
 	return 1, nil
 }
 
