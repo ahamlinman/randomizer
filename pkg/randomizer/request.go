@@ -2,7 +2,6 @@ package randomizer
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -78,19 +77,9 @@ func (a App) newRequestFromArgs(args []string) (request, error) {
 		if err := consumeFlag(handler); err != nil {
 			return request, err
 		}
-	} else if strings.HasPrefix(flag, "/") {
-		// The user may have mistyped a flag; let them know about the error.
-		return request, Error{
-			cause: errors.Errorf("unknown flag %q", args[0]),
-			helpText: fmt.Sprintf(
-				`Whoops, %q isn't a valid flag. (Try "%s /help" to learn more about flags!)`,
-				args[0],
-				a.name,
-			),
-		}
 	}
 
-	request.Args = append(request.Args, args...)
+	request.Args = args
 	return request, nil
 }
 
