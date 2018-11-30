@@ -139,9 +139,16 @@ var testCases = []struct {
 	},
 
 	{
-		description: "no options provided to save",
+		description: "saving a group with a flag name",
 		store:       mockStore{},
-		args:        []string{"/save", "test"},
+		args:        []string{"/save", "/delete", "one", "two"},
+		check:       isError("has a special meaning"),
+	},
+
+	{
+		description: "not enough options provided to save",
+		store:       mockStore{},
+		args:        []string{"/save", "test", "one"},
 		check:       isError("need at least two options"),
 	},
 
