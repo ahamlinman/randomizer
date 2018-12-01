@@ -26,26 +26,23 @@ type request struct {
 }
 
 func (a App) newRequestFromArgs(args []string) (request, error) {
-	if len(args) < 1 {
-		return request{}, nil
-	}
-
 	r := request{}
-	err := r.parseArgs(args)
+	err := r.populateFromArgs(args)
 	return r, err
 }
 
-func (r *request) parseArgs(args []string) error {
-	if isFlag(args[0]) {
-		var err error
-		args, err = r.consumeFlag(args)
-		if err != nil {
-			return err
-		}
+func (r *request) populateFromArgs(args []string) error {
+	rest, err := r.consumeFlagIfPresent(args)
+	r.Args = rest
+	return err
+}
+
+func (r *request) consumeFlagIfPresent(args []string) (rest []string, err error) {
+	if len(args) >= 1 && isFlag(args[0]) {
+		return r.consumeFlag(args)
 	}
 
-	r.Args = args
-	return nil
+	return args, nil
 }
 
 func isFlag(flag string) bool {
@@ -53,8 +50,10 @@ func isFlag(flag string) bool {
 	return ok
 }
 
-func (r *request) consumeFlag(args []string) ([]string, error) {
-	handler := flagHandlers[args[0]]
+func (r *request) consumeFlag(args []string) (rest []string, err error) {
+	flag := args[0]
+	handler := flagHandlers[flag]
+
 	consumed, err := handler(r, args)
 	if err != nil {
 		return args, err
@@ -63,14 +62,7 @@ func (r *request) consumeFlag(args []string) ([]string, error) {
 	return args[consumed:], nil
 }
 
-// flagHandler is a type for functions that can parse a flag and its value(s)
-// from an argument list into a request struct.
-//
-// The argument slice provided to the handler starts at the argument containing
-// the flag itself. If the returned error is nil, the returned int is the total
-// number of arguments (1 or more) consumed by parsing this flag and its
-// value(s).
-type flagHandler func(*request, []string) (int, error)
+type flagHandler func(r *request, args []string) (argsConsumed int, err error)
 
 var flagHandlers = map[string]flagHandler{
 	// As a special case, show the help message if "help" is the only argument
