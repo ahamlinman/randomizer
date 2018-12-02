@@ -22,7 +22,7 @@ var helpMessageTemplate = template.Must(template.New("").Parse(
 	`{{.Name}} randomizes the order of options in a list.
 
 *Example:* {{.Name}} one two three
-> I randomized and got: *two*, *three*, *one*.
+&gt; I randomized and got: *two*, *three*, *one*.
 
 If you use a set of options a lot, try saving them as a *group* in the current channel or DM!
 
