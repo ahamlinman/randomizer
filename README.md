@@ -8,7 +8,7 @@ The randomizer, quite simply, chooses random options out of lists.
 
 More specifically, it can:
 
-* Choose one or more items randomly out of a list (obviously)
+* Randomize the order of items in a list (naturally)
 * Save "groups" of items for later use, in a local database or Amazon DynamoDB
 * Run as a Slack slash command (on your own server or on AWS Lambda), or as a
   CLI tool for local testing
