@@ -13,11 +13,6 @@ import (
 )
 
 func main() {
-	name := os.Getenv("SLACK_COMMAND_NAME")
-	if name == "" {
-		name = "/randomize"
-	}
-
 	token := os.Getenv("SLACK_TOKEN")
 	if token == "" {
 		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided")
@@ -31,7 +26,6 @@ func main() {
 	}
 
 	app := slack.App{
-		Name:         name,
 		Token:        []byte(token),
 		StoreFactory: storeFactory,
 		DebugWriter:  os.Stderr,

@@ -7,10 +7,6 @@ Parameters:
   SlackToken:
     Description: The authentication token created by Slack for the slash command
     Type: String
-  SlackCommandName:
-    Description: The name of the command to display in help output in Slack
-    Type: String
-    Default: '/randomize'
   ReadCapacityUnits:
     Description: The number of read capacity units to set on the DynamoDB table
     Type: Number
@@ -48,7 +44,6 @@ Resources:
       Environment:
         Variables:
           SLACK_TOKEN: !Ref SlackToken
-          SLACK_COMMAND_NAME: !Ref SlackCommandName
           DYNAMODB_TABLE: !Ref GroupsTable
       Events:
         ApiGet:

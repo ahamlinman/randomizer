@@ -16,9 +16,6 @@ import (
 // App provides HTTP handling logic that allows the randomizer to be integrated
 // as a slash command in a Slack workspace.
 type App struct {
-	// Name is the name of the command as displayed in help output. Ideally, it
-	// should match the name of the slash command configured in Slack.
-	Name string
 	// Token is the expected value of the authentication token provided by Slack.
 	// This can be obtained from the slash command configuration.
 	Token []byte
@@ -94,8 +91,11 @@ func (a App) serveRandomizer(w http.ResponseWriter, params url.Values) {
 }
 
 func (a App) runRandomizer(params url.Values) (randomizer.Result, error) {
-	channelID := params.Get("channel_id")
-	app := randomizer.NewApp(a.Name, a.StoreFactory(channelID))
+	var (
+		name      = params.Get("command")
+		channelID = params.Get("channel_id")
+	)
+	app := randomizer.NewApp(name, a.StoreFactory(channelID))
 
 	args := strings.Split(params.Get("text"), " ")
 	return app.Main(args)
