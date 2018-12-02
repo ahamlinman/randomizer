@@ -1,4 +1,12 @@
-package main // import "go.alexhamlin.co/randomizer/cmd/randomize"
+/*
+
+The randomizer-demo command is a quick way to test the randomizer's
+functionality before deploying it into a Slack workspace.
+
+CLI arguments are passed directly to the randomizer app.
+
+*/
+package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-demo"
 
 import (
 	"fmt"

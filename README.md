@@ -15,9 +15,9 @@ More specifically, it can:
 
 ## Trying it Out
 
-From the root of this repository, simply run `go build ./cmd/randomize` to try
-out a local copy of the randomizer in your terminal. Start by running
-`./randomize help` to see what you can do.
+From the root of this repository, simply run `go build ./cmd/randomizer-demo`
+to try out a local copy of the randomizer in your terminal. Start by running
+`./randomizer-demo help` to see what you can do.
 
 This is a good way to get a rough taste of what the command looks like in a
 Slack workspace, especially if you'd like to quickly test out changes.
