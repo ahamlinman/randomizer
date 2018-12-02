@@ -1,4 +1,4 @@
-package main // import "go.alexhamlin.co/randomizer/cmd/slack-randomize-server"
+package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-server"
 
 import (
 	"flag"

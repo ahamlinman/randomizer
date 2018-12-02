@@ -24,8 +24,8 @@ Slack workspace, especially if you'd like to quickly test out changes.
 
 ## Deploying to Your Server
 
-From the root of this repository, run `go build ./cmd/slack-randomize-server`.
-The resulting binary starts up a web server that provides a Slack slash command
+From the root of this repository, run `go build ./cmd/randomizer-server`. The
+resulting binary starts up a web server that provides a Slack slash command
 endpoint at its root path.
 
 The web server requires the `SLACK_TOKEN` environment variable to be set to the
