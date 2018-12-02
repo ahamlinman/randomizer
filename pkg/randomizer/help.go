@@ -8,11 +8,11 @@ import (
 func (a App) showHelp(request request) (Result, error) {
 	return Result{
 		resultType: ShowedHelp,
-		message:    a.getHelpMessage(request.Operand),
+		message:    a.getHelpMessage(),
 	}, nil
 }
 
-func (a App) getHelpMessage(category string) string {
+func (a App) getHelpMessage() string {
 	var buf bytes.Buffer
 	helpMessageTemplate.Execute(&buf, struct{ Name string }{a.name})
 	return buf.String()
