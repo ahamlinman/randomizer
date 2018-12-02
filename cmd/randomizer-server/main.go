@@ -1,3 +1,9 @@
+/*
+
+The randomizer-server command starts a web server that accepts Slack Slash
+Command API requests and runs the randomizer in response.
+
+*/
 package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-server"
 
 import (
@@ -17,7 +23,7 @@ func main() {
 
 	token := os.Getenv("SLACK_TOKEN")
 	if token == "" {
-		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided")
+		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided in environment")
 		os.Exit(2)
 	}
 

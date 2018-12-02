@@ -1,3 +1,9 @@
+/*
+
+The randomizer-dbtools command provides quick-and-dirty helper utilities for
+randomizer data stores.
+
+*/
 package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-dbtools"
 
 import (
