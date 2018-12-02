@@ -3,8 +3,6 @@ package randomizer
 import (
 	"math/rand"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Store represents an object that provides persistence for "groups" of
@@ -64,15 +62,7 @@ func (a App) Main(args []string) (Result, error) {
 		return Result{}, err
 	}
 
-	return a.handleRequest(request)
-}
-
-func (a App) handleRequest(request request) (Result, error) {
 	handler := appHandlers[request.Operation]
-	if handler == nil {
-		panic(errors.Errorf("invalid request: %+v", request))
-	}
-
 	return handler(a, request)
 }
 

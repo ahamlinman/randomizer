@@ -44,113 +44,32 @@ var testCases = []struct {
 	},
 
 	{
-		description: "choosing one of a set of options",
+		description: "randomizing a set of options",
 		args:        []string{"three", "two", "one"},
-		check:       isResult(Selection, "*one*"),
+		check:       isResult(Selection, "*one*", "*three*", "*two*"),
 	},
 
 	// Selecting from groups
 
 	{
-		description: "choosing one option from a group",
+		description: "randomizing a group",
 		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test"},
-		check:       isResult(Selection, "*one*"),
+		args:        []string{"test"},
+		check:       isResult(Selection, "*one*", "*three*", "*two*"),
 	},
 
 	{
-		description: "combining groups with literal options",
-		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test", "four"},
-		check:       isResult(Selection, "*four*"),
-	},
-
-	{
-		description: "combining multiple groups",
-		store: mockStore{
-			"first":  {"one", "two", "three"},
-			"second": {"four", "five", "six"},
-		},
-		args:  []string{"+first", "+second"},
-		check: isResult(Selection, "*five*"),
-	},
-
-	{
-		description: "choosing from a group that does not exist",
+		description: "randomizing a group that does not exist",
 		store:       mockStore{},
-		args:        []string{"+test"},
+		args:        []string{"test"},
 		check:       isError(`couldn't find the "test" group`),
 	},
 
 	{
 		description: "error while getting a group",
 		store:       nil,
-		args:        []string{"+test"},
+		args:        []string{"test"},
 		check:       isError(`had trouble getting the "test" group`),
-	},
-
-	{
-		description: "removing an option from consideration",
-		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test", "-one"},
-		check:       isResult(Selection, "*three*"),
-	},
-
-	{
-		description: "removing an option that does not exist",
-		store:       mockStore{"test": {"three", "two", "one"}},
-		args:        []string{"+test", "-four"},
-		check:       isError(`"four" wasn't available for me to remove`),
-	},
-
-	// Multiple selections
-
-	{
-		description: "choosing multiple options (prefixed flag)",
-		args:        []string{"/n", "2", "one", "two", "three", "four"},
-		check:       isResult(Selection, "*four*", "*one*"),
-	},
-
-	{
-		description: "choosing multiple options (postfixed flag)",
-		args:        []string{"one", "two", "three", "four", "/n", "2"},
-		check:       isResult(Selection, "*four*", "*one*"),
-	},
-
-	{
-		description: "choosing all options",
-		args:        []string{"/n", "all", "one", "two", "three", "four"},
-		check:       isResult(Selection, "*four*", "*one*", "*three*", "*two*"),
-	},
-
-	{
-		description: "choosing too few options",
-		args:        []string{"/n", "0", "one", "two"},
-		check:       isError("can't pick less than one option"),
-	},
-
-	{
-		description: "choosing too many options",
-		args:        []string{"/n", "3", "one", "two"},
-		check:       isError("can't pick more options than I was given"),
-	},
-
-	{
-		description: "non-integer options count",
-		args:        []string{"/n", "2.1", "one", "two"},
-		check:       isError("isn't a valid count"),
-	},
-
-	{
-		description: "invalid options count",
-		args:        []string{"/n", "wat", "one", "two"},
-		check:       isError("isn't a valid count"),
-	},
-
-	{
-		description: "no options count provided",
-		args:        []string{"one", "two", "/n"},
-		check:       isError("requires an argument"),
 	},
 
 	// Group CRUD operations
@@ -213,17 +132,6 @@ var testCases = []struct {
 	},
 
 	{
-		description: "saving a group with expanded arguments",
-		store:       mockStore{"test": {"one", "two"}},
-		args:        []string{"/save", "new", "+test", "three"},
-		check:       isResult(SavedGroup, `The "new" group was saved`, "• one", "• three", "• two"),
-		expectedStore: mockStore{
-			"test": {"one", "two"},
-			"new":  {"one", "three", "two"},
-		},
-	},
-
-	{
 		description: "unable to save a group",
 		store:       nil,
 		args:        []string{"/save", "test", "one", "two"},
@@ -231,16 +139,16 @@ var testCases = []struct {
 	},
 
 	{
-		description: "unable to expand arguments when saving a group",
+		description: "saving a group with a flag name",
 		store:       mockStore{},
-		args:        []string{"/save", "new", "+test", "three"},
-		check:       isError(`couldn't find the "test" group`),
+		args:        []string{"/save", "/delete", "one", "two"},
+		check:       isError("has a special meaning"),
 	},
 
 	{
-		description: "no options provided to save",
+		description: "not enough options provided to save",
 		store:       mockStore{},
-		args:        []string{"/save", "test"},
+		args:        []string{"/save", "test", "one"},
 		check:       isError("need at least two options"),
 	},
 
@@ -288,23 +196,9 @@ var testCases = []struct {
 	},
 
 	{
-		description: "help in a category",
-		args:        []string{"/help", "groups"},
-		check:       isResult(ShowedHelp, "lets you save *groups*"),
-	},
-
-	{
 		description: "help as an option to be randomized",
 		args:        []string{"help", "me"},
 		check:       isResult(Selection, "*help*"),
-	},
-
-	// Invalid operations
-
-	{
-		description: "using an invalid operation flag",
-		args:        []string{"/svae", "group", "one", "two"},
-		check:       isError("isn't a valid flag"),
 	},
 }
 
