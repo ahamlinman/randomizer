@@ -51,8 +51,8 @@ build () (
   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
     -ldflags='-s -w' \
-    -o dist/slack-lambda-handler \
-    ../cmd/slack-lambda-handler
+    -o dist/randomizer-lambda \
+    ../cmd/randomizer-lambda
 )
 
 package () (

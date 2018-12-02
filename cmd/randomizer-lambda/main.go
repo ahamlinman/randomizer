@@ -1,4 +1,4 @@
-package main // import "go.alexhamlin.co/randomizer/cmd/slack-lambda-handler"
+package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-lambda"
 
 import (
 	"fmt"

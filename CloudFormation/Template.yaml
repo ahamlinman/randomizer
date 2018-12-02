@@ -30,7 +30,7 @@ Resources:
       Description: A randomizer slash command for Slack, with support for saving groups and more
       Runtime: go1.x
       CodeUri: ./dist
-      Handler: slack-lambda-handler
+      Handler: randomizer-lambda
       Environment:
         Variables:
           SLACK_TOKEN: !Ref SlackToken
