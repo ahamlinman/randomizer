@@ -2,13 +2,13 @@ package slack // import "go.alexhamlin.co/randomizer/pkg/slack"
 
 import (
 	"crypto/subtle"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/pkg/errors"
 	"go.alexhamlin.co/randomizer/pkg/randomizer"
 	"go.alexhamlin.co/randomizer/pkg/store"
 )
@@ -34,48 +34,100 @@ type App struct {
 // slash command is invoked. (The HTTP method used by Slack can be selected
 // when configuring the slash command.)
 func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var params url.Values
-	if r.Method == "POST" {
-		if err := r.ParseForm(); err != nil {
-			a.log("Bad POST form data: %v\n", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		params = r.PostForm
-	} else {
-		params = r.URL.Query()
+	params, err := a.getRequestParams(r)
+	if err != nil {
+		a.log("Failed to get request params: %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	// This function "[requires] careful thought to use correctly." So hopefully
-	// I managed to do that.
-	if subtle.ConstantTimeCompare(a.Token, []byte(params.Get("token"))) != 1 {
+	if !a.hasValidToken(params) {
 		a.log("Invalid token in request\n")
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	if params.Get("ssl_check") == "1" {
+	if a.isSSLCheck(params) {
 		a.log("Handled SSL check\n")
 		return
 	}
 
-	// From now on, we're going to return JSON no matter what.
-	w.Header().Add("Content-Type", "application/json")
+	a.serveRandomizer(w, params)
+}
 
-	app := randomizer.NewApp(a.Name, a.StoreFactory(params.Get("channel_id")))
-	result, err := app.Main(strings.Split(params.Get("text"), " "))
+func (a App) getRequestParams(r *http.Request) (url.Values, error) {
+	switch r.Method {
+	case http.MethodPost:
+		// This implicitly assumes an application/x-www-form-urlencoded body, per
+		// https://api.slack.com/slash-commands#app_command_handling.
+		err := r.ParseForm()
+		return r.PostForm, errors.Wrap(err, "reading POST form data")
+
+	case http.MethodGet:
+		return r.URL.Query(), nil
+	}
+
+	return nil, errors.Errorf("unsupported method %v", r.Method)
+}
+
+func (a App) hasValidToken(params url.Values) bool {
+	token := params.Get("token")
+
+	// This function "[requires] careful thought to use correctly." Hopefully
+	// I've managed to do that.
+	return subtle.ConstantTimeCompare(a.Token, []byte(token)) == 1
+}
+
+func (a App) isSSLCheck(params url.Values) bool {
+	return params.Get("ssl_check") == "1"
+}
+
+func (a App) serveRandomizer(w http.ResponseWriter, params url.Values) {
+	result, err := a.runRandomizer(params)
 	if err != nil {
-		a.log("Error from randomizer: %v\n", err.(randomizer.Error).Cause())
-		response{typeEphemeral, err.(randomizer.Error).HelpText()}.Send(w)
+		a.log("Error from randomizer: %v\n", err)
+		a.writeError(w, err)
 		return
 	}
 
-	switch result.Type() {
-	case randomizer.ShowedHelp, randomizer.ListedGroups, randomizer.ShowedGroup:
-		response{typeEphemeral, result.Message()}.Send(w)
+	a.writeResult(w, result)
+}
 
-	default:
-		response{typeInChannel, result.Message()}.Send(w)
+func (a App) runRandomizer(params url.Values) (randomizer.Result, error) {
+	channelID := params.Get("channel_id")
+	app := randomizer.NewApp(a.Name, a.StoreFactory(channelID))
+
+	args := strings.Split(params.Get("text"), " ")
+	return app.Main(args)
+}
+
+func (a App) writeResult(w http.ResponseWriter, result randomizer.Result) {
+	a.writeResponse(w, response{
+		Text: result.Message(),
+		Type: slackTypeForResultType[result.Type()],
+	})
+}
+
+var slackTypeForResultType = map[randomizer.ResultType]responseType{
+	randomizer.Selection:    typeInChannel,
+	randomizer.SavedGroup:   typeInChannel,
+	randomizer.DeletedGroup: typeInChannel,
+	// Default to typeEphemeral for everything else, to keep channels clean.
+}
+
+func (a App) writeError(w http.ResponseWriter, err error) {
+	a.writeResponse(w, response{
+		Text: err.(randomizer.Error).HelpText(),
+		Type: typeEphemeral,
+	})
+}
+
+func (a App) writeResponse(w http.ResponseWriter, response response) {
+	w.Header().Add("Content-Type", "application/json")
+
+	_, err := response.WriteTo(w)
+	if err != nil {
+		a.log("Error writing response: %v\n", err)
 	}
 }
 
@@ -85,36 +137,4 @@ func (a App) log(format string, v ...interface{}) {
 	}
 
 	fmt.Fprintf(a.DebugWriter, format, v...)
-}
-
-type responseType int
-
-const (
-	typeEphemeral responseType = iota + 1
-	typeInChannel
-)
-
-func (t responseType) MarshalText() ([]byte, error) {
-	switch t {
-	case typeEphemeral:
-		return []byte("ephemeral"), nil
-
-	case typeInChannel:
-		return []byte("in_channel"), nil
-	}
-
-	panic(fmt.Errorf("unknown response type code %v", t))
-}
-
-type response struct {
-	Type responseType `json:"response_type"`
-	Text string       `json:"text"`
-}
-
-func (r response) Send(w io.Writer) {
-	if r == (response{}) {
-		return
-	}
-
-	json.NewEncoder(w).Encode(&r)
 }
