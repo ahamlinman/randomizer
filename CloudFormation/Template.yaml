@@ -7,14 +7,6 @@ Parameters:
   SlackToken:
     Description: The authentication token created by Slack for the slash command
     Type: String
-  ReadCapacityUnits:
-    Description: The number of read capacity units to set on the DynamoDB table
-    Type: Number
-    Default: '10'
-  WriteCapacityUnits:
-    Description: The number of write capacity units to set on the DynamoDB table
-    Type: Number
-    Default: '10'
 
 Resources:
   GroupsTable:
@@ -30,9 +22,7 @@ Resources:
           AttributeType: S
         - AttributeName: Group
           AttributeType: S
-      ProvisionedThroughput:
-        ReadCapacityUnits: !Ref ReadCapacityUnits
-        WriteCapacityUnits: !Ref WriteCapacityUnits
+      BillingMode: PAY_PER_REQUEST
 
   LambdaFunction:
     Type: AWS::Serverless::Function

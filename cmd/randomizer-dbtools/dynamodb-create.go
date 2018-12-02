@@ -14,8 +14,9 @@ var dynamoCreateCmd = &cobra.Command{
 	Long: `Create a DynamoDB table with the randomizer schema.
 
 Note that a successful exit only means that DynamoDB has received the request
-to provision the table. The table itself may still take some time to create
-before it can be used.`,
+to create the table. It may take some time for the table to become usable.
+
+This tool does not support DynamoDB's on-demand capacity mode.`,
 	Run: runDynamoDBCreate,
 }
 
@@ -27,13 +28,13 @@ var (
 func init() {
 	dynamoCreateCmd.Flags().Int64VarP(
 		&createReadCap,
-		"readcap", "r", 10,
+		"readcap", "r", 1,
 		"number of read capacity units to provision",
 	)
 
 	dynamoCreateCmd.Flags().Int64VarP(
 		&createWriteCap,
-		"writecap", "w", 10,
+		"writecap", "w", 1,
 		"number of write capacity units to provision",
 	)
 
