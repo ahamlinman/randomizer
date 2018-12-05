@@ -1,4 +1,4 @@
-package randomizer // import "go.alexhamlin.co/randomizer/pkg/randomizer"
+package randomizer // import "go.alexhamlin.co/randomizer/internal/randomizer"
 
 import "fmt"
 

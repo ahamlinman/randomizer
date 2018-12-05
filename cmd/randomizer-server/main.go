@@ -12,8 +12,8 @@ import (
 	"net/http"
 	"os"
 
-	"go.alexhamlin.co/randomizer/pkg/slack"
-	"go.alexhamlin.co/randomizer/pkg/store"
+	"go.alexhamlin.co/randomizer/internal/slack"
+	"go.alexhamlin.co/randomizer/internal/store"
 )
 
 func main() {

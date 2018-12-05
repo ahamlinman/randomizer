@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/handlerfunc"
 
-	"go.alexhamlin.co/randomizer/pkg/slack"
-	"go.alexhamlin.co/randomizer/pkg/store/dynamodb"
+	"go.alexhamlin.co/randomizer/internal/slack"
+	"go.alexhamlin.co/randomizer/internal/store/dynamodb"
 )
 
 func main() {

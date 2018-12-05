@@ -1,11 +1,11 @@
-package store // import "go.alexhamlin.co/randomizer/pkg/store"
+package store // import "go.alexhamlin.co/randomizer/internal/store"
 
 import (
 	"os"
 
-	"go.alexhamlin.co/randomizer/pkg/randomizer"
-	boltstore "go.alexhamlin.co/randomizer/pkg/store/bbolt"
-	dynamostore "go.alexhamlin.co/randomizer/pkg/store/dynamodb"
+	"go.alexhamlin.co/randomizer/internal/randomizer"
+	"go.alexhamlin.co/randomizer/internal/store/bbolt"
+	"go.alexhamlin.co/randomizer/internal/store/dynamodb"
 )
 
 // Factory represents a type for functions that produce a store for the
@@ -31,10 +31,10 @@ type Factory func(partition string) randomizer.Store
 // https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html.
 func FactoryFromEnv() (func(string) randomizer.Store, error) {
 	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
-		return dynamostore.FactoryFromEnv()
+		return dynamodb.FactoryFromEnv()
 	}
 
-	return boltstore.FactoryFromEnv()
+	return bbolt.FactoryFromEnv()
 }
 
 func envHasAny(names ...string) bool {

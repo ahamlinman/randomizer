@@ -1,4 +1,4 @@
-package slack // import "go.alexhamlin.co/randomizer/pkg/slack"
+package slack // import "go.alexhamlin.co/randomizer/internal/slack"
 
 import (
 	"crypto/subtle"
@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"go.alexhamlin.co/randomizer/pkg/randomizer"
-	"go.alexhamlin.co/randomizer/pkg/store"
+	"go.alexhamlin.co/randomizer/internal/randomizer"
+	"go.alexhamlin.co/randomizer/internal/store"
 )
 
 // App provides HTTP handling logic that allows the randomizer to be integrated

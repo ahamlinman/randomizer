@@ -5,7 +5,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
-	"go.alexhamlin.co/randomizer/pkg/randomizer"
+	"go.alexhamlin.co/randomizer/internal/randomizer"
 )
 
 // FactoryFromEnv returns a function that can return individual randomizer

@@ -7,7 +7,7 @@ COPY go.mod go.sum /tmp/randomizer/
 RUN go mod download
 
 COPY cmd/ /tmp/randomizer/cmd/
-COPY pkg/ /tmp/randomizer/pkg/
+COPY internal/ /tmp/randomizer/internal/
 RUN go install -mod=readonly -ldflags="-s -w" -v ./cmd/randomizer-server
 
 

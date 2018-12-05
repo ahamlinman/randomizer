@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/pkg/errors"
 
-	"go.alexhamlin.co/randomizer/pkg/randomizer"
+	"go.alexhamlin.co/randomizer/internal/randomizer"
 )
 
 // FactoryFromEnv returns a function that can return individual randomizer
