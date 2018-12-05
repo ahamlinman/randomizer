@@ -15,7 +15,7 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/handlerfunc"
 
 	"go.alexhamlin.co/randomizer/pkg/slack"
-	"go.alexhamlin.co/randomizer/pkg/store"
+	"go.alexhamlin.co/randomizer/pkg/store/dynamodb"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	storeFactory, err := store.DynamoDBFactoryFromEnv(os.Stderr)
+	storeFactory, err := dynamodb.FactoryFromEnv()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
 		os.Exit(2)
