@@ -49,7 +49,7 @@ func (a App) expandGroup(group string) ([]string, error) {
 
 	if len(expansion) == 0 {
 		return nil, Error{
-			cause: errors.New("group not found"),
+			cause: errors.Errorf("group %q not found", group),
 			helpText: fmt.Sprintf(
 				`Whoops, I couldn't find the %q group in this channel. (Type "%s help" to learn more about groups!)`,
 				group,
