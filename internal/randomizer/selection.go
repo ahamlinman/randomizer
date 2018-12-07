@@ -15,7 +15,7 @@ func (a App) makeSelection(request request) (Result, error) {
 	if len(options) < 2 {
 		return Result{}, Error{
 			cause:    errors.New("too few options"),
-			helpText: "Whoops, I need at least two options to pick from!",
+			helpText: "Whoops, I need at least two options to pick from, or the name of a group!",
 		}
 	}
 
