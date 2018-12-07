@@ -97,7 +97,7 @@ func (a App) runRandomizer(params url.Values) (randomizer.Result, error) {
 	)
 	app := randomizer.NewApp(name, a.StoreFactory(channelID))
 
-	args := strings.Split(params.Get("text"), " ")
+	args := strings.Fields(params.Get("text"))
 	return app.Main(args)
 }
 
