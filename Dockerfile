@@ -4,11 +4,10 @@ WORKDIR /tmp/randomizer
 ENV CGO_ENABLED=0
 
 COPY go.mod go.sum /tmp/randomizer/
-RUN go mod download
-
+COPY vendor/ /tmp/randomizer/vendor/
 COPY cmd/ /tmp/randomizer/cmd/
 COPY internal/ /tmp/randomizer/internal/
-RUN go install -mod=readonly -ldflags="-s -w" -v ./cmd/randomizer-server
+RUN go install -mod=vendor -ldflags="-s -w" -v ./cmd/randomizer-server
 
 
 FROM alpine:latest
