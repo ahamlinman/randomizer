@@ -3,6 +3,7 @@ package randomizer
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -68,9 +69,9 @@ func (a App) saveGroup(request request) (Result, error) {
 	name := request.Operand
 	options := request.Args
 
-	if isFlag(name) {
+	if isForbiddenGroupName(name) {
 		return Result{}, Error{
-			cause: errors.New("used operation as group name"),
+			cause: errors.Errorf("saving with forbidden group name %q", name),
 			helpText: fmt.Sprintf(
 				`Whoops, %q has a special meaning and can't be used as a group name. (Type "%s help" to learn more!)`,
 				name,
@@ -103,6 +104,11 @@ func (a App) saveGroup(request request) (Result, error) {
 			bulletize(options),
 		),
 	}, nil
+}
+
+func isForbiddenGroupName(name string) bool {
+	// Keep "/" reserved as a prefix for future flags.
+	return isFlag(name) || strings.HasPrefix(name, "/")
 }
 
 func (a App) deleteGroup(request request) (Result, error) {
