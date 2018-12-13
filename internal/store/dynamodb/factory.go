@@ -13,9 +13,11 @@ import (
 	"go.alexhamlin.co/randomizer/internal/randomizer"
 )
 
-// FactoryFromEnv returns a function that can return individual randomizer
-// stores backed by DynamoDB. See the "store" package documentation for
-// details.
+// FactoryFromEnv returns a store.Factory whose stores are backed by Amazon
+// DynamoDB.
+//
+// AWS configuration is read as described at
+// https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html.
 func FactoryFromEnv() (func(string) randomizer.Store, error) {
 	cfg, err := awsConfigFromEnv()
 	if err != nil {

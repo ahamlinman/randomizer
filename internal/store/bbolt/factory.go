@@ -8,9 +8,8 @@ import (
 	"go.alexhamlin.co/randomizer/internal/randomizer"
 )
 
-// FactoryFromEnv returns a function that can return individual randomizer
-// stores backed by a local Bolt database. See the "store" package
-// documentation for details.
+// FactoryFromEnv returns a store.Factory whose stores are backed by a local
+// Bolt database (using the CoreOS "bbolt" fork).
 func FactoryFromEnv() (func(string) randomizer.Store, error) {
 	path := pathFromEnv()
 

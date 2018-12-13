@@ -16,19 +16,8 @@ import (
 type Factory func(partition string) randomizer.Store
 
 // FactoryFromEnv constructs and returns a Factory based on available
-// environment variables.
-//
-// By default, a store backed by a local Bolt database (using the CoreOS
-// "bbolt" fork) is returned, using the database file from the DB_PATH
-// environment variable. If this variable is unset, the file "randomizer.db" in
-// the current directory will be used. The database file is automatically
-// created if it does not yet exist.
-//
-// If the DYNAMODB, DYNAMODB_TABLE, or DYNAMODB_ENDPOINT environment variables
-// are set, a store backed by an Amazon DynamoDB table is returned.
-// Requirements for the table are described by the dynamodb package in this
-// module. AWS configuration is read as described at
-// https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html.
+// environment variables. It delegates to more specific store implementations
+// as appropriate.
 func FactoryFromEnv() (func(string) randomizer.Store, error) {
 	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
 		return dynamodb.FactoryFromEnv()
