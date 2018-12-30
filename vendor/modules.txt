@@ -1,4 +1,4 @@
-# github.com/aws/aws-lambda-go v1.6.0
+# github.com/aws/aws-lambda-go v1.8.0
 github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/messages
@@ -25,10 +25,10 @@ github.com/aws/aws-sdk-go-v2/private/protocol/rest
 github.com/aws/aws-sdk-go-v2/private/protocol/json/jsonutil
 github.com/aws/aws-sdk-go-v2/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go-v2/private/protocol/xml/xmlutil
-# github.com/awslabs/aws-lambda-go-api-proxy v0.0.0-20180713153304-3a4d35011e4a
+# github.com/awslabs/aws-lambda-go-api-proxy v0.2.0
 github.com/awslabs/aws-lambda-go-api-proxy/handlerfunc
 github.com/awslabs/aws-lambda-go-api-proxy/core
-# github.com/go-ini/ini v1.38.2
+# github.com/go-ini/ini v1.40.0
 github.com/go-ini/ini
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
@@ -38,9 +38,9 @@ github.com/jmespath/go-jmespath
 github.com/pkg/errors
 # github.com/spf13/cobra v0.0.3
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.2
+# github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
 # go.etcd.io/bbolt v1.3.1-etcd.7
 go.etcd.io/bbolt
-# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
+# golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb
 golang.org/x/sys/unix
