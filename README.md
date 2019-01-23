@@ -86,7 +86,7 @@ Topics not covered by these brief notes include:
 * Proper service management, whether through Docker, a container orchestrator
   (Docker Swarm, Kubernetes, etc.), or a more traditional service manager
   (systemd, etc.)
-* Setting up a reverse proxy to provdie SSL termination for the randomizer API,
+* Setting up a reverse proxy to provide SSL termination for the randomizer API,
   should you desire this (hint: you very much should)
 * The specifics of DynamoDB table creation / IAM configuration, should you wish
   to use DynamoDB
