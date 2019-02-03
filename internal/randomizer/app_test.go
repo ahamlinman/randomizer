@@ -40,7 +40,7 @@ var testCases = []struct {
 	{
 		description: "providing no options",
 		args:        []string{},
-		check:       isError("need at least two options"),
+		check:       isResult(ShowedHelp),
 	},
 
 	{

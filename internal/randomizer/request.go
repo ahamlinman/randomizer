@@ -32,9 +32,34 @@ func (a App) newRequestFromArgs(args []string) (request, error) {
 }
 
 func (r *request) populateFromArgs(args []string) error {
+	if isHelpRequest(args) {
+		r.Operation = showHelp
+		return nil
+	}
+
 	rest, err := r.consumeFlagIfPresent(args)
 	r.Args = rest
 	return err
+}
+
+func isHelpRequest(args []string) bool {
+	// Show the help message if...
+	switch {
+	// ...the user doesn't know how to ask for help...
+	case len(args) == 0:
+		return true
+
+	// ...or doesn't yet know the flag syntax ("/" prefix)...
+	case len(args) == 1 && args[0] == "help":
+		return true
+
+	// ...or actually asks for it directly.
+	case args[0] == "/help":
+		return true
+
+	default:
+		return false
+	}
 }
 
 func (r *request) consumeFlagIfPresent(args []string) (rest []string, err error) {
@@ -65,26 +90,10 @@ func (r *request) consumeFlag(args []string) (rest []string, err error) {
 type flagHandler func(r *request, args []string) (argsConsumed int, err error)
 
 var flagHandlers = map[string]flagHandler{
-	// As a special case, show the help message if "help" is the only argument
-	// provided by the user (in case they don't yet know the flag syntax)
-	"help":  (*request).parseHelp,
-	"/help": (*request).parseHelp,
-
 	"/list":   (*request).parseList,
 	"/show":   (*request).parseShow,
 	"/save":   (*request).parseSave,
 	"/delete": (*request).parseDelete,
-}
-
-func (r *request) parseHelp(args []string) (int, error) {
-	if args[0] == "help" && len(args) > 1 {
-		// If "help" isn't the only argument given, treat it as a normal option to
-		// be randomized
-		return 0, nil
-	}
-
-	r.Operation = showHelp
-	return 1, nil
 }
 
 func (r *request) parseList(_ []string) (int, error) {
