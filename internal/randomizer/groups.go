@@ -107,8 +107,9 @@ func (a App) saveGroup(request request) (Result, error) {
 }
 
 func isForbiddenGroupName(name string) bool {
-	// Keep "/" reserved as a prefix for future flags.
-	return isFlag(name) || strings.HasPrefix(name, "/")
+	// Keep "/" reserved as a prefix for flags. Also block "help," as it has
+	// special handling.
+	return name == "help" || strings.HasPrefix(name, "/")
 }
 
 func (a App) deleteGroup(request request) (Result, error) {

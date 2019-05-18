@@ -50,6 +50,7 @@ func isHelpRequest(args []string) bool {
 		return true
 
 	// ...or doesn't yet know the flag syntax ("/" prefix)...
+	// (note that we have special-case logic to block "help" as a group name)
 	case len(args) == 1 && args[0] == "help":
 		return true
 
