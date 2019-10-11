@@ -77,9 +77,9 @@ The following environment variables are required:
      [here][AWS vars]
 
 To get the API server binary, run `go build ./cmd/randomizer-server`. You can
-also run the pre-built Docker image: `docker.alexhamlin.co/go/randomizer`. By
-default, the server listens on port 7636; this can be changed with a command
-line flag. Run the server with `-help` for more details.
+also run the pre-built Docker image: `ahamlinman/randomizer`. By default, the
+server listens on port 7636; this can be changed with a command line flag. Run
+the server with `-help` for more details.
 
 Topics not covered by these brief notes include:
 
