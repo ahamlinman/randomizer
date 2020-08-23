@@ -21,12 +21,9 @@ import (
 
 // CustomHostVariable is the name of the environment variable that contains
 // the custom hostname for the request. If this variable is not set the framework
-// reverts to `DefaultServerAddress`. The value for a custom host should include
-// a protocol: http://my-custom.host.com
+// reverts to `RequestContext.DomainName`. The value for a custom host should
+// include a protocol: http://my-custom.host.com
 const CustomHostVariable = "GO_API_HOST"
-
-// DefaultServerAddress is prepended to the path of each incoming reuqest
-const DefaultServerAddress = "https://aws-serverless-go-api.com"
 
 // APIGwContextHeader is the custom header key used to store the
 // API Gateway context. To access the Context properties use the
@@ -149,7 +146,7 @@ func (r *RequestAccessor) EventToRequest(req events.APIGatewayProxyRequest) (*ht
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
-	serverAddress := DefaultServerAddress
+	serverAddress := "https://" + req.RequestContext.DomainName
 	if customAddress, ok := os.LookupEnv(CustomHostVariable); ok {
 		serverAddress = customAddress
 	}
@@ -166,6 +163,17 @@ func (r *RequestAccessor) EventToRequest(req events.APIGatewayProxyRequest) (*ht
 			}
 		}
 		path += "?" + queryString
+	} else if len(req.QueryStringParameters) > 0 {
+		// Support `QueryStringParameters` for backward compatibility.
+		// https://github.com/awslabs/aws-lambda-go-api-proxy/issues/37
+		queryString := ""
+		for q := range req.QueryStringParameters {
+			if queryString != "" {
+				queryString += "&"
+			}
+			queryString += url.QueryEscape(q) + "=" + url.QueryEscape(req.QueryStringParameters[q])
+		}
+		path += "?" + queryString
 	}
 
 	httpRequest, err := http.NewRequest(
@@ -179,9 +187,21 @@ func (r *RequestAccessor) EventToRequest(req events.APIGatewayProxyRequest) (*ht
 		log.Println(err)
 		return nil, err
 	}
-	for h := range req.Headers {
-		httpRequest.Header.Add(h, req.Headers[h])
+
+	if req.MultiValueHeaders != nil {
+		for k, values := range req.MultiValueHeaders {
+			for _, value := range values {
+				httpRequest.Header.Add(k, value)
+			}
+		}
+	} else {
+		for h := range req.Headers {
+			httpRequest.Header.Add(h, req.Headers[h])
+		}
 	}
+
+	httpRequest.RequestURI = httpRequest.URL.RequestURI()
+
 	return httpRequest, nil
 }
 
@@ -204,7 +224,7 @@ func addToHeader(req *http.Request, apiGwRequest events.APIGatewayProxyRequest) 
 func addToContext(ctx context.Context, req *http.Request, apiGwRequest events.APIGatewayProxyRequest) *http.Request {
 	lc, _ := lambdacontext.FromContext(ctx)
 	rc := requestContext{lambdaContext: lc, gatewayProxyContext: apiGwRequest.RequestContext, stageVars: apiGwRequest.StageVariables}
-	ctx = context.WithValue(req.Context(), ctxKey{}, rc)
+	ctx = context.WithValue(ctx, ctxKey{}, rc)
 	return req.WithContext(ctx)
 }
 

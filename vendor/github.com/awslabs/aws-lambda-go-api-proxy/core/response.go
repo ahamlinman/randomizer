@@ -18,9 +18,10 @@ const contentTypeHeaderKey = "Content-Type"
 // ProxyResponseWriter implements http.ResponseWriter and adds the method
 // necessary to return an events.APIGatewayProxyResponse object
 type ProxyResponseWriter struct {
-	headers http.Header
-	body    bytes.Buffer
-	status  int
+	headers   http.Header
+	body      bytes.Buffer
+	status    int
+	observers []chan<- bool
 }
 
 // NewProxyResponseWriter returns a new ProxyResponseWriter object.
@@ -28,10 +29,25 @@ type ProxyResponseWriter struct {
 // status code of -1
 func NewProxyResponseWriter() *ProxyResponseWriter {
 	return &ProxyResponseWriter{
-		headers: make(http.Header),
-		status:  defaultStatusCode,
+		headers:   make(http.Header),
+		status:    defaultStatusCode,
+		observers: make([]chan<- bool, 0),
 	}
 
+}
+
+func (r *ProxyResponseWriter) CloseNotify() <-chan bool {
+	ch := make(chan bool)
+
+	r.observers = append(r.observers, ch)
+
+	return ch
+}
+
+func (r *ProxyResponseWriter) notifyClosed() {
+	for _, v := range r.observers {
+		v <- true
+	}
 }
 
 // Header implementation from the http.ResponseWriter interface.
@@ -43,7 +59,7 @@ func (r *ProxyResponseWriter) Header() http.Header {
 // was set before with the WriteHeader method it sets the status
 // for the response to 200 OK.
 func (r *ProxyResponseWriter) Write(body []byte) (int, error) {
-	if r.status == -1 {
+	if r.status == defaultStatusCode {
 		r.status = http.StatusOK
 	}
 
@@ -69,6 +85,8 @@ func (r *ProxyResponseWriter) WriteHeader(status int) {
 // Returns a populated proxy response object. If the response is invalid, for example
 // has no headers or an invalid status code returns an error.
 func (r *ProxyResponseWriter) GetProxyResponse() (events.APIGatewayProxyResponse, error) {
+	r.notifyClosed()
+
 	if r.status == defaultStatusCode {
 		return events.APIGatewayProxyResponse{}, errors.New("Status code not set on response")
 	}
@@ -85,8 +103,15 @@ func (r *ProxyResponseWriter) GetProxyResponse() (events.APIGatewayProxyResponse
 		isBase64 = true
 	}
 
+	proxyHeaders := make(map[string]string)
+
+	for h := range r.headers {
+		proxyHeaders[h] = r.headers.Get(h)
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode:        r.status,
+		Headers:           proxyHeaders,
 		MultiValueHeaders: http.Header(r.headers),
 		Body:              output,
 		IsBase64Encoded:   isBase64,
