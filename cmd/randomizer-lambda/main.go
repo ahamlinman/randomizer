@@ -4,7 +4,7 @@ The randomizer-lambda command provides an AWS Lambda handler for the randomizer
 as a Slack Slash Command, using Amazon API Gateway's proxy mode.
 
 */
-package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-lambda"
+package main
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package slack // import "go.alexhamlin.co/randomizer/internal/slack"
+package slack
 
 import (
 	"crypto/subtle"

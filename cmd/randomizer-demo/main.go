@@ -6,7 +6,7 @@ functionality before deploying it into a Slack workspace.
 CLI arguments are passed directly to the randomizer app.
 
 */
-package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-demo"
+package main
 
 import (
 	"fmt"

@@ -4,7 +4,7 @@ The randomizer-server command starts a web server that accepts Slack Slash
 Command API requests and runs the randomizer in response.
 
 */
-package main // import "go.alexhamlin.co/randomizer/cmd/randomizer-server"
+package main
 
 import (
 	"flag"

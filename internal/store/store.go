@@ -1,4 +1,4 @@
-package store // import "go.alexhamlin.co/randomizer/internal/store"
+package store
 
 import (
 	"os"
