@@ -49,10 +49,18 @@ build () (
 
   mkdir -p dist
   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build \
+    go build -v \
     -ldflags='-s -w' \
     -o dist/randomizer-lambda \
     ../cmd/randomizer-lambda
+
+  if type strip; then
+    strip dist/randomizer-lambda
+  fi
+
+  if type upx; then
+    upx dist/randomizer-lambda
+  fi
 )
 
 package () (
