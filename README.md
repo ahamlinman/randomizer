@@ -5,11 +5,11 @@ in a list.
 
 Not sure what to get for lunch?
 
-> **/randomize** burgers salad teriyaki
+> **/randomize** salad sandwich ramen
 
 Need a code review from a teammate?
 
-> **/randomize /save** myteam Alice Bob Charlie Dave Eve
+> **/randomize /save** myteam Alice Bob Carol Dave Eve
 >
 > **/randomize** myteam
 
@@ -17,11 +17,9 @@ Whenever you're unsure, let the universe decide!
 
 ## Try the Demo
 
-You'll need the [Go][go] toolchain installed to try the demo
-program.
+You'll need the [Go][go] toolchain installed to try the demo program.
 
-1. Clone this repository: `go get go.alexhamlin.co/randomizer`. (Or, with Go
-   1.11+, just `git clone` to any location.)
+1. Clone this repository and `cd` into it
 1. Build the demo: `go build ./cmd/randomizer-demo`
 1. See what to do next: `./randomizer-demo help`
 

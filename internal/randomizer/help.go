@@ -26,7 +26,7 @@ var helpMessageTemplate = template.Must(template.New("").Parse(
 
 If you use a set of options a lot, try saving them as a *group* in the current channel or DM!
 
-*Save a group:* {{.Name}} /save snacks chips pretzels jerky trailmix
+*Save a group:* {{.Name}} /save snacks chips pretzels trailmix
 *Use a group:* {{.Name}} snacks
 *List your current channel's groups:* {{.Name}} /list
 *Show the options in a group:* {{.Name}} /show snacks
