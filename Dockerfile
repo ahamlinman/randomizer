@@ -1,13 +1,15 @@
-FROM golang:1.13 AS builder
+FROM golang:1.15-alpine AS builder
 
 WORKDIR /tmp/randomizer
-ENV CGO_ENABLED=0
 
-COPY go.mod go.sum /tmp/randomizer/
-COPY vendor/ /tmp/randomizer/vendor/
-COPY cmd/ /tmp/randomizer/cmd/
-COPY internal/ /tmp/randomizer/internal/
-RUN go install -mod=vendor -ldflags="-s -w" -v ./cmd/randomizer-server
+COPY go.mod go.sum ./
+COPY vendor/ ./vendor/
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+RUN go install -v \
+  -mod=vendor \
+  -ldflags="-s -w" \
+  ./cmd/randomizer-server
 
 
 FROM alpine:latest
