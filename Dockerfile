@@ -1,22 +1,28 @@
-FROM golang:1.15-alpine AS builder
-
+FROM --platform=$BUILDPLATFORM golang:1.15-alpine3.12 AS builder
 WORKDIR /tmp/randomizer
+
+ARG TARGETOS
+ARG TARGETARCH
+ENV CGO_ENABLED=0
+ENV GOOS=$TARGETOS
+ENV GOARCH=$TARGETARCH
 
 COPY go.mod go.sum ./
 COPY vendor/ ./vendor/
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
-RUN go install -v \
+
+RUN go build -v \
   -mod=vendor \
-  -ldflags="-s -w" \
+  -trimpath -ldflags="-s -w" \
   ./cmd/randomizer-server
 
 
-FROM alpine:latest
+FROM alpine:3.12
 
 EXPOSE 7636
 ENTRYPOINT ["/usr/local/bin/randomizer-server"]
 
 RUN apk add --no-cache ca-certificates
 
-COPY --from=builder /go/bin/randomizer-server /usr/local/bin/randomizer-server
+COPY --from=builder /tmp/randomizer/randomizer-server /usr/local/bin/randomizer-server
