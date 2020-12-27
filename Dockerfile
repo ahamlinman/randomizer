@@ -1,21 +1,15 @@
 FROM --platform=$BUILDPLATFORM golang:1.15-alpine3.12 AS builder
 WORKDIR /tmp/randomizer
 
-ARG TARGETOS
-ARG TARGETARCH
-ENV CGO_ENABLED=0
-ENV GOOS=$TARGETOS
-ENV GOARCH=$TARGETARCH
+ARG TARGETPLATFORM
+ENV TARGETPLATFORM=$TARGETPLATFORM
 
-COPY go.mod go.sum ./
+COPY build-internal.sh go.mod go.sum ./
 COPY vendor/ ./vendor/
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 
-RUN go build -v \
-  -mod=vendor \
-  -trimpath -ldflags="-s -w" \
-  ./cmd/randomizer-server
+RUN ./build-internal.sh
 
 
 FROM alpine:3.12
