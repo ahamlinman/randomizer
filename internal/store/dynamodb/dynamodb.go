@@ -3,6 +3,7 @@ package dynamodb
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
@@ -49,25 +50,28 @@ func New(db *dynamodb.Client, table, partition string) (Store, error) {
 	}, nil
 }
 
-var (
-	listKeyConditionExpression   = "#PART = :part"
-	listProjectionExpression     = "#GROUP"
-	listExpressionAttributeNames = map[string]string{
-		"#PART":  partitionKey,
-		"#GROUP": groupKey,
-	}
-)
-
 // List obtains the list of stored groups for this Store's partition.
 func (s Store) List() ([]string, error) {
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(
+			expression.KeyEqual(
+				expression.Key(partitionKey), expression.Value(s.partition),
+			),
+		).
+		WithProjection(expression.NamesList(
+			expression.Name(groupKey),
+		)).
+		Build()
+	if err != nil {
+		return nil, errors.Wrap(err, "building expression")
+	}
+
 	result, err := s.db.Query(context.TODO(), &dynamodb.QueryInput{
-		TableName:                &s.table,
-		KeyConditionExpression:   &listKeyConditionExpression,
-		ProjectionExpression:     &listProjectionExpression,
-		ExpressionAttributeNames: listExpressionAttributeNames,
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":part": &types.AttributeValueMemberS{Value: s.partition},
-		},
+		TableName:                 &s.table,
+		KeyConditionExpression:    expr.KeyCondition(),
+		ProjectionExpression:      expr.Projection(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "listing groups for %q from table %q", s.partition, s.table)
@@ -84,21 +88,25 @@ func (s Store) List() ([]string, error) {
 	return list, nil
 }
 
-var (
-	getProjectionExpression     = "#ITEMS"
-	getExpressionAttributeNames = map[string]string{"#ITEMS": itemsKey}
-)
-
 // Get obtains the options in a single named group from this Store's partition.
 func (s Store) Get(name string) ([]string, error) {
+	expr, err := expression.NewBuilder().
+		WithProjection(expression.NamesList(
+			expression.Name(itemsKey),
+		)).
+		Build()
+	if err != nil {
+		return nil, errors.Wrap(err, "building expression")
+	}
+
 	result, err := s.db.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: &s.table,
 		Key: map[string]types.AttributeValue{
 			partitionKey: &types.AttributeValueMemberS{Value: s.partition},
 			groupKey:     &types.AttributeValueMemberS{Value: name},
 		},
-		ProjectionExpression:     &getProjectionExpression,
-		ExpressionAttributeNames: getExpressionAttributeNames,
+		ProjectionExpression:     expr.Projection(),
+		ExpressionAttributeNames: expr.Names(),
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting %q for %q from table %q", name, s.partition, s.table)
