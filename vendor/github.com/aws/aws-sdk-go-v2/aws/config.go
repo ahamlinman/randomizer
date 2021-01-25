@@ -2,7 +2,17 @@ package aws
 
 import (
 	"net/http"
+
+	"github.com/aws/smithy-go/logging"
+	"github.com/aws/smithy-go/middleware"
 )
+
+// HTTPClient provides the interface to provide custom HTTPClients. Generally
+// *http.Client is sufficient for most use cases. The HTTPClient should not
+// follow redirects.
+type HTTPClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 // A Config provides service configuration for service clients.
 type Config struct {
@@ -20,66 +30,48 @@ type Config struct {
 	// variables, shared credential file, and EC2 Instance Roles.
 	Credentials CredentialsProvider
 
-	// The resolver to use for looking up endpoints for AWS service clients
-	// to use based on region.
+	// The HTTP Client the SDK's API clients will use to invoke HTTP requests.
+	// The SDK defaults to a BuildableClient allowing API clients to create
+	// copies of the HTTP Client for service specific customizations.
+	//
+	// Use a (*http.Client) for custom behavior. Using a custom http.Client
+	// will prevent the SDK from modifying the HTTP client.
+	HTTPClient HTTPClient
+
+	// An endpoint resolver that can be used to provide or override an endpoint for the given
+	// service and region Please see the `aws.EndpointResolver` documentation on usage.
 	EndpointResolver EndpointResolver
 
-	// The HTTP client to use when sending requests. Defaults to
-	// `http.DefaultClient`.
-	HTTPClient *http.Client
+	// Retryer is a function that provides a Retryer implementation. A Retryer guides how HTTP requests should be
+	// retried in case of recoverable failures. When nil the API client will use a default
+	// retryer.
+	//
+	// In general, the provider function should return a new instance of a Retyer if you are attempting
+	// to provide a consistent Retryer configuration across all clients. This will ensure that each client will be
+	// provided a new instance of the Retryer implementation, and will avoid issues such as sharing the same retry token
+	// bucket across services.
+	Retryer func() Retryer
 
-	// TODO document
-	Handlers Handlers
+	// ConfigSources are the sources that were used to construct the Config.
+	// Allows for additional configuration to be loaded by clients.
+	ConfigSources []interface{}
 
-	// Retryer guides how HTTP requests should be retried in case of
-	// recoverable failures.
-	//
-	// When nil or the value does not implement the request.Retryer interface,
-	// the client.DefaultRetryer will be used.
-	//
-	// When both Retryer and MaxRetries are non-nil, the former is used and
-	// the latter ignored.
-	//
-	// To set the Retryer field in a type-safe manner and with chaining, use
-	// the request.WithRetryer helper function:
-	//
-	//   cfg := request.WithRetryer(aws.NewConfig(), myRetryer)
-	Retryer Retryer
-
-	// An integer value representing the logging level. The default log level
-	// is zero (LogOff), which represents no logging. To enable logging set
-	// to a LogLevel Value.
-	LogLevel LogLevel
+	// APIOptions provides the set of middleware mutations modify how the API
+	// client requests will be handled. This is useful for adding additional
+	// tracing data to a request, or changing behavior of the SDK's client.
+	APIOptions []func(*middleware.Stack) error
 
 	// The logger writer interface to write logging messages to. Defaults to
-	// standard out.
-	Logger Logger
+	// standard error.
+	Logger logging.Logger
 
-	// EnforceShouldRetryCheck is used in the AfterRetryHandler to always call
-	// ShouldRetry regardless of whether or not if request.Retryable is set.
-	// This will utilize ShouldRetry method of custom retryers. If EnforceShouldRetryCheck
-	// is not set, then ShouldRetry will only be called if request.Retryable is nil.
-	// Proper handling of the request.Retryable field is important when setting this field.
+	// Configures the events that will be sent to the configured logger.
+	// This can be used to configure the logging of signing, retries, request, and responses
+	// of the SDK clients.
 	//
-	// TODO this config field is depercated and needs removed.
-	EnforceShouldRetryCheck bool
-
-	// DisableRestProtocolURICleaning will not clean the URL path when making
-	// rest protocol requests.  Will default to false. This would only be used
-	// for empty directory names in s3 requests.
-	//
-	// Example:
-	//    cfg, err := external.LoadDefaultAWSConfig()
-	//    cfg.DisableRestProtocolURICleaning = true
-	//
-	//    svc := s3.New(cfg)
-	//    out, err := svc.GetObject(&s3.GetObjectInput {
-	//    	Bucket: aws.String("bucketname"),
-	//    	Key: aws.String("//foo//bar//moo"),
-	//    })
-	//
-	// TODO need better way of representing support for this concept. Not on Config.
-	DisableRestProtocolURICleaning bool
+	// See the ClientLogMode type documentation for the complete set of logging modes and available
+	// configuration.
+	ClientLogMode ClientLogMode
 }
 
 // NewConfig returns a new Config pointer that can be chained with builder
@@ -92,7 +84,5 @@ func NewConfig() *Config {
 // configurations are provided they will be merged into the new config returned.
 func (c Config) Copy() Config {
 	cp := c
-	cp.Handlers = cp.Handlers.Copy()
-
 	return cp
 }

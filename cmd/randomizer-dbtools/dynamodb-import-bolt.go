@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	bolt "go.etcd.io/bbolt"
@@ -45,7 +47,7 @@ func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
 
 	dynamoDB := getDynamoDB()
 
-	writeRequests := make([]dynamodb.WriteRequest, 0)
+	writeRequests := make([]types.WriteRequest, 0)
 	err = boltDB.View(func(tx *bolt.Tx) error {
 		return tx.ForEach(func(partition []byte, b *bolt.Bucket) error {
 			return b.ForEach(func(group, itemsGob []byte) error {
@@ -60,12 +62,12 @@ func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
 					return errors.Wrapf(err, "decoding items for %q in %q", groupStr, partitionStr)
 				}
 
-				writeRequests = append(writeRequests, dynamodb.WriteRequest{
-					PutRequest: &dynamodb.PutRequest{
-						Item: map[string]dynamodb.AttributeValue{
-							"Partition": {S: &partitionStr},
-							"Group":     {S: &groupStr},
-							"Items":     {SS: items},
+				writeRequests = append(writeRequests, types.WriteRequest{
+					PutRequest: &types.PutRequest{
+						Item: map[string]types.AttributeValue{
+							"Partition": &types.AttributeValueMemberS{Value: partitionStr},
+							"Group":     &types.AttributeValueMemberS{Value: groupStr},
+							"Items":     &types.AttributeValueMemberSS{Value: items},
 						},
 					},
 				})
@@ -79,12 +81,11 @@ func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	input := dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]dynamodb.WriteRequest{
+	_, err = dynamoDB.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
 			dynamoDBTable: writeRequests,
 		},
-	}
-	_, err = dynamoDB.BatchWriteItemRequest(&input).Send()
+	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not write to DynamoDB: %v\n", err)
 		os.Exit(1)

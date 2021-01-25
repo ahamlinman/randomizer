@@ -1,12 +1,14 @@
 package dynamodb
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/pkg/errors"
 
@@ -24,7 +26,7 @@ func FactoryFromEnv() (func(string) randomizer.Store, error) {
 		return nil, err
 	}
 
-	db := dynamodb.New(cfg)
+	db := dynamodb.NewFromConfig(cfg)
 	table := tableFromEnv()
 
 	return func(partition string) randomizer.Store {
@@ -37,19 +39,27 @@ func FactoryFromEnv() (func(string) randomizer.Store, error) {
 }
 
 func awsConfigFromEnv() (aws.Config, error) {
-	cfg, err := external.LoadDefaultAWSConfig()
-	if err != nil {
-		return aws.Config{}, errors.Wrap(err, "loading AWS config")
+	options := []func(*config.LoadOptions) error{
+		config.WithHTTPClient(&http.Client{Timeout: 2500 * time.Millisecond}),
+		config.WithRetryer(
+			func() aws.Retryer {
+				return retry.AddWithMaxAttempts(retry.NewStandard(), 2)
+			},
+		),
 	}
-
-	cfg.HTTPClient = &http.Client{Timeout: 2500 * time.Millisecond}
-	cfg.Retryer = aws.DefaultRetryer{NumMaxRetries: 2}
 
 	if endpoint := os.Getenv("DYNAMODB_ENDPOINT"); endpoint != "" {
-		cfg.EndpointResolver = aws.ResolveWithEndpointURL(endpoint)
+		options = append(options,
+			config.WithEndpointResolver(aws.EndpointResolverFunc(
+				func(_, _ string) (aws.Endpoint, error) {
+					return aws.Endpoint{URL: endpoint}, nil
+				},
+			)),
+		)
 	}
 
-	return cfg, nil
+	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
+	return cfg, errors.Wrap(err, "loading AWS config")
 }
 
 func tableFromEnv() string {

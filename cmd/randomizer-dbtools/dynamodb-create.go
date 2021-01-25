@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/spf13/cobra"
 )
 
@@ -49,38 +51,34 @@ func runDynamoDBCreate(cmd *cobra.Command, args []string) {
 		groupKey     = "Group"
 	)
 
-	input := dynamodb.CreateTableInput{
+	_, err := db.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
 		TableName: &dynamoDBTable,
-
-		KeySchema: []dynamodb.KeySchemaElement{
+		KeySchema: []types.KeySchemaElement{
 			{
 				AttributeName: &partitionKey,
-				KeyType:       dynamodb.KeyTypeHash,
+				KeyType:       types.KeyTypeHash,
 			},
 			{
 				AttributeName: &groupKey,
-				KeyType:       dynamodb.KeyTypeRange,
+				KeyType:       types.KeyTypeRange,
 			},
 		},
-
-		AttributeDefinitions: []dynamodb.AttributeDefinition{
+		AttributeDefinitions: []types.AttributeDefinition{
 			{
 				AttributeName: &partitionKey,
-				AttributeType: dynamodb.ScalarAttributeTypeS, // String
+				AttributeType: types.ScalarAttributeTypeS, // String
 			},
 			{
 				AttributeName: &groupKey,
-				AttributeType: dynamodb.ScalarAttributeTypeS, // String
+				AttributeType: types.ScalarAttributeTypeS, // String
 			},
 		},
-
-		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+		ProvisionedThroughput: &types.ProvisionedThroughput{
 			ReadCapacityUnits:  &createReadCap,
 			WriteCapacityUnits: &createWriteCap,
 		},
-	}
-
-	if _, err := db.CreateTableRequest(&input).Send(); err != nil {
+	})
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "creation failed: %v\n", err)
 		os.Exit(1)
 	}
