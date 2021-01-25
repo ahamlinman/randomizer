@@ -3,7 +3,7 @@
 # This Dockerfile requires BuildKit. When using `docker build`, set
 # DOCKER_BUILDKIT=1.
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.15-alpine3.12 AS golang
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.15-alpine3.13 AS golang
 FROM golang AS builder
 
 ENV CGO_ENABLED=0
@@ -28,7 +28,7 @@ COPY --from=builder /randomizer-server /
 
 # ---
 
-FROM docker.io/library/alpine:3.12 AS server-image
+FROM docker.io/library/alpine:3.13 AS server-image
 
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /randomizer-server /usr/local/bin/randomizer-server
