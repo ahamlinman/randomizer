@@ -3,7 +3,7 @@
 # NOTE: This Dockerfile requires BuildKit. When using `docker build`, set
 # DOCKER_BUILDKIT=1.
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.15-alpine3.13 AS golang
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.16-alpine3.13 AS golang
 FROM golang AS build
 
 ENV CGO_ENABLED=0
