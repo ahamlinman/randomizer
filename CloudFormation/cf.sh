@@ -61,12 +61,6 @@ build () (
   else
     echo '(install strip for a probably smaller binary)'
   fi
-
-  if type upx >/dev/null 2>&1; then
-    (set -x; upx dist/randomizer-lambda)
-  else
-    echo '(install upx for a smaller binary: https://upx.github.io)'
-  fi
 )
 
 package () (
