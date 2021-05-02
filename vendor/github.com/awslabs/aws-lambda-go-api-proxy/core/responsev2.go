@@ -12,14 +12,9 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-const (
-	defaultStatusCode    = -1
-	contentTypeHeaderKey = "Content-Type"
-)
-
-// ProxyResponseWriter implements http.ResponseWriter and adds the method
+// ProxyResponseWriterV2 implements http.ResponseWriter and adds the method
 // necessary to return an events.APIGatewayProxyResponse object
-type ProxyResponseWriter struct {
+type ProxyResponseWriterV2 struct {
 	headers   http.Header
 	body      bytes.Buffer
 	status    int
@@ -29,8 +24,8 @@ type ProxyResponseWriter struct {
 // NewProxyResponseWriter returns a new ProxyResponseWriter object.
 // The object is initialized with an empty map of headers and a
 // status code of -1
-func NewProxyResponseWriter() *ProxyResponseWriter {
-	return &ProxyResponseWriter{
+func NewProxyResponseWriterV2() *ProxyResponseWriterV2 {
+	return &ProxyResponseWriterV2{
 		headers:   make(http.Header),
 		status:    defaultStatusCode,
 		observers: make([]chan<- bool, 0),
@@ -38,7 +33,7 @@ func NewProxyResponseWriter() *ProxyResponseWriter {
 
 }
 
-func (r *ProxyResponseWriter) CloseNotify() <-chan bool {
+func (r *ProxyResponseWriterV2) CloseNotify() <-chan bool {
 	ch := make(chan bool, 1)
 
 	r.observers = append(r.observers, ch)
@@ -46,21 +41,21 @@ func (r *ProxyResponseWriter) CloseNotify() <-chan bool {
 	return ch
 }
 
-func (r *ProxyResponseWriter) notifyClosed() {
+func (r *ProxyResponseWriterV2) notifyClosed() {
 	for _, v := range r.observers {
 		v <- true
 	}
 }
 
 // Header implementation from the http.ResponseWriter interface.
-func (r *ProxyResponseWriter) Header() http.Header {
+func (r *ProxyResponseWriterV2) Header() http.Header {
 	return r.headers
 }
 
 // Write sets the response body in the object. If no status code
 // was set before with the WriteHeader method it sets the status
 // for the response to 200 OK.
-func (r *ProxyResponseWriter) Write(body []byte) (int, error) {
+func (r *ProxyResponseWriterV2) Write(body []byte) (int, error) {
 	if r.status == defaultStatusCode {
 		r.status = http.StatusOK
 	}
@@ -78,7 +73,7 @@ func (r *ProxyResponseWriter) Write(body []byte) (int, error) {
 
 // WriteHeader sets a status code for the response. This method is used
 // for error responses.
-func (r *ProxyResponseWriter) WriteHeader(status int) {
+func (r *ProxyResponseWriterV2) WriteHeader(status int) {
 	r.status = status
 }
 
@@ -86,11 +81,11 @@ func (r *ProxyResponseWriter) WriteHeader(status int) {
 // an events.APIGatewayProxyResponse object.
 // Returns a populated proxy response object. If the response is invalid, for example
 // has no headers or an invalid status code returns an error.
-func (r *ProxyResponseWriter) GetProxyResponse() (events.APIGatewayProxyResponse, error) {
+func (r *ProxyResponseWriterV2) GetProxyResponse() (events.APIGatewayV2HTTPResponse, error) {
 	r.notifyClosed()
 
 	if r.status == defaultStatusCode {
-		return events.APIGatewayProxyResponse{}, errors.New("Status code not set on response")
+		return events.APIGatewayV2HTTPResponse{}, errors.New("Status code not set on response")
 	}
 
 	var output string
@@ -105,7 +100,7 @@ func (r *ProxyResponseWriter) GetProxyResponse() (events.APIGatewayProxyResponse
 		isBase64 = true
 	}
 
-	return events.APIGatewayProxyResponse{
+	return events.APIGatewayV2HTTPResponse{
 		StatusCode:        r.status,
 		MultiValueHeaders: http.Header(r.headers),
 		Body:              output,
