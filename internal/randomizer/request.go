@@ -1,6 +1,7 @@
 package randomizer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -20,13 +21,14 @@ const (
 // request represents a single user request to a randomizer instance, created
 // from raw user input.
 type request struct {
+	context.Context
 	Operation operation
 	Operand   string
 	Args      []string
 }
 
-func (a App) newRequestFromArgs(args []string) (request, error) {
-	r := request{}
+func (a App) newRequest(ctx context.Context, args []string) (request, error) {
+	r := request{Context: ctx}
 	err := r.populateFromArgs(args)
 	return r, err
 }

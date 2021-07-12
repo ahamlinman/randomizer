@@ -57,8 +57,8 @@ func shuffle(options []string) {
 // Note that all errors returned from this function will be of this package's
 // Error type. This provides the HelpText method for user-friendly output
 // formatting.
-func (a App) Main(args []string) (Result, error) {
-	request, err := a.newRequestFromArgs(args)
+func (a App) Main(ctx context.Context, args []string) (Result, error) {
+	request, err := a.newRequest(ctx, args)
 	if err != nil {
 		return Result{}, err
 	}

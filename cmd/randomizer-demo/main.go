@@ -9,6 +9,7 @@ CLI arguments are passed directly to the randomizer app.
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -24,7 +25,7 @@ func main() {
 	}
 
 	app := randomizer.NewApp(os.Args[0], storeFactory("Groups"))
-	result, err := app.Main(os.Args[1:])
+	result, err := app.Main(context.TODO(), os.Args[1:])
 	if err != nil {
 		err := err.(randomizer.Error)
 		fmt.Fprintln(os.Stderr, err.HelpText())

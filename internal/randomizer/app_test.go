@@ -225,7 +225,7 @@ func TestMain(t *testing.T) {
 				sort.Strings(options)
 			}
 
-			res, err := app.Main(tc.args)
+			res, err := app.Main(context.TODO(), tc.args)
 			tc.check(t, res, err)
 
 			if tc.expectedStore != nil && !reflect.DeepEqual(tc.store, tc.expectedStore) {

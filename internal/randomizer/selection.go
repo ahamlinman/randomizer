@@ -8,7 +8,7 @@ import (
 )
 
 func (a App) makeSelection(request request) (Result, error) {
-	options, err := a.expandArgs(request.Args)
+	options, err := a.expandArgs(request.Context, request.Args)
 	if err != nil {
 		return Result{}, err
 	}
@@ -21,16 +21,16 @@ func (a App) makeSelection(request request) (Result, error) {
 	}, nil
 }
 
-func (a App) expandArgs(args []string) ([]string, error) {
+func (a App) expandArgs(ctx context.Context, args []string) ([]string, error) {
 	if len(args) == 1 {
-		return a.expandGroup(args[0])
+		return a.expandGroup(ctx, args[0])
 	}
 
 	return args, nil
 }
 
-func (a App) expandGroup(group string) ([]string, error) {
-	expansion, err := a.store.Get(context.TODO(), group)
+func (a App) expandGroup(ctx context.Context, group string) ([]string, error) {
+	expansion, err := a.store.Get(ctx, group)
 	if err != nil {
 		return nil, Error{
 			cause: err,
