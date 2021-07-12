@@ -1,6 +1,7 @@
 package randomizer
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -9,7 +10,7 @@ import (
 )
 
 func (a App) listGroups(_ request) (Result, error) {
-	groups, err := a.store.List()
+	groups, err := a.store.List(context.TODO())
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
@@ -38,7 +39,7 @@ func (a App) listGroups(_ request) (Result, error) {
 func (a App) showGroup(request request) (Result, error) {
 	name := request.Operand
 
-	group, err := a.store.Get(name)
+	group, err := a.store.Get(context.TODO(), name)
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
@@ -87,7 +88,7 @@ func (a App) saveGroup(request request) (Result, error) {
 		}
 	}
 
-	if err := a.store.Put(name, options); err != nil {
+	if err := a.store.Put(context.TODO(), name, options); err != nil {
 		return Result{}, Error{
 			cause:    err,
 			helpText: "Whoops, I had trouble saving that group. Please try again later!",
@@ -114,7 +115,7 @@ func isForbiddenGroupName(name string) bool {
 
 func (a App) deleteGroup(request request) (Result, error) {
 	name := request.Operand
-	existed, err := a.store.Delete(name)
+	existed, err := a.store.Delete(context.TODO(), name)
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,

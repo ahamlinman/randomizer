@@ -1,6 +1,7 @@
 package randomizer
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"strings"
@@ -277,7 +278,7 @@ func isError(contains string) validator {
 	}
 }
 
-func (ms mockStore) List() ([]string, error) {
+func (ms mockStore) List(_ context.Context) ([]string, error) {
 	if ms == nil {
 		return nil, errors.New("mock store list error")
 	}
@@ -290,7 +291,7 @@ func (ms mockStore) List() ([]string, error) {
 	return keys, nil
 }
 
-func (ms mockStore) Get(name string) ([]string, error) {
+func (ms mockStore) Get(_ context.Context, name string) ([]string, error) {
 	if ms == nil {
 		return nil, errors.New("mock store get error")
 	}
@@ -298,7 +299,7 @@ func (ms mockStore) Get(name string) ([]string, error) {
 	return ms[name], nil
 }
 
-func (ms mockStore) Put(name string, options []string) error {
+func (ms mockStore) Put(_ context.Context, name string, options []string) error {
 	if ms == nil {
 		return errors.New("mock store put error")
 	}
@@ -310,7 +311,7 @@ func (ms mockStore) Put(name string, options []string) error {
 	return nil
 }
 
-func (ms mockStore) Delete(name string) (existed bool, err error) {
+func (ms mockStore) Delete(_ context.Context, name string) (existed bool, err error) {
 	if ms == nil {
 		return false, errors.New("mock store delete error")
 	}

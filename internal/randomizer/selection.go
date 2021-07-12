@@ -1,6 +1,7 @@
 package randomizer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -29,7 +30,7 @@ func (a App) expandArgs(args []string) ([]string, error) {
 }
 
 func (a App) expandGroup(group string) ([]string, error) {
-	expansion, err := a.store.Get(group)
+	expansion, err := a.store.Get(context.TODO(), group)
 	if err != nil {
 		return nil, Error{
 			cause: err,

@@ -51,7 +51,7 @@ func New(db *dynamodb.Client, table, partition string) (Store, error) {
 }
 
 // List obtains the list of stored groups for this Store's partition.
-func (s Store) List() ([]string, error) {
+func (s Store) List(ctx context.Context) ([]string, error) {
 	expr, err := expression.NewBuilder().
 		WithKeyCondition(
 			expression.KeyEqual(
@@ -66,7 +66,7 @@ func (s Store) List() ([]string, error) {
 		return nil, errors.Wrap(err, "building expression")
 	}
 
-	result, err := s.db.Query(context.TODO(), &dynamodb.QueryInput{
+	result, err := s.db.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 &s.table,
 		KeyConditionExpression:    expr.KeyCondition(),
 		ProjectionExpression:      expr.Projection(),
@@ -89,7 +89,7 @@ func (s Store) List() ([]string, error) {
 }
 
 // Get obtains the options in a single named group from this Store's partition.
-func (s Store) Get(name string) ([]string, error) {
+func (s Store) Get(ctx context.Context, name string) ([]string, error) {
 	expr, err := expression.NewBuilder().
 		WithProjection(expression.NamesList(
 			expression.Name(itemsKey),
@@ -99,7 +99,7 @@ func (s Store) Get(name string) ([]string, error) {
 		return nil, errors.Wrap(err, "building expression")
 	}
 
-	result, err := s.db.GetItem(context.TODO(), &dynamodb.GetItemInput{
+	result, err := s.db.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: &s.table,
 		Key: map[string]types.AttributeValue{
 			partitionKey: &types.AttributeValueMemberS{Value: s.partition},
@@ -125,8 +125,8 @@ func (s Store) Get(name string) ([]string, error) {
 
 // Put saves the provided options into a named group for this Store's
 // partition.
-func (s Store) Put(name string, options []string) error {
-	_, err := s.db.PutItem(context.TODO(), &dynamodb.PutItemInput{
+func (s Store) Put(ctx context.Context, name string, options []string) error {
+	_, err := s.db.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: &s.table,
 		Item: map[string]types.AttributeValue{
 			partitionKey: &types.AttributeValueMemberS{Value: s.partition},
@@ -138,8 +138,8 @@ func (s Store) Put(name string, options []string) error {
 }
 
 // Delete removes the named group from this Store's partition.
-func (s Store) Delete(name string) (bool, error) {
-	result, err := s.db.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+func (s Store) Delete(ctx context.Context, name string) (bool, error) {
+	result, err := s.db.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: &s.table,
 		Key: map[string]types.AttributeValue{
 			partitionKey: &types.AttributeValueMemberS{Value: s.partition},
