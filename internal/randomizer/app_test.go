@@ -221,11 +221,9 @@ func TestMain(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			app := NewApp("randomizer", tc.store)
-			app.shuffle = func(options []string) {
-				sort.Strings(options)
-			}
+			app.shuffle = sort.Strings
 
-			res, err := app.Main(context.TODO(), tc.args)
+			res, err := app.Main(context.Background(), tc.args)
 			tc.check(t, res, err)
 
 			if tc.expectedStore != nil && !reflect.DeepEqual(tc.store, tc.expectedStore) {

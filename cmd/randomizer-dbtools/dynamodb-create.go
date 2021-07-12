@@ -88,7 +88,7 @@ func runDynamoDBCreate(cmd *cobra.Command, args []string) {
 		input.BillingMode = types.BillingModePayPerRequest
 	}
 
-	_, err := db.CreateTable(context.TODO(), input)
+	_, err := db.CreateTable(context.Background(), input)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "creation failed: %v\n", err)
 		os.Exit(1)
