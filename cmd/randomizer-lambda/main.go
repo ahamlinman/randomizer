@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/awslabs/aws-lambda-go-api-proxy/handlerfunc"
+	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 
 	"go.alexhamlin.co/randomizer/internal/slack"
 	"go.alexhamlin.co/randomizer/internal/store/dynamodb"
@@ -36,12 +35,5 @@ func main() {
 		StoreFactory: storeFactory,
 		DebugWriter:  os.Stderr,
 	}
-
-	proxy := handlerfunc.New(app.ServeHTTP)
-
-	lambda.Start(
-		func(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-			return proxy.Proxy(req)
-		},
-	)
+	lambda.Start(httpadapter.New(app).ProxyWithContext)
 }

@@ -138,7 +138,7 @@ github.com/aws/smithy-go/waiter
 # github.com/awslabs/aws-lambda-go-api-proxy v0.10.0
 ## explicit
 github.com/awslabs/aws-lambda-go-api-proxy/core
-github.com/awslabs/aws-lambda-go-api-proxy/handlerfunc
+github.com/awslabs/aws-lambda-go-api-proxy/httpadapter
 # github.com/golang/protobuf v1.5.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes

@@ -1,4 +1,4 @@
-package handlerfunc
+package httpadapter
 
 import (
 	"context"
@@ -8,40 +8,40 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/core"
 )
 
-type HandlerFuncAdapter struct {
+type HandlerAdapter struct {
 	core.RequestAccessor
-	handlerFunc http.HandlerFunc
+	handler http.Handler
 }
 
-func New(handlerFunc http.HandlerFunc) *HandlerFuncAdapter {
-	return &HandlerFuncAdapter{
-		handlerFunc: handlerFunc,
+func New(handler http.Handler) *HandlerAdapter {
+	return &HandlerAdapter{
+		handler: handler,
 	}
 }
 
 // Proxy receives an API Gateway proxy event, transforms it into an http.Request
 // object, and sends it to the http.HandlerFunc for routing.
-// It returns a proxy response object generated from the http.ResponseWriter.
-func (h *HandlerFuncAdapter) Proxy(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// It returns a proxy response object generated from the http.Handler.
+func (h *HandlerAdapter) Proxy(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	req, err := h.ProxyEventToHTTPRequest(event)
 	return h.proxyInternal(req, err)
 }
 
 // ProxyWithContext receives context and an API Gateway proxy event,
-// transforms them into an http.Request object, and sends it to the http.HandlerFunc for routing.
+// transforms them into an http.Request object, and sends it to the http.Handler for routing.
 // It returns a proxy response object generated from the http.ResponseWriter.
-func (h *HandlerFuncAdapter) ProxyWithContext(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (h *HandlerAdapter) ProxyWithContext(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	req, err := h.EventToRequestWithContext(ctx, event)
 	return h.proxyInternal(req, err)
 }
 
-func (h *HandlerFuncAdapter) proxyInternal(req *http.Request, err error) (events.APIGatewayProxyResponse, error) {
+func (h *HandlerAdapter) proxyInternal(req *http.Request, err error) (events.APIGatewayProxyResponse, error) {
 	if err != nil {
 		return core.GatewayTimeout(), core.NewLoggedError("Could not convert proxy event to request: %v", err)
 	}
 
 	w := core.NewProxyResponseWriter()
-	h.handlerFunc.ServeHTTP(http.ResponseWriter(w), req)
+	h.handler.ServeHTTP(http.ResponseWriter(w), req)
 
 	resp, err := w.GetProxyResponse()
 	if err != nil {
