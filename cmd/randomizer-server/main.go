@@ -7,6 +7,7 @@ Command API requests and runs the randomizer in response.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	storeFactory, err := store.FactoryFromEnv()
+	storeFactory, err := store.FactoryFromEnv(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
 		os.Exit(2)

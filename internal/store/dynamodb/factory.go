@@ -21,8 +21,8 @@ import (
 //
 // AWS configuration is read as described at
 // https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html.
-func FactoryFromEnv() (func(string) randomizer.Store, error) {
-	cfg, err := awsConfigFromEnv()
+func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) {
+	cfg, err := awsConfigFromEnv(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func FactoryFromEnv() (func(string) randomizer.Store, error) {
 	}, nil
 }
 
-func awsConfigFromEnv() (aws.Config, error) {
+func awsConfigFromEnv(ctx context.Context) (aws.Config, error) {
 	options := []func(*config.LoadOptions) error{
 		config.WithHTTPClient(&http.Client{Timeout: 2500 * time.Millisecond}),
 		config.WithRetryer(
@@ -59,7 +59,7 @@ func awsConfigFromEnv() (aws.Config, error) {
 		)
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
+	cfg, err := config.LoadDefaultConfig(ctx, options...)
 	if err != nil {
 		return aws.Config{}, errors.Wrap(err, "loading AWS config")
 	}

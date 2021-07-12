@@ -7,6 +7,7 @@ as a Slack Slash Command, using Amazon API Gateway's proxy mode.
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -24,7 +25,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	storeFactory, err := dynamodb.FactoryFromEnv()
+	storeFactory, err := dynamodb.FactoryFromEnv(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
 		os.Exit(2)

@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	storeFactory, err := store.FactoryFromEnv()
+	storeFactory, err := store.FactoryFromEnv(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
 		os.Exit(2)
