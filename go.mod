@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.4.1
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.1.2
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.4.0
+	github.com/aws/aws-xray-sdk-go v1.6.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.2.1

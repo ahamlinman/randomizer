@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	xrayawsv2 "github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/pkg/errors"
 
 	"go.alexhamlin.co/randomizer/internal/randomizer"
@@ -59,7 +60,15 @@ func awsConfigFromEnv() (aws.Config, error) {
 	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
-	return cfg, errors.Wrap(err, "loading AWS config")
+	if err != nil {
+		return aws.Config{}, errors.Wrap(err, "loading AWS config")
+	}
+
+	if useXRay := os.Getenv("DYNAMODB_XRAY_TRACING"); useXRay == "1" {
+		xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	}
+
+	return cfg, nil
 }
 
 func tableFromEnv() string {
