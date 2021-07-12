@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-
 set -xeuo pipefail
 
-volume_name="dynamodb-randomizer"
+DOCKER="${DOCKER:-docker}"
+VOLUME_NAME="${VOLUME_NAME:-dynamodb-randomizer}"
+CONTAINER_NAME="${CONTAINER_NAME:-dynamodb-randomizer}"
+HOST_PORT="${HOST_PORT:-8000}"
 
-if ! docker volume inspect "$volume_name" >/dev/null 2>&1; then
-  docker volume create "$volume_name"
+if ! "$DOCKER" volume inspect "$VOLUME_NAME" >/dev/null 2>&1; then
+  "$DOCKER" volume create "$VOLUME_NAME"
 fi
 
-container_name="dynamodb-randomizer"
-host_port=8000
-
-docker run \
-  --rm -d --name "$container_name" \
-  -p "$host_port":8000 \
-  -v "$volume_name":/var/lib/randomizer \
+"$DOCKER" run \
+  --rm -d --name "$CONTAINER_NAME" \
+  -p "$HOST_PORT":8000 \
+  -v "$VOLUME_NAME":/var/lib/randomizer \
   amazon/dynamodb-local -jar DynamoDBLocal.jar -dbPath /var/lib/randomizer
