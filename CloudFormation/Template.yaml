@@ -7,6 +7,13 @@ Parameters:
   SlackToken:
     Description: The authentication token created by Slack for the slash command
     Type: String
+  XRayTracingEnabled:
+    Description: If 'true', turn on X-Ray tracing for all requests
+    Type: String
+    Default: 'true'
+
+Conditions:
+  HasXRayTracingEnabled: !Equals [!Ref XRayTracingEnabled, 'true']
 
 Resources:
   GroupsTable:
@@ -31,10 +38,12 @@ Resources:
       Runtime: go1.x
       CodeUri: ./dist
       Handler: randomizer-lambda
+      Tracing: !If [HasXRayTracingEnabled, Active, PassThrough]
       Environment:
         Variables:
           SLACK_TOKEN: !Ref SlackToken
           DYNAMODB_TABLE: !Ref GroupsTable
+          DYNAMODB_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
       Events:
         ApiGet:
           Type: Api

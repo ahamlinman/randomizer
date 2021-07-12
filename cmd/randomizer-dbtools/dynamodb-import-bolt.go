@@ -81,7 +81,7 @@ func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	_, err = dynamoDB.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
+	_, err = dynamoDB.BatchWriteItem(context.Background(), &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
 			dynamoDBTable: writeRequests,
 		},

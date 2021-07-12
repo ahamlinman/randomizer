@@ -2,6 +2,7 @@ package bbolt
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ func New(db *bolt.DB, bucket string) (Store, error) {
 }
 
 // List obtains the set of stored groups.
-func (b Store) List() (groups []string, err error) {
+func (b Store) List(_ context.Context) (groups []string, err error) {
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucket))
 		if bucket == nil {
@@ -47,7 +48,7 @@ func (b Store) List() (groups []string, err error) {
 }
 
 // Get obtains the options in a single named group.
-func (b Store) Get(name string) (options []string, err error) {
+func (b Store) Get(_ context.Context, name string) (options []string, err error) {
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucket))
 		if bucket == nil {
@@ -66,7 +67,7 @@ func (b Store) Get(name string) (options []string, err error) {
 }
 
 // Put saves the provided options into a named group.
-func (b Store) Put(name string, options []string) error {
+func (b Store) Put(_ context.Context, name string, options []string) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(b.bucket))
 		if err != nil {
@@ -88,7 +89,7 @@ func (b Store) Put(name string, options []string) error {
 }
 
 // Delete removes the named group from the store.
-func (b Store) Delete(name string) (existed bool, err error) {
+func (b Store) Delete(_ context.Context, name string) (existed bool, err error) {
 	err = b.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucket))
 		if bucket == nil {

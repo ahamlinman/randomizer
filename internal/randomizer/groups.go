@@ -8,8 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (a App) listGroups(_ request) (Result, error) {
-	groups, err := a.store.List()
+func (a App) listGroups(request request) (Result, error) {
+	var (
+		ctx = request.Context
+	)
+
+	groups, err := a.store.List(ctx)
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
@@ -36,9 +40,12 @@ func (a App) listGroups(_ request) (Result, error) {
 }
 
 func (a App) showGroup(request request) (Result, error) {
-	name := request.Operand
+	var (
+		ctx  = request.Context
+		name = request.Operand
+	)
 
-	group, err := a.store.Get(name)
+	group, err := a.store.Get(ctx, name)
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,
@@ -66,8 +73,11 @@ func (a App) showGroup(request request) (Result, error) {
 }
 
 func (a App) saveGroup(request request) (Result, error) {
-	name := request.Operand
-	options := request.Args
+	var (
+		ctx     = request.Context
+		name    = request.Operand
+		options = request.Args
+	)
 
 	if isForbiddenGroupName(name) {
 		return Result{}, Error{
@@ -87,7 +97,7 @@ func (a App) saveGroup(request request) (Result, error) {
 		}
 	}
 
-	if err := a.store.Put(name, options); err != nil {
+	if err := a.store.Put(ctx, name, options); err != nil {
 		return Result{}, Error{
 			cause:    err,
 			helpText: "Whoops, I had trouble saving that group. Please try again later!",
@@ -113,8 +123,12 @@ func isForbiddenGroupName(name string) bool {
 }
 
 func (a App) deleteGroup(request request) (Result, error) {
-	name := request.Operand
-	existed, err := a.store.Delete(name)
+	var (
+		ctx  = request.Context
+		name = request.Operand
+	)
+
+	existed, err := a.store.Delete(ctx, name)
 	if err != nil {
 		return Result{}, Error{
 			cause:    err,

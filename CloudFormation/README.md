@@ -17,12 +17,12 @@ already have it. See [Installing the AWS Command Line Interface][install] in
 the AWS CLI User Guide for a full walkthrough of how to install the tool with
 `pip`. On some systems, there might be other (possibly easier) ways to install
 the tool. For example, if you're using macOS and have [Homebrew][brew]
-installed, you can simply run `brew install awscli`.
+installed, you can run `brew install awscli`.
 
 After installation, see [Configuring the AWS CLI][configure] in the AWS CLI
 User Guide to set up access to your AWS account from the CLI. This requires a
 set of credentials from AWS; the guide explains how to obtain these if you're
-not already familiar with AWS [IAM][IAM].
+not already familiar with [AWS IAM][IAM].
 
 [install]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html
 [brew]: https://brew.sh
@@ -77,9 +77,9 @@ workspace. Go ahead and try it out!
 
 ## Upgrades and Maintenance
 
-To upgrade the randomizer deployment in your AWS account, simply run the above
-command inside a newer version of the randomizer repository without the Slack
-token parameter override. For example:
+To upgrade the randomizer deployment in your AWS account, run the above command
+inside a newer version of the randomizer repository without the Slack token
+parameter override. For example:
 
 ```
 ./cf.sh build-deploy <bucket name> <stack name>
@@ -87,6 +87,18 @@ token parameter override. For example:
 
 Run `./cf.sh help` to learn more about additional commands that might be
 useful.
+
+### X-Ray Tracing
+
+The CloudFormation template enables [AWS X-Ray][X-Ray] tracing by default for
+both the Lambda function and its requests to DynamoDB. To turn this off, you
+can set the `XRayTracingEnabled` parameter to `false` during your
+CloudFormation deployment. Note that as of this writing X-Ray is free for up to
+100,000 traces per month for every AWS account, and it's a neat way to see
+where time is being spent on each request, so there's probably not much reason
+to turn it off.
+
+[X-Ray]: https://aws.amazon.com/xray/
 
 ## Notes
 

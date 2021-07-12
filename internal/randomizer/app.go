@@ -1,6 +1,7 @@
 package randomizer
 
 import (
+	"context"
 	"math/rand"
 	"time"
 )
@@ -10,20 +11,20 @@ import (
 type Store interface {
 	// List should return a list of all available groups. If no groups have been
 	// saved, an empty list should be returned.
-	List() (groups []string, err error)
+	List(ctx context.Context) (groups []string, err error)
 
 	// Get should return the list of options in the named group. If the group
 	// does not exist, an empty list should be returned.
-	Get(group string) (options []string, err error)
+	Get(ctx context.Context, group string) (options []string, err error)
 
 	// Put should save the provided options as a named group, completely
 	// overwriting any previous group of that name.
-	Put(group string, options []string) error
+	Put(ctx context.Context, group string, options []string) error
 
 	// Delete should ensure that the named group no longer exists, returning true
 	// or false to indicate whether the group existed prior to this deletion
 	// attempt.
-	Delete(group string) (bool, error)
+	Delete(ctx context.Context, group string) (bool, error)
 }
 
 // App represents a randomizer app that can accept commands.
@@ -56,8 +57,8 @@ func shuffle(options []string) {
 // Note that all errors returned from this function will be of this package's
 // Error type. This provides the HelpText method for user-friendly output
 // formatting.
-func (a App) Main(args []string) (Result, error) {
-	request, err := a.newRequestFromArgs(args)
+func (a App) Main(ctx context.Context, args []string) (Result, error) {
+	request, err := a.newRequest(ctx, args)
 	if err != nil {
 		return Result{}, err
 	}

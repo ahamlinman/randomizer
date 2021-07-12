@@ -1,6 +1,7 @@
 package slack
 
 import (
+	"context"
 	"crypto/subtle"
 	"fmt"
 	"io"
@@ -45,12 +46,19 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if a.isSSLCheck(params) {
+	if params.Get("ssl_check") == "1" {
 		a.log("Handled SSL check\n")
 		return
 	}
 
-	a.serveRandomizer(w, params)
+	result, err := a.runRandomizer(r.Context(), params)
+	if err != nil {
+		a.log("Error from randomizer: %v\n", err)
+		a.writeError(w, err)
+		return
+	}
+
+	a.writeResult(w, result)
 }
 
 func (a App) getRequestParams(r *http.Request) (url.Values, error) {
@@ -76,30 +84,15 @@ func (a App) hasValidToken(params url.Values) bool {
 	return subtle.ConstantTimeCompare(a.Token, []byte(token)) == 1
 }
 
-func (a App) isSSLCheck(params url.Values) bool {
-	return params.Get("ssl_check") == "1"
-}
-
-func (a App) serveRandomizer(w http.ResponseWriter, params url.Values) {
-	result, err := a.runRandomizer(params)
-	if err != nil {
-		a.log("Error from randomizer: %v\n", err)
-		a.writeError(w, err)
-		return
-	}
-
-	a.writeResult(w, result)
-}
-
-func (a App) runRandomizer(params url.Values) (randomizer.Result, error) {
+func (a App) runRandomizer(ctx context.Context, params url.Values) (randomizer.Result, error) {
 	var (
 		name      = params.Get("command")
 		channelID = params.Get("channel_id")
+		args      = strings.Fields(params.Get("text"))
 	)
-	app := randomizer.NewApp(name, a.StoreFactory(channelID))
 
-	args := strings.Fields(params.Get("text"))
-	return app.Main(args)
+	app := randomizer.NewApp(name, a.StoreFactory(channelID))
+	return app.Main(ctx, args)
 }
 
 func (a App) writeResult(w http.ResponseWriter, result randomizer.Result) {

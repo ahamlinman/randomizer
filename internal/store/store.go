@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"os"
 
 	"go.alexhamlin.co/randomizer/internal/randomizer"
@@ -18,9 +19,9 @@ type Factory func(partition string) randomizer.Store
 // FactoryFromEnv constructs and returns a Factory based on available
 // environment variables. It delegates to more specific store implementations
 // as appropriate.
-func FactoryFromEnv() (func(string) randomizer.Store, error) {
+func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) {
 	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
-		return dynamodb.FactoryFromEnv()
+		return dynamodb.FactoryFromEnv(ctx)
 	}
 
 	return bbolt.FactoryFromEnv()

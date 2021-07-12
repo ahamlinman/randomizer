@@ -1,6 +1,7 @@
 package randomizer
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"strings"
@@ -220,11 +221,9 @@ func TestMain(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			app := NewApp("randomizer", tc.store)
-			app.shuffle = func(options []string) {
-				sort.Strings(options)
-			}
+			app.shuffle = sort.Strings
 
-			res, err := app.Main(tc.args)
+			res, err := app.Main(context.Background(), tc.args)
 			tc.check(t, res, err)
 
 			if tc.expectedStore != nil && !reflect.DeepEqual(tc.store, tc.expectedStore) {
@@ -277,7 +276,7 @@ func isError(contains string) validator {
 	}
 }
 
-func (ms mockStore) List() ([]string, error) {
+func (ms mockStore) List(_ context.Context) ([]string, error) {
 	if ms == nil {
 		return nil, errors.New("mock store list error")
 	}
@@ -290,7 +289,7 @@ func (ms mockStore) List() ([]string, error) {
 	return keys, nil
 }
 
-func (ms mockStore) Get(name string) ([]string, error) {
+func (ms mockStore) Get(_ context.Context, name string) ([]string, error) {
 	if ms == nil {
 		return nil, errors.New("mock store get error")
 	}
@@ -298,7 +297,7 @@ func (ms mockStore) Get(name string) ([]string, error) {
 	return ms[name], nil
 }
 
-func (ms mockStore) Put(name string, options []string) error {
+func (ms mockStore) Put(_ context.Context, name string, options []string) error {
 	if ms == nil {
 		return errors.New("mock store put error")
 	}
@@ -310,7 +309,7 @@ func (ms mockStore) Put(name string, options []string) error {
 	return nil
 }
 
-func (ms mockStore) Delete(name string) (existed bool, err error) {
+func (ms mockStore) Delete(_ context.Context, name string) (existed bool, err error) {
 	if ms == nil {
 		return false, errors.New("mock store delete error")
 	}
