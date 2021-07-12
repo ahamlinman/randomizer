@@ -21,7 +21,7 @@ const (
 // request represents a single user request to a randomizer instance, created
 // from raw user input.
 type request struct {
-	context.Context
+	Context   context.Context
 	Operation operation
 	Operand   string
 	Args      []string
