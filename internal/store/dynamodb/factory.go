@@ -64,6 +64,10 @@ func awsConfigFromEnv() (aws.Config, error) {
 		return aws.Config{}, errors.Wrap(err, "loading AWS config")
 	}
 
+	// WARNING: X-Ray tracing will fail (and panic) if the context passed to store
+	// operations is not already associated with an open X-Ray segment. That means
+	// that as of this writing, this option is only safe to use on AWS Lambda.
+	// Other clients should avoid setting it.
 	if useXRay := os.Getenv("DYNAMODB_XRAY_TRACING"); useXRay == "1" {
 		xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	}
