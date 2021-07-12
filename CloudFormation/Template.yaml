@@ -10,7 +10,7 @@ Parameters:
   XRayTracingEnabled:
     Description: If 'true', turn on X-Ray tracing for all requests
     Type: String
-    Default: 'false'
+    Default: 'true'
 
 Conditions:
   HasXRayTracingEnabled: !Equals [!Ref XRayTracingEnabled, 'true']
