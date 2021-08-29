@@ -1,9 +1,9 @@
-# syntax = docker.io/docker/dockerfile:1.2
+# syntax = docker.io/docker/dockerfile:1.3
 
 # NOTE: This Dockerfile requires BuildKit. When using `docker build`, set
 # DOCKER_BUILDKIT=1.
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.16-alpine3.13 AS golang
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.17-alpine3.14 AS golang
 FROM golang AS build
 
 ENV CGO_ENABLED=0
@@ -27,7 +27,7 @@ COPY --from=build /randomizer-server /
 
 # ---
 
-FROM docker.io/library/alpine:3.13 AS server-image
+FROM docker.io/library/alpine:3.14 AS server-image
 
 RUN apk add --no-cache ca-certificates
 COPY --from=build /randomizer-server /usr/local/bin/randomizer-server
