@@ -45,22 +45,13 @@ EOF
 }
 
 build () (
-  (
-    set -x
-    mkdir -p dist
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-      go build -v \
-      -ldflags='-s -w' \
-      -o dist/randomizer-lambda \
-      ../cmd/randomizer-lambda
-  )
-
-  if type strip >/dev/null 2>&1; then
-    # In my experience this may remove more than Go's -s and -w linker flags.
-    (set -x; strip dist/randomizer-lambda)
-  else
-    echo '(install strip for a probably smaller binary)'
-  fi
+  set -x
+  mkdir -p dist
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -v \
+    -ldflags='-s -w' \
+    -o dist/randomizer-lambda \
+    ../cmd/randomizer-lambda
 )
 
 package () (
