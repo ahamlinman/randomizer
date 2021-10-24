@@ -2,8 +2,12 @@ package dynamodb
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	_ "embed"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -40,8 +44,16 @@ func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) 
 }
 
 func awsConfigFromEnv(ctx context.Context) (aws.Config, error) {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{RootCAs: getTLSRootPool()}
+
+	client := &http.Client{
+		Timeout:   2500 * time.Millisecond,
+		Transport: transport,
+	}
+
 	options := []func(*config.LoadOptions) error{
-		config.WithHTTPClient(&http.Client{Timeout: 2500 * time.Millisecond}),
+		config.WithHTTPClient(client),
 		config.WithRetryer(
 			func() aws.Retryer {
 				return retry.AddWithMaxAttempts(retry.NewStandard(), 2)
@@ -79,6 +91,24 @@ func tableFromEnv() string {
 	if table := os.Getenv("DYNAMODB_TABLE"); table != "" {
 		return table
 	}
-
 	return "RandomizerGroups"
+}
+
+//go:generate ./refresh-tls-roots.sh
+
+var (
+	//go:embed cert.pem
+	tlsRootsPEM  []byte
+	tlsRoots     *x509.CertPool
+	initTLSRoots sync.Once
+)
+
+func getTLSRootPool() *x509.CertPool {
+	initTLSRoots.Do(func() {
+		tlsRoots = x509.NewCertPool()
+		if !tlsRoots.AppendCertsFromPEM(tlsRootsPEM) {
+			panic("failed to initialize TLS roots for DynamoDB client")
+		}
+	})
+	return tlsRoots
 }
