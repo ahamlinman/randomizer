@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 usage () {
   cat <<EOF
 cf.sh - Deploy the randomizer to your AWS account using CloudFormation
 
-The AWS CLI must be installed and configured to use this script. For details
-about configuration, see the AWS Documentation:
-
-https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+You must install the AWS CLI and Skopeo to use this script. See README.md for
+details.
 
 $0 build
   (Re)build the container image that will be deployed to AWS Lambda.
@@ -18,15 +15,16 @@ $0 upload <ECR repository>
   Upload the built container image to the provided ECR repository with Skopeo
   using a unique tag.
 
-$0 deploy <stack name> [args...]
+$0 deploy <stack name> [overrides...]
   Deploy the latest version of the CloudFormation stack using the latest
   container image, then print the URL for the deployed API.
 
-  Additional arguments are passed directly to "aws cloudformation deploy". When
-  deploying the stack for the first time, pass "--parameter-overrides
-  SlackToken=<token>" to set the token used to authenticate requests from Slack.
+  Additional arguments are passed to the "--parameter-overrides" option of "aws
+  cloudformation deploy". Whend eploying the stack for the first time, pass
+  "SlackToken=<token>" to set the token used to authenticate requests from
+  Slack.
 
-$0 build-deploy <ECR repository> <stack name> [args...]
+$0 build-deploy <ECR repository> <stack name> [overrides...]
   Build, upload, and deploy all in one step.
 
 $0 help
@@ -96,8 +94,9 @@ deploy () (
       --capabilities CAPABILITY_IAM \
       --stack-name "$stack_name" \
       --no-fail-on-empty-changeset \
-      --parameter-overrides ImageUri="$(cat latest-image.txt)" \
-      "$@"
+      --parameter-overrides \
+          ImageUri="$(cat latest-image.txt)" \
+          "$@"
   )
 
   echo -e "\\nThe Slack webhook is available at the following URL:"

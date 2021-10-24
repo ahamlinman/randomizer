@@ -70,7 +70,7 @@ With both of the above names and your verification token from Slack available
 (see README.md one level up), run the following command from this directory:
 
 ```
-./cf.sh build-deploy <repository name> <stack name> --parameter-overrides SlackToken=<token>
+./cf.sh build-deploy <repository name> <stack name> SlackToken=<token>
 ```
 
 This command will automatically compile the randomizer code for AWS Lambda,
@@ -106,7 +106,8 @@ useful.
 * The default configuration enables [AWS X-Ray][x-ray] tracing for the function
   and its requests to DynamoDB. X-Ray is free for up to 100,000 traces per month
   for every AWS account, and it's useful to see where each request is spending
-  time. However, you can turn it off with `--parameter-overrides XRayTracingEnabled=false`.
+  time. However, you can turn it off by passing `XRayTracingEnabled=false` to
+  the deployment script.
 * Estimating costs on AWS is never easy. Anecdotally, my Slack team at work
   (over 1,000 people) makes a little over 200 requests to the randomizer per
   month. Between the low volume and my relatively low use of AWS in general
