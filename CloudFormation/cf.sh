@@ -46,7 +46,7 @@ build () (
     -o randomizer-lambda \
     ../cmd/randomizer-lambda
 
-  go run zeroimage.go \
+  go run go.alexhamlin.co/zeroimage@latest \
     -entrypoint randomizer-lambda \
     -os "$os" -arch "$arch" \
     -output randomizer-lambda.tar
