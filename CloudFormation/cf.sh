@@ -35,9 +35,12 @@ EOF
 }
 
 build () (
+  os=linux
+  arch=arm64
+
   set -x
 
-  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
     go build -v \
     -ldflags='-s -w' \
     -o randomizer-lambda \
@@ -45,7 +48,7 @@ build () (
 
   go run zeroimage.go \
     -entrypoint randomizer-lambda \
-    -os linux -arch amd64 \
+    -os "$os" -arch "$arch" \
     -output randomizer-lambda.tar
 )
 
