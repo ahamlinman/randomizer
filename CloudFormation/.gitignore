@@ -1,3 +1,4 @@
-*.env
-dist
-Package.yaml
+/*.env
+/latest-image.txt
+/randomizer-lambda
+/randomizer-lambda.tar
