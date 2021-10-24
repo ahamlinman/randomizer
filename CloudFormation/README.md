@@ -96,17 +96,6 @@ parameter override. For example:
 Run `./cf.sh help` to learn more about additional commands that might be
 useful.
 
-### X-Ray Tracing
-
-The CloudFormation template enables [AWS X-Ray][x-ray] tracing by default for
-both the Lambda function and its requests to DynamoDB. To turn this off, you can
-set the `XRayTracingEnabled` parameter to `false` during your CloudFormation
-deployment. Note that as of this writing X-Ray is free for up to 100,000 traces
-per month for every AWS account, and it's a neat way to see where time is being
-spent on each request, so there's probably not much reason to turn it off.
-
-[x-ray]: https://aws.amazon.com/xray/
-
 ## Notes
 
 * The CloudFormation template (Template.yaml) uses the [AWS SAM][sam]
@@ -114,6 +103,10 @@ spent on each request, so there's probably not much reason to turn it off.
 * The DynamoDB table in the template is provisioned in On-Demand capacity mode.
   Note that this mode is not eligible for the AWS Free Tier. See the
   documentation for [Read/Write Capacity Mode][capacity mode] for more details.
+* The default configuration enables [AWS X-Ray][x-ray] tracing for the function
+  and its requests to DynamoDB. X-Ray is free for up to 100,000 traces per month
+  for every AWS account, and it's useful to see where each request is spending
+  time. However, you can turn it off with `--parameter-overrides XRayTracingEnabled=false`.
 * Estimating costs on AWS is never easy. Anecdotally, my Slack team at work
   (over 1,000 people) makes a little over 200 requests to the randomizer per
   month. Between the low volume and my relatively low use of AWS in general
@@ -122,3 +115,4 @@ spent on each request, so there's probably not much reason to turn it off.
 
 [sam]: https://github.com/awslabs/serverless-application-model
 [capacity mode]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
+[x-ray]: https://aws.amazon.com/xray/

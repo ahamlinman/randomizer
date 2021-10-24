@@ -62,14 +62,14 @@ upload () (
     return 1
   fi
 
-  ecr_repository="$1"
-
-  account="$(aws sts get-caller-identity --query Account --output text)"
-  region="$(aws configure get region)"
+  repository_name="$1"
+  repository="$(aws ecr describe-repositories \
+    --repository-names "$repository_name" \
+    --query 'repositories[0].repositoryUri' \
+    --output text)"
+  registry="${repository%%/*}"
   tag="$(date +%s)"
-
-  registry="$account.dkr.ecr.$region.amazonaws.com"
-  image="$registry/$ecr_repository:$tag"
+  image="$repository:$tag"
 
   set -x
   if ! skopeo login --get-login "$registry" &>/dev/null; then
