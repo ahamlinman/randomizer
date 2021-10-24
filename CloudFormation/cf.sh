@@ -38,16 +38,15 @@ build () (
 
   set -x
 
-  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
+  CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
     go build -v \
     -ldflags='-s -w' \
     -o randomizer-lambda \
     ../cmd/randomizer-lambda
 
-  go run go.alexhamlin.co/zeroimage@latest \
-    -entrypoint randomizer-lambda \
-    -os "$os" -arch "$arch" \
-    -output randomizer-lambda.tar
+  go run go.alexhamlin.co/zeroimage@main \
+    -os $os -arch $arch \
+    randomizer-lambda
 )
 
 upload () (
@@ -70,8 +69,9 @@ upload () (
   image="$repository:$tag"
 
   set -x
-  if ! skopeo login --get-login "$registry" &>/dev/null; then
-    aws ecr get-login-password | skopeo login --username AWS --password-stdin "$registry"
+  if ! skopeo list-tags "$repository" &>/dev/null; then
+    aws ecr get-login-password \
+    | skopeo login --username AWS --password-stdin "$registry"
   fi
 
   skopeo copy oci-archive:randomizer-lambda.tar docker://"$image"
