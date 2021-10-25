@@ -31,9 +31,9 @@ $0 current-image <stack name>
   Display the container image that the provided CloudFormation stack is
   currently configured to run.
 
-$0 clean-repository <ECR repository>
-  Remove all tags from the ECR repository, except for the 2 newest uploads in
-  the repository or the last known image uploaded by this script.
+$0 clean-repository <ECR repository> <stack names...>
+  Remove all tags from the ECR repository that are not used by one of the listed
+  CloudFormation stacks.
 
 $0 help
   Print this message.
@@ -134,43 +134,50 @@ current-image () (
 
 clean-repository () (
   repository_name="$1"
+  shift
+
+  if [ "$#" -lt 1 ]; then
+    echo "must specify at least one stack name" 1>&2
+    return 1
+  fi
+
   all_tags_list="$(
     aws ecr describe-images --repository-name "$repository_name" \
       --output text --query 'imageDetails[].imageTags[] | map(&[@], @)' \
     | sort -n
   )"
 
-  keep_tags_list="$(echo "$all_tags_list" | tail -n2)"
-  if [ -f latest-image.txt ]; then
-    current_image="$(cat latest-image.txt)"
-    current_tag="${current_image##*:}"
-    keep_tags_list="$(printf '%s\n' "$keep_tags_list" "$current_tag" | sort -nu)"
-  fi
+  declare -a keep_tags
+  for stack in "$@"; do
+    image="$(current-image "$stack")"
+    keep_tags+=("${image##*:}")
+  done
+  keep_tags_list="$(printf '%s\n' "${keep_tags[@]}" | sort -nu)"
 
-  n_drop_tags=0
-  drop_tags_cmd=(aws ecr batch-delete-image \
+  n_deleted_tags=0
+  delete_tags_cmd=(aws ecr batch-delete-image \
     --repository-name "$repository_name" \
     --image-ids)
   while read -r tag; do
-    ((n_drop_tags+=1))
-    drop_tags_cmd+=("imageTag=$tag")
+    ((n_deleted_tags+=1))
+    delete_tags_cmd+=("imageTag=$tag")
   done < <(comm -23 <(echo "$all_tags_list") <(echo "$keep_tags_list"))
 
-  if [ "$n_drop_tags" -eq 0 ]; then
-    echo "Repository is clean enough; no tags to drop."
+  if [ "$n_deleted_tags" -eq 0 ]; then
+    echo "Repository is clean enough; no tags to delete."
     return
   fi
 
-  echo "Will keep the following tags:"
+  echo "Will keep the following tags used by the listed stacks:"
   echo "$keep_tags_list"
   echo
-  echo "Will run the following command to drop all other tags:"
-  echo "${drop_tags_cmd[*]}"
+  echo "Will run the following command to delete all other tags:"
+  echo "${delete_tags_cmd[*]}"
   echo
   read -rp "Press Enter to run, or Ctrl-C to quit..."
 
   set -x
-  "${drop_tags_cmd[@]}"
+  "${delete_tags_cmd[@]}"
 )
 
 cmd="${1:-help}"
