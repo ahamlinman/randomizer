@@ -20,12 +20,20 @@ $0 deploy <stack name> [overrides...]
   container image, then print the URL for the deployed API.
 
   Additional arguments are passed to the "--parameter-overrides" option of "aws
-  cloudformation deploy". Whend eploying the stack for the first time, pass
+  cloudformation deploy". When deploying the stack for the first time, pass
   "SlackToken=<token>" to set the token used to authenticate requests from
   Slack.
 
 $0 build-deploy <ECR repository> <stack name> [overrides...]
   Build, upload, and deploy all in one step.
+
+$0 current-image <stack name>
+  Display the container image that the provided CloudFormation stack is
+  currently configured to run.
+
+$0 clean-repository <ECR repository>
+  Remove all tags from the ECR repository, except for the 2 newest uploads in
+  the repository or the last known image uploaded by this script.
 
 $0 help
   Print this message.
@@ -116,6 +124,55 @@ build-deploy () {
   deploy "$stack_name" "$@"
 }
 
+current-image () (
+  stack_name="$1"
+  aws cloudformation describe-stacks \
+    --stack-name "$stack_name" \
+    --output text \
+    --query "Stacks[0].Parameters[?ParameterKey=='ImageUri'].ParameterValue"
+)
+
+clean-repository () (
+  repository_name="$1"
+  all_tags_list="$(
+    aws ecr describe-images --repository-name "$repository_name" \
+      --output text --query 'imageDetails[].imageTags[] | map(&[@], @)' \
+    | sort -n
+  )"
+
+  keep_tags_list="$(echo "$all_tags_list" | tail -n2)"
+  if [ -f latest-image.txt ]; then
+    current_image="$(cat latest-image.txt)"
+    current_tag="${current_image##*:}"
+    keep_tags_list="$(printf '%s\n' "$keep_tags_list" "$current_tag" | sort -nu)"
+  fi
+
+  n_drop_tags=0
+  drop_tags_cmd=(aws ecr batch-delete-image \
+    --repository-name "$repository_name" \
+    --image-ids)
+  while read -r tag; do
+    ((n_drop_tags+=1))
+    drop_tags_cmd+=("imageTag=$tag")
+  done < <(comm -23 <(echo "$all_tags_list") <(echo "$keep_tags_list"))
+
+  if [ "$n_drop_tags" -eq 0 ]; then
+    echo "Repository is clean enough; no tags to drop."
+    return
+  fi
+
+  echo "Will keep the following tags:"
+  echo "$keep_tags_list"
+  echo
+  echo "Will run the following command to drop all other tags:"
+  echo "${drop_tags_cmd[*]}"
+  echo
+  read -rp "Press Enter to run, or Ctrl-C to quit..."
+
+  set -x
+  "${drop_tags_cmd[@]}"
+)
+
 cmd="${1:-help}"
 [ "$#" -gt 0 ] && shift
 
@@ -131,6 +188,12 @@ case "$cmd" in
     ;;
   build-deploy)
     build-deploy "$@"
+    ;;
+  current-image)
+    current-image "$@"
+    ;;
+  clean-repository)
+    clean-repository "$@"
     ;;
   help)
     usage
