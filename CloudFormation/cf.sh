@@ -56,9 +56,10 @@ build () (
     -o "$binary_name" \
     "$go_src"
 
-  go run go.alexhamlin.co/zeroimage@main \
-    -os $os -arch $arch \
-    -output "$tarball_name" \
+  go run go.alexhamlin.co/zeroimage@main build \
+    --target-os "$os" \
+    --target-arch "$arch" \
+    --output "$tarball_name" \
     "$binary_name"
 )
 
