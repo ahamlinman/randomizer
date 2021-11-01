@@ -45,20 +45,16 @@ EOF
 }
 
 build () (
-  os=linux
-  arch=arm64
-
   set -x
 
-  CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
+  CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
     go build -v \
     -ldflags='-s -w' \
     -o "$binary_name" \
     "$go_src"
 
   go run go.alexhamlin.co/zeroimage@main build \
-    --target-os "$os" \
-    --target-arch "$arch" \
+    --platform linux/arm64 \
     --output "$tarball_name" \
     "$binary_name"
 )
