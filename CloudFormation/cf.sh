@@ -5,20 +5,19 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 source .cf.local.bash
 
 binary_name="${binary_name:-$(basename "$go_src")}"
-tarball_name="${tarball_name:-$binary_name.tar}"
 
 usage () {
   cat <<EOF
 cf.sh - Manage $project deployments with AWS CloudFormation
 
-You must install the AWS CLI and Skopeo to use this script.
+You must install the AWS CLI to use this script.
 
 $0 build
   (Re)build the container image that will be deployed to AWS Lambda.
 
 $0 upload <ECR repository>
-  Upload the built container image to the provided ECR repository with Skopeo
-  using a unique tag.
+  Upload the built container image to the provided ECR repository using a
+  unique tag.
 
 $0 deploy <stack name> [overrides...]
   Deploy the latest version of the CloudFormation stack using the latest
@@ -52,20 +51,15 @@ build () (
     -ldflags='-s -w' \
     -o "$binary_name" \
     "$go_src"
-
-  go run go.alexhamlin.co/zeroimage@main build \
-    --platform linux/arm64 \
-    --output "$tarball_name" \
-    "$binary_name"
 )
 
+zeroimage () {
+  go run go.alexhamlin.co/zeroimage@main "$@"
+}
+
 upload () (
-  if ! type skopeo &>/dev/null; then
-    echo "must install skopeo to upload container images" 1>&2
-    return 1
-  fi
-  if [ ! -s "$tarball_name" ]; then
-    echo "must build a container image before uploading" 1>&2
+  if [ ! -s "$binary_name" ]; then
+    echo "must build a binary before uploading" 1>&2
     return 1
   fi
 
@@ -79,12 +73,16 @@ upload () (
   image="$repository:$tag"
 
   set -x
-  if ! skopeo list-tags docker://"$repository" &>/dev/null; then
+  if ! zeroimage check-auth --push "$image" &>/dev/null; then
     aws ecr get-login-password \
-    | skopeo login --username AWS --password-stdin "$registry"
+    | zeroimage login --username AWS --password-stdin "$registry"
   fi
 
-  skopeo copy oci-archive:"$tarball_name" docker://"$image"
+  zeroimage build \
+    --platform linux/arm64 \
+    --push "$image" \
+    "$binary_name"
+
   echo "$image" > latest-image.txt
 )
 

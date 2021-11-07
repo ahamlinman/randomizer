@@ -9,18 +9,12 @@ get started.
 
 ## Install and Configure Required Tools
 
-In addition to a working Go installation, the deployment script requires two
-special CLI tools:
-
-* [The AWS CLI][install-aws-cli] (versions 1 and 2 should both work)
-* [Skopeo][install-skopeo]
-
-The above links include full installation instructions for each tool. However,
-if you happen to be using [Homebrew][brew], the process reduces down to a single
-command:
+In addition to a working Go installation, the deployment script requires the
+[AWS CLI][install-aws-cli]. Versions 1 and 2 should both work. If you happen to
+be using [Homebrew][brew], you can install the AWS CLI with a single command:
 
 ```sh
-brew install awscli skopeo
+brew install awscli
 ```
 
 After installing the AWS CLI, see [Configuring the AWS CLI][configure] to set up
@@ -31,7 +25,6 @@ IAM][iam].
 (TODO: Discuss what IAM policies the CLI user needs to have.)
 
 [install-aws-cli]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html
-[install-skopeo]: https://github.com/containers/skopeo/blob/main/install.md
 [brew]: https://brew.sh
 [configure]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html
 [iam]: https://aws.amazon.com/iam/
@@ -98,6 +91,8 @@ useful.
 
 ## Notes
 
+* The deployment script runs [zeroimage][zeroimage] with `go run` to upload the
+  compiled randomizer binary as a container image to your ECR repository.
 * The CloudFormation template (Template.yaml) uses the [AWS SAM][sam]
   transformation to simplify the setup of the Lambda function.
 * The DynamoDB table in the template is provisioned in On-Demand capacity mode.
@@ -114,6 +109,7 @@ useful.
   (letting me take advantage of free tiers on Lambda and DynamoDB even as an
   existing user), the randomizer is effectively free for me to run.
 
+[zeroimage]: https://github.com/ahamlinman/zeroimage
 [sam]: https://github.com/awslabs/serverless-application-model
 [capacity mode]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
 [x-ray]: https://aws.amazon.com/xray/
