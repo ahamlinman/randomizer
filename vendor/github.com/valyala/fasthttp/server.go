@@ -248,6 +248,10 @@ type Server struct {
 	// Deprecated: Use IdleTimeout instead.
 	MaxKeepaliveDuration time.Duration
 
+	// MaxIdleWorkerDuration is the maximum idle time of a single worker in the underlying
+	// worker pool of the Server. Idle workers beyond this time will be cleared.
+	MaxIdleWorkerDuration time.Duration
+
 	// Period between tcp keep-alive messages.
 	//
 	// TCP keep-alive period is determined by operation system by default.
@@ -391,7 +395,17 @@ type Server struct {
 	// By default standard logger from log package is used.
 	Logger Logger
 
-	tlsConfig  *tls.Config
+	// TLSConfig optionally provides a TLS configuration for use
+	// by ServeTLS, ServeTLSEmbed, ListenAndServeTLS, ListenAndServeTLSEmbed,
+	// AppendCert, AppendCertEmbed and NextProto.
+	//
+	// Note that this value is cloned by ServeTLS, ServeTLSEmbed, ListenAndServeTLS
+	// and ListenAndServeTLSEmbed, so it's not possible to modify the configuration
+	// with methods like tls.Config.SetSessionTicketKeys.
+	// To use SetSessionTicketKeys, use Server.Serve with a TLS Listener
+	// instead.
+	TLSConfig *tls.Config
+
 	nextProtos map[string]ServeHandler
 
 	concurrency      uint32
@@ -404,8 +418,11 @@ type Server struct {
 	writerPool     sync.Pool
 	hijackConnPool sync.Pool
 
-	// We need to know our listeners so we can close them in Shutdown().
+	// We need to know our listeners and idle connections so we can close them in Shutdown().
 	ln []net.Listener
+
+	idleConns   map[net.Conn]struct{}
+	idleConnsMu sync.Mutex
 
 	mu   sync.Mutex
 	open int32
@@ -1464,8 +1481,9 @@ func (s *Server) NextProto(key string, nph ServeHandler) {
 	if s.nextProtos == nil {
 		s.nextProtos = make(map[string]ServeHandler)
 	}
+
 	s.configTLS()
-	s.tlsConfig.NextProtos = append(s.tlsConfig.NextProtos, key)
+	s.TLSConfig.NextProtos = append(s.TLSConfig.NextProtos, key)
 	s.nextProtos[key] = nph
 }
 
@@ -1547,14 +1565,14 @@ func (s *Server) ListenAndServe(addr string) error {
 // The server sets the given file mode for the UNIX addr.
 func (s *Server) ListenAndServeUNIX(addr string, mode os.FileMode) error {
 	if err := os.Remove(addr); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("unexpected error when trying to remove unix socket file %q: %s", addr, err)
+		return fmt.Errorf("unexpected error when trying to remove unix socket file %q: %w", addr, err)
 	}
 	ln, err := net.Listen("unix", addr)
 	if err != nil {
 		return err
 	}
 	if err = os.Chmod(addr, mode); err != nil {
-		return fmt.Errorf("cannot chmod %#o for %q: %s", mode, addr, err)
+		return fmt.Errorf("cannot chmod %#o for %q: %w", mode, addr, err)
 	}
 	return s.Serve(ln)
 }
@@ -1624,19 +1642,19 @@ func (s *Server) ServeTLS(ln net.Listener, certFile, keyFile string) error {
 		s.mu.Unlock()
 		return err
 	}
-	if s.tlsConfig == nil {
+	if s.TLSConfig == nil {
 		s.mu.Unlock()
 		return errNoCertOrKeyProvided
 	}
 
 	// BuildNameToCertificate has been deprecated since 1.14.
 	// But since we also support older versions we'll keep this here.
-	s.tlsConfig.BuildNameToCertificate() //nolint:staticcheck
+	s.TLSConfig.BuildNameToCertificate() //nolint:staticcheck
 
 	s.mu.Unlock()
 
 	return s.Serve(
-		tls.NewListener(ln, s.tlsConfig),
+		tls.NewListener(ln, s.TLSConfig.Clone()),
 	)
 }
 
@@ -1654,19 +1672,19 @@ func (s *Server) ServeTLSEmbed(ln net.Listener, certData, keyData []byte) error 
 		s.mu.Unlock()
 		return err
 	}
-	if s.tlsConfig == nil {
+	if s.TLSConfig == nil {
 		s.mu.Unlock()
 		return errNoCertOrKeyProvided
 	}
 
 	// BuildNameToCertificate has been deprecated since 1.14.
 	// But since we also support older versions we'll keep this here.
-	s.tlsConfig.BuildNameToCertificate() //nolint:staticcheck
+	s.TLSConfig.BuildNameToCertificate() //nolint:staticcheck
 
 	s.mu.Unlock()
 
 	return s.Serve(
-		tls.NewListener(ln, s.tlsConfig),
+		tls.NewListener(ln, s.TLSConfig.Clone()),
 	)
 }
 
@@ -1681,12 +1699,12 @@ func (s *Server) AppendCert(certFile, keyFile string) error {
 
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		return fmt.Errorf("cannot load TLS key pair from certFile=%q and keyFile=%q: %s", certFile, keyFile, err)
+		return fmt.Errorf("cannot load TLS key pair from certFile=%q and keyFile=%q: %w", certFile, keyFile, err)
 	}
 
 	s.configTLS()
+	s.TLSConfig.Certificates = append(s.TLSConfig.Certificates, cert)
 
-	s.tlsConfig.Certificates = append(s.tlsConfig.Certificates, cert)
 	return nil
 }
 
@@ -1703,16 +1721,14 @@ func (s *Server) AppendCertEmbed(certData, keyData []byte) error {
 	}
 
 	s.configTLS()
+	s.TLSConfig.Certificates = append(s.TLSConfig.Certificates, cert)
 
-	s.tlsConfig.Certificates = append(s.tlsConfig.Certificates, cert)
 	return nil
 }
 
 func (s *Server) configTLS() {
-	if s.tlsConfig == nil {
-		s.tlsConfig = &tls.Config{
-			PreferServerCipherSuites: true,
-		}
+	if s.TLSConfig == nil {
+		s.TLSConfig = &tls.Config{}
 	}
 }
 
@@ -1745,11 +1761,12 @@ func (s *Server) Serve(ln net.Listener) error {
 	s.mu.Unlock()
 
 	wp := &workerPool{
-		WorkerFunc:      s.serveConn,
-		MaxWorkersCount: maxWorkersCount,
-		LogAllErrors:    s.LogAllErrors,
-		Logger:          s.logger(),
-		connState:       s.setState,
+		WorkerFunc:            s.serveConn,
+		MaxWorkersCount:       maxWorkersCount,
+		LogAllErrors:          s.LogAllErrors,
+		MaxIdleWorkerDuration: s.MaxIdleWorkerDuration,
+		Logger:                s.logger(),
+		connState:             s.setState,
 	}
 	wp.Start()
 
@@ -1825,6 +1842,8 @@ func (s *Server) Shutdown() error {
 	if s.done != nil {
 		close(s.done)
 	}
+
+	s.closeIdleConns()
 
 	// Closing the listener will make Serve() call Stop on the worker pool.
 	// Setting .stop to 1 will make serveConn() break out of its loop.
@@ -2065,7 +2084,7 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 		connectionClose bool
 		isHTTP11        bool
 
-		reqReset               bool
+		reqReset, respReset    bool
 		continueReadingRequest bool = true
 	)
 	for {
@@ -2104,6 +2123,7 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 			br, err = acquireByteReader(&ctx)
 		}
 
+		reqReset, respReset = false, false
 		ctx.Request.isTLS = isTLS
 		ctx.Response.Header.noDefaultContentType = s.NoDefaultContentType
 		ctx.Response.Header.noDefaultDate = s.NoDefaultDate
@@ -2288,8 +2308,6 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 		if !ctx.IsGet() && ctx.IsHead() {
 			ctx.Response.SkipBody = true
 		}
-		reqReset = true
-		ctx.Request.Reset()
 
 		hijackHandler = ctx.hijackHandler
 		ctx.hijackHandler = nil
@@ -2313,7 +2331,6 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 			previousWriteTimeout = 0
 		}
 
-		connectionClose = connectionClose || ctx.Response.ConnectionClose()
 		connectionClose = connectionClose || ctx.Response.ConnectionClose() || (s.CloseOnShutdown && atomic.LoadInt32(&s.stop) == 1)
 		if connectionClose {
 			ctx.Response.Header.SetCanonical(strConnection, strClose)
@@ -2391,6 +2408,10 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 		s.setState(c, StateIdle)
 		ctx.userValues.Reset()
 
+		reqReset, respReset = true, true
+		ctx.Request.Reset()
+		ctx.Response.Reset()
+
 		if atomic.LoadInt32(&s.stop) == 1 {
 			err = nil
 			break
@@ -2405,10 +2426,13 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 	}
 	if ctx != nil {
 		// in unexpected cases the for loop will break
-		// before request reset call. in such cases, call it before
+		// before request/response reset call. in such cases, call it before
 		// release to fix #548
 		if !reqReset {
 			ctx.Request.Reset()
+		}
+		if !respReset {
+			ctx.Response.Reset()
 		}
 		s.releaseCtx(ctx)
 	}
@@ -2416,6 +2440,7 @@ func (s *Server) serveConn(c net.Conn) (err error) {
 }
 
 func (s *Server) setState(nc net.Conn, state ConnState) {
+	s.trackConn(nc, state)
 	if hook := s.ConnState; hook != nil {
 		hook(nc, state)
 	}
@@ -2495,7 +2520,7 @@ func writeResponse(ctx *RequestCtx, w *bufio.Writer) error {
 		panic("BUG: cannot write timed out response")
 	}
 	err := ctx.Response.Write(w)
-	ctx.Response.Reset()
+
 	return err
 }
 
@@ -2732,7 +2757,7 @@ func (s *Server) getServerName() []byte {
 }
 
 func (s *Server) writeFastError(w io.Writer, statusCode int, msg string) {
-	w.Write(statusLine(statusCode)) //nolint:errcheck
+	w.Write(formatStatusLine(nil, strHTTP11, statusCode, s2b(StatusMessage(statusCode)))) //nolint:errcheck
 
 	server := ""
 	if !s.NoDefaultServerHeader {
@@ -2780,9 +2805,36 @@ func (s *Server) writeErrorResponse(bw *bufio.Writer, ctx *RequestCtx, serverNam
 	if bw == nil {
 		bw = acquireWriter(ctx)
 	}
+
 	writeResponse(ctx, bw) //nolint:errcheck
+	ctx.Response.Reset()
 	bw.Flush()
+
 	return bw
+}
+
+func (s *Server) trackConn(c net.Conn, state ConnState) {
+	s.idleConnsMu.Lock()
+	switch state {
+	case StateIdle:
+		if s.idleConns == nil {
+			s.idleConns = make(map[net.Conn]struct{})
+		}
+		s.idleConns[c] = struct{}{}
+
+	default:
+		delete(s.idleConns, c)
+	}
+	s.idleConnsMu.Unlock()
+}
+
+func (s *Server) closeIdleConns() {
+	s.idleConnsMu.Lock()
+	for c := range s.idleConns {
+		_ = c.Close()
+	}
+	s.idleConns = nil
+	s.idleConnsMu.Unlock()
 }
 
 // A ConnState represents the state of a client connection to a server.
