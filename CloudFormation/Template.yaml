@@ -4,7 +4,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: A randomizer slash command for Slack, with support for saving groups and more
 
 Parameters:
-  SlackToken:
+  SlackToken: # TODO: This probably needs to be more secret than this makes it.
     Description: The authentication token created by Slack for the slash command
     Type: String
   XRayTracingEnabled:
