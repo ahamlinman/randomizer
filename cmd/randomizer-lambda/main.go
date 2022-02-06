@@ -32,9 +32,9 @@ func main() {
 	}
 
 	app := slack.App{
-		Token:        []byte(token),
-		StoreFactory: storeFactory,
-		DebugWriter:  os.Stderr,
+		TokenProvider: slack.StaticToken([]byte(token)),
+		StoreFactory:  storeFactory,
+		DebugWriter:   os.Stderr,
 	}
 	lambda.Start(httpadapter.New(app).ProxyWithContext)
 }

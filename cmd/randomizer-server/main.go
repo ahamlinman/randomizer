@@ -35,9 +35,9 @@ func main() {
 	}
 
 	http.Handle("/", slack.App{
-		Token:        []byte(token),
-		StoreFactory: storeFactory,
-		DebugWriter:  os.Stderr,
+		TokenProvider: slack.StaticToken([]byte(token)),
+		StoreFactory:  storeFactory,
+		DebugWriter:   os.Stderr,
 	})
 
 	fmt.Println("Starting randomizer service on", addr)
