@@ -7,10 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
+	"go.alexhamlin.co/randomizer/internal/randomizer/rndtest"
 )
-
-type mockStore map[string][]string
 
 type validator func(*testing.T, Result, error)
 
@@ -31,10 +29,10 @@ type validator func(*testing.T, Result, error)
 // randomizer finishes. Nil stores return an error on every operation.
 var testCases = []struct {
 	description   string
-	store         mockStore
+	store         rndtest.Store
 	args          []string
 	check         validator
-	expectedStore mockStore
+	expectedStore rndtest.Store
 }{
 	// Basic functionality
 
@@ -54,14 +52,14 @@ var testCases = []struct {
 
 	{
 		description: "randomizing a group",
-		store:       mockStore{"test": {"three", "two", "one"}},
+		store:       rndtest.Store{"test": {"three", "two", "one"}},
 		args:        []string{"test"},
 		check:       isResult(Selection, "*one*", "*three*", "*two*"),
 	},
 
 	{
 		description: "randomizing a group that does not exist",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"test"},
 		check:       isError(`couldn't find the "test" group`),
 	},
@@ -77,14 +75,14 @@ var testCases = []struct {
 
 	{
 		description: "listing groups",
-		store:       mockStore{"first": {"one"}, "second": {"two"}},
+		store:       rndtest.Store{"first": {"one"}, "second": {"two"}},
 		args:        []string{"/list"},
 		check:       isResult(ListedGroups, "• first", "• second"),
 	},
 
 	{
 		description: "listing groups when there are none",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/list"},
 		check:       isResult(ListedGroups, "no groups are available"),
 	},
@@ -98,14 +96,14 @@ var testCases = []struct {
 
 	{
 		description: "showing a group",
-		store:       mockStore{"test": {"one", "two", "three"}},
+		store:       rndtest.Store{"test": {"one", "two", "three"}},
 		args:        []string{"/show", "test"},
 		check:       isResult(ShowedGroup, "• one", "• three", "• two"),
 	},
 
 	{
 		description: "showing a group that does not exist",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/show", "test"},
 		check:       isError("can't find that group"),
 	},
@@ -119,17 +117,17 @@ var testCases = []struct {
 
 	{
 		description: "no group provided to show",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/show"},
 		check:       isError("requires an argument"),
 	},
 
 	{
 		description:   "saving a group",
-		store:         mockStore{},
+		store:         rndtest.Store{},
 		args:          []string{"/save", "test", "one", "two"},
 		check:         isResult(SavedGroup, `The "test" group was saved`, "• one", "• two"),
-		expectedStore: mockStore{"test": {"one", "two"}},
+		expectedStore: rndtest.Store{"test": {"one", "two"}},
 	},
 
 	{
@@ -141,43 +139,43 @@ var testCases = []struct {
 
 	{
 		description: "saving a group with a flag name",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/save", "/delete", "one", "two"},
 		check:       isError("has a special meaning"),
 	},
 
 	{
 		description: "saving a group with a potential flag name",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/save", "/futureflag", "one", "two"},
 		check:       isError("has a special meaning"),
 	},
 
 	{
 		description: `saving a group named "help"`,
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/save", "help", "one", "two"},
 		check:       isError("has a special meaning"),
 	},
 
 	{
 		description: "not enough options provided to save",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/save", "test", "one"},
 		check:       isError("need at least two options"),
 	},
 
 	{
 		description:   "deleting a group",
-		store:         mockStore{"test": {"one", "two"}},
+		store:         rndtest.Store{"test": {"one", "two"}},
 		args:          []string{"/delete", "test"},
 		check:         isResult(DeletedGroup, `The "test" group was deleted`),
-		expectedStore: mockStore{},
+		expectedStore: rndtest.Store{},
 	},
 
 	{
 		description: "deleting a group that does not exist",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/delete", "test"},
 		check:       isError("can't find that group"),
 	},
@@ -191,7 +189,7 @@ var testCases = []struct {
 
 	{
 		description: "no group provided to delete",
-		store:       mockStore{},
+		store:       rndtest.Store{},
 		args:        []string{"/delete"},
 		check:       isError("requires an argument"),
 	},
@@ -274,47 +272,4 @@ func isError(contains string) validator {
 			t.Errorf("error help text missing substring %q", contains)
 		}
 	}
-}
-
-func (ms mockStore) List(_ context.Context) ([]string, error) {
-	if ms == nil {
-		return nil, errors.New("mock store list error")
-	}
-
-	keys := make([]string, 0, len(ms))
-	for k := range ms {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
-}
-
-func (ms mockStore) Get(_ context.Context, name string) ([]string, error) {
-	if ms == nil {
-		return nil, errors.New("mock store get error")
-	}
-
-	return ms[name], nil
-}
-
-func (ms mockStore) Put(_ context.Context, name string, options []string) error {
-	if ms == nil {
-		return errors.New("mock store put error")
-	}
-
-	copied := make([]string, len(options))
-	copy(copied, options)
-	sort.Strings(copied)
-	ms[name] = copied
-	return nil
-}
-
-func (ms mockStore) Delete(_ context.Context, name string) (existed bool, err error) {
-	if ms == nil {
-		return false, errors.New("mock store delete error")
-	}
-
-	_, existed = ms[name]
-	delete(ms, name)
-	return
 }
