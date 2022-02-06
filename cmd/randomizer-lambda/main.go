@@ -23,10 +23,10 @@ func main() {
 	var tokenProvider slack.TokenProvider
 	if token, ok := os.LookupEnv("SLACK_TOKEN"); ok {
 		tokenProvider = slack.StaticToken(token)
-	} else if path, ok := os.LookupEnv("SLACK_TOKEN_SSM_PATH"); ok {
-		tokenProvider = slack.AWSParameter(path, 2*time.Minute)
+	} else if ssmName, ok := os.LookupEnv("SLACK_TOKEN_SSM_NAME"); ok {
+		tokenProvider = slack.AWSParameter(ssmName, 2*time.Minute)
 	} else {
-		fmt.Fprintln(os.Stderr, "must define SLACK_TOKEN or SLACK_TOKEN_SSM_PATH")
+		fmt.Fprintln(os.Stderr, "must define SLACK_TOKEN or SLACK_TOKEN_SSM_NAME")
 		os.Exit(2)
 	}
 

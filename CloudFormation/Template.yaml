@@ -4,17 +4,18 @@ Transform: AWS::Serverless-2016-10-31
 Description: A randomizer slash command for Slack, with support for saving groups and more
 
 Parameters:
-  SlackTokenSSMPath:
+  SlackTokenSSMName:
     Description: >-
-      Path to the Slack slash command verification token in the AWS SSM
-      Parameter Store, with no leading slash
+      Name of the Slack slash command verification token in the AWS SSM
+      Parameter Store, with no leading slash. May be encrypted with the
+      AWS-managed KMS key.
     Type: String
   XRayTracingEnabled:
-    Description: If 'true', turn on X-Ray tracing for all requests
+    Description: If 'true', turn on X-Ray tracing for all requests.
     Type: String
     Default: 'true'
   ImageUri:
-    Description: The container image for the Lambda function to run
+    Description: The container image for the Lambda function to run.
     Type: String
 
 Conditions:
@@ -47,7 +48,7 @@ Resources:
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref GroupsTable
-          SLACK_TOKEN_SSM_PATH: !Sub '/${SlackTokenSSMPath}'
+          SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
           AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
       Events:
         ApiGet:
@@ -64,7 +65,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref GroupsTable
         - SSMParameterReadPolicy:
-            ParameterName: !Ref SlackTokenSSMPath
+            ParameterName: !Ref SlackTokenSSMName
 
 Outputs:
   ApiUrl:

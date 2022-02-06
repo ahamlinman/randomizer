@@ -23,10 +23,10 @@ func StaticToken(token string) TokenProvider {
 	}
 }
 
-// AWSParameter retrieves the expected value of the verification token from a
-// path in the AWS SSM Parameter Store, and caches the retrieved token value for
-// the provided TTL.
-func AWSParameter(path string, ttl time.Duration) TokenProvider {
+// AWSParameter retrieves the expected value of the verification token from the
+// AWS SSM Parameter Store, decrypting it if necessary, and caches the retrieved
+// token value for the provided TTL.
+func AWSParameter(name string, ttl time.Duration) TokenProvider {
 	var (
 		mu        ctxLock
 		token     string
@@ -50,7 +50,7 @@ func AWSParameter(path string, ttl time.Duration) TokenProvider {
 		}
 
 		output, err := ssm.NewFromConfig(cfg).GetParameter(ctx, &ssm.GetParameterInput{
-			Name:           aws.String(path),
+			Name:           aws.String(name),
 			WithDecryption: true,
 		})
 		if err != nil {
