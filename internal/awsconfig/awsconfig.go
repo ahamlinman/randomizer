@@ -6,12 +6,14 @@ import (
 	"crypto/x509"
 	_ "embed"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
+	xrayawsv2 "github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/pkg/errors"
 )
 
@@ -44,6 +46,18 @@ func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
 	options = append(options, extraOptions...)
 
 	cfg, err := config.LoadDefaultConfig(ctx, options...)
+	if err != nil {
+		return aws.Config{}, errors.Wrap(err, "loading AWS config")
+	}
+
+	// WARNING: X-Ray tracing will panic if the context passed to AWS operations
+	// is not already associated with an open X-Ray segment. That means that as of
+	// this writing this option is only safe to use on AWS Lambda. Other clients
+	// should avoid setting it.
+	if useXRay := os.Getenv("AWS_CLIENT_XRAY_TRACING"); useXRay == "1" {
+		xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	}
+
 	return cfg, errors.Wrap(err, "loading AWS config")
 }
 

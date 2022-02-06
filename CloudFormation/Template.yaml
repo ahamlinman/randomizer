@@ -46,7 +46,7 @@ Resources:
         Variables:
           SLACK_TOKEN: !Ref SlackToken
           DYNAMODB_TABLE: !Ref GroupsTable
-          DYNAMODB_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
+          AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
       Events:
         ApiGet:
           Type: Api
