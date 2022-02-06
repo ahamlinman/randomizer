@@ -10,6 +10,12 @@ Parameters:
       Parameter Store, with no leading slash. May be encrypted with the
       AWS-managed KMS key.
     Type: String
+  SlackTokenSSMTTL:
+    Description: >-
+      TTL for caching the slash command verification token after successfully
+      retrieving it from SSM, as a Go duration.
+    Type: String
+    Default: 2m
   XRayTracingEnabled:
     Description: If 'true', turn on X-Ray tracing for all requests.
     Type: String
@@ -49,6 +55,7 @@ Resources:
         Variables:
           DYNAMODB_TABLE: !Ref GroupsTable
           SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
+          SLACK_TOKEN_SSM_TTL: !Ref SlackTokenSSMTTL
           AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
       Events:
         ApiGet:

@@ -21,12 +21,13 @@ import (
 
 func main() {
 	var tokenProvider slack.TokenProvider
+
 	if token, ok := os.LookupEnv("SLACK_TOKEN"); ok {
 		tokenProvider = slack.StaticToken(token)
 	} else if ssmName, ok := os.LookupEnv("SLACK_TOKEN_SSM_NAME"); ok {
-		tokenProvider = slack.AWSParameter(ssmName, 2*time.Minute)
+		tokenProvider = slack.AWSParameter(ssmName, getSSMTTL())
 	} else {
-		fmt.Fprintln(os.Stderr, "must define SLACK_TOKEN or SLACK_TOKEN_SSM_NAME")
+		fmt.Fprintln(os.Stderr, "Must define SLACK_TOKEN or SLACK_TOKEN_SSM_NAME")
 		os.Exit(2)
 	}
 
@@ -42,4 +43,21 @@ func main() {
 		DebugWriter:   os.Stderr,
 	}
 	lambda.Start(httpadapter.New(app).ProxyWithContext)
+}
+
+const defaultSSMTTL = 2 * time.Minute
+
+func getSSMTTL() time.Duration {
+	ttlEnv, ok := os.LookupEnv("SLACK_TOKEN_SSM_TTL")
+	if !ok {
+		return defaultSSMTTL
+	}
+
+	ttl, err := time.ParseDuration(ttlEnv)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "SLACK_TOKEN_SSM_TTL must be a valid Go duration")
+		os.Exit(2)
+	}
+
+	return ttl
 }
