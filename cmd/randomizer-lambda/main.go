@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
@@ -19,9 +20,13 @@ import (
 )
 
 func main() {
-	token := os.Getenv("SLACK_TOKEN")
-	if token == "" {
-		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided in environment")
+	var tokenProvider slack.TokenProvider
+	if token, ok := os.LookupEnv("SLACK_TOKEN"); ok {
+		tokenProvider = slack.StaticToken(token)
+	} else if path, ok := os.LookupEnv("SLACK_TOKEN_SSM_PATH"); ok {
+		tokenProvider = slack.AWSParameter(path, 2*time.Minute)
+	} else {
+		fmt.Fprintln(os.Stderr, "must define SLACK_TOKEN or SLACK_TOKEN_SSM_PATH")
 		os.Exit(2)
 	}
 
@@ -32,7 +37,7 @@ func main() {
 	}
 
 	app := slack.App{
-		TokenProvider: slack.StaticToken(token),
+		TokenProvider: tokenProvider,
 		StoreFactory:  storeFactory,
 		DebugWriter:   os.Stderr,
 	}
