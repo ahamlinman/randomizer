@@ -88,16 +88,15 @@ func (a App) getRequestParams(r *http.Request) (url.Values, error) {
 }
 
 func (a App) isTokenValid(ctx context.Context, params url.Values) (bool, error) {
+	gotToken := params.Get("token")
 	wantToken, err := a.TokenProvider(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	gotToken := []byte(params.Get("token"))
-
 	// This function "[requires] careful thought to use correctly." Hopefully
 	// I've managed to do that.
-	return subtle.ConstantTimeCompare(gotToken, wantToken) == 1, nil
+	return subtle.ConstantTimeCompare([]byte(gotToken), []byte(wantToken)) == 1, nil
 }
 
 func (a App) runRandomizer(ctx context.Context, params url.Values) (randomizer.Result, error) {

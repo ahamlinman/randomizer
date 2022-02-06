@@ -35,7 +35,7 @@ func main() {
 	}
 
 	http.Handle("/", slack.App{
-		TokenProvider: slack.StaticToken([]byte(token)),
+		TokenProvider: slack.StaticToken(token),
 		StoreFactory:  storeFactory,
 		DebugWriter:   os.Stderr,
 	})
