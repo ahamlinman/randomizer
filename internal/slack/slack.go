@@ -3,6 +3,7 @@ package slack
 import (
 	"context"
 	"crypto/subtle"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -108,18 +109,29 @@ func (a App) runRandomizer(ctx context.Context, params url.Values) (randomizer.R
 	return app.Main(ctx, args)
 }
 
-func (a App) writeResult(w http.ResponseWriter, result randomizer.Result) {
-	a.writeResponse(w, response{
-		Text: result.Message(),
-		Type: slackTypeForResultType[result.Type()],
-	})
+type response struct {
+	Type responseType `json:"response_type"`
+	Text string       `json:"text"`
 }
 
-var slackTypeForResultType = map[randomizer.ResultType]responseType{
-	randomizer.Selection:    typeInChannel,
-	randomizer.SavedGroup:   typeInChannel,
-	randomizer.DeletedGroup: typeInChannel,
-	// Default to typeEphemeral for everything else, to keep channels clean.
+type responseType string
+
+const (
+	typeEphemeral responseType = "ephemeral"
+	typeInChannel responseType = "in_channel"
+)
+
+func (a App) writeResult(w http.ResponseWriter, result randomizer.Result) {
+	rtype := typeEphemeral
+	switch result.Type() {
+	case randomizer.Selection, randomizer.SavedGroup, randomizer.DeletedGroup:
+		rtype = typeInChannel
+	}
+
+	a.writeResponse(w, response{
+		Text: result.Message(),
+		Type: rtype,
+	})
 }
 
 func (a App) writeError(w http.ResponseWriter, err error) {
@@ -131,8 +143,7 @@ func (a App) writeError(w http.ResponseWriter, err error) {
 
 func (a App) writeResponse(w http.ResponseWriter, response response) {
 	w.Header().Add("Content-Type", "application/json")
-
-	_, err := response.WriteTo(w)
+	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
 		a.log("Error writing response: %v\n", err)
 	}
