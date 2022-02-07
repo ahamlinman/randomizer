@@ -65,9 +65,9 @@ func StaticToken(token string) TokenProvider {
 // token value for the provided TTL.
 func AWSParameter(name string, ttl time.Duration) TokenProvider {
 	var (
-		mu        ctxLock
-		token     string
-		retrieved time.Time
+		mu     ctxLock
+		token  string
+		expiry time.Time
 	)
 
 	return func(ctx context.Context) (string, error) {
@@ -81,7 +81,6 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 		}
 		defer mu.Unlock()
 
-		expiry := retrieved.Add(ttl)
 		if time.Now().Before(expiry) {
 			return token, nil
 		}
@@ -94,8 +93,8 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 			return "", errors.Wrap(err, "loading Slack token parameter")
 		}
 
-		retrieved = time.Now()
 		token = *output.Parameter.Value
+		expiry = time.Now().Add(ttl)
 		return token, nil
 	}
 }

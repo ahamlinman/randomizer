@@ -69,7 +69,10 @@ aws ssm put-parameter --type SecureString --name /Randomizer/SlackToken --value 
 
 The parameter name in the `aws ssm` command is unique within your AWS account,
 must start with a `/`, and can contain additional slash-separated parts to help
-you organize all of the SSM parameters in your account.
+you organize all of the SSM parameters in your account. While the parameter can
+be encrypted with the default AWS-managed SSM key, the CloudFormation template
+does not currently support encryption with a custom KMS key (which would cost
+$1/mo and require additional IAM and KMS setup).
 
 [ssm parameter store]: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
 

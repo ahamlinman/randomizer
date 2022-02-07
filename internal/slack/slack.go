@@ -47,7 +47,7 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	tokenIsValid, err := a.isTokenValid(r.Context(), params)
 	if err != nil {
-		a.log("Failed to get token: %v\n", err)
+		a.log("Unable to check verification token: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -94,8 +94,6 @@ func (a App) isTokenValid(ctx context.Context, params url.Values) (bool, error) 
 		return false, err
 	}
 
-	// This function "[requires] careful thought to use correctly." Hopefully
-	// I've managed to do that.
 	return subtle.ConstantTimeCompare([]byte(gotToken), []byte(wantToken)) == 1, nil
 }
 
@@ -141,9 +139,7 @@ func (a App) writeResponse(w http.ResponseWriter, response response) {
 }
 
 func (a App) log(format string, v ...interface{}) {
-	if a.DebugWriter == nil {
-		return
+	if a.DebugWriter != nil {
+		fmt.Fprintf(a.DebugWriter, format, v...)
 	}
-
-	fmt.Fprintf(a.DebugWriter, format, v...)
 }
