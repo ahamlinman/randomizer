@@ -48,28 +48,59 @@ randomizer code outside of the deployment script.
 
 [ecr]: https://aws.amazon.com/ecr/
 
+## Add the Slack Verification Token to the AWS SSM Parameter Store
+
+The randomizer validates that each HTTP request legitimately came from Slack by
+checking for a special Slack-provided token value in the request parameters.
+Since this token is a secret value, we'll store it in the [AWS Systems Manager
+Parameter Store][ssm parameter store] with encryption.
+
+Note that the current version of the randomizer only supports the deprecated
+"Verification Token" to validate requests, and not the newer "Signing Secret"
+configuration.
+
+The token value is available on the "Basic Information" page of the Slack app
+configuration interface. Once you have it, you can create the parameter using
+the AWS CLI:
+
+```sh
+aws ssm put-parameter --type SecureString --name /Randomizer/SlackToken --value <token>
+```
+
+The parameter name in the `aws ssm` command is unique within your AWS account,
+must start with a `/`, and can contain additional slash-separated parts to help
+you organize all of the SSM parameters in your account.
+
+[ssm parameter store]: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
+
 ## Run the Initial Deployment
 
 Now, we're ready to use AWS [CloudFormation][CloudFormation] to deploy the
 randomizer into our account, with all necessary resources (e.g. the DynamoDB
 table for storing groups) automatically created and configured.
 
-Similar to how you picked a ECR repository name, you'll also need to pick a name
-for your CloudFormation "stack." Like your repository name, this needs to be
-unique within your AWS account. If you only need to deploy one copy of the
-randomizer, a simple name like "Randomizer" should be enough.
+Similar to how you picked ECR repository and SSM parameter names, you'll also
+need to pick a name for your CloudFormation "stack." Like your repository name,
+this needs to be unique within your AWS account. If you only need to deploy one
+copy of the randomizer, a simple name like "Randomizer" should be enough.
 
-With both of the above names and your verification token from Slack available
-(see README.md one level up), run the following command from this directory:
+Note that when you pass the SSM parameter name to `cf.sh`, **you must omit the
+leading slash from the name**, unlike with the above `aws ssm` command. This is
+an unfortunate limitation of the CloudFormation template. If you include the
+leading slash, your CloudFormation stack might deploy successfully but fail to
+work once you actually try to run the slash command!
+
+With all of the above names available, run the following command from this
+directory:
 
 ```
-./cf.sh build-deploy <repository name> <stack name> SlackToken=<token>
+./cf.sh build-deploy <repository name> <stack name> SlackTokenSSMName=<parameter name>
 ```
 
 This command will automatically compile the randomizer code for AWS Lambda,
 upload it to your ECR repository, and set it up for use. After some time, the
-script will finish and print the webhook URL for Slack. Copy and paste this into
-the "URL" field of the Slack slash command configuration, and save it.
+script will finish and print the webhook URL for Slack. Copy and paste this
+into the "URL" field of your Slack slash command configuration, and save it.
 
 At this point, you should be able to use the randomizer in your Slack
 workspace. Go ahead and try it out!
@@ -79,7 +110,7 @@ workspace. Go ahead and try it out!
 ## Upgrades and Maintenance
 
 To upgrade the randomizer deployment in your AWS account, run the above command
-inside a newer version of the randomizer repository without the Slack token
+in a newer version of the randomizer repository without the `SlackTokenSSMName`
 parameter override. For example:
 
 ```
@@ -87,27 +118,26 @@ parameter override. For example:
 ```
 
 Run `./cf.sh help` to learn more about additional commands that might be
-useful.
+useful, and additional parameters that you can override to tune the deployment.
 
 ## Notes
 
-* The deployment script runs [zeroimage][zeroimage] with `go run` to upload the
+- The deployment script runs [zeroimage][zeroimage] with `go run` to upload the
   compiled randomizer binary as a container image to your ECR repository.
-* The CloudFormation template (Template.yaml) uses the [AWS SAM][sam]
+- The CloudFormation template (Template.yaml) uses the [AWS SAM][sam]
   transformation to simplify the setup of the Lambda function.
-* The DynamoDB table in the template is provisioned in On-Demand capacity mode.
+- The DynamoDB table in the template is provisioned in On-Demand capacity mode.
   Note that this mode is not eligible for the AWS Free Tier. See the
   documentation for [Read/Write Capacity Mode][capacity mode] for more details.
-* The default configuration enables [AWS X-Ray][x-ray] tracing for the function
+- The default configuration enables [AWS X-Ray][x-ray] tracing for the function
   and its requests to DynamoDB. X-Ray is free for up to 100,000 traces per month
   for every AWS account, and it's useful to see where each request is spending
   time. However, you can turn it off by passing `XRayTracingEnabled=false` to
   the deployment script.
-* Estimating costs on AWS is never easy. Anecdotally, my Slack team at work
-  (over 1,000 people) makes a little over 200 requests to the randomizer per
-  month. Between the low volume and my relatively low use of AWS in general
-  (letting me take advantage of free tiers on Lambda and DynamoDB even as an
-  existing user), the randomizer is effectively free for me to run.
+- My co-workers and I collectively make a little over 500 requests to the
+  randomizer per month, and at that small of a volume it's essentially free to
+  run on AWS even without the 12 month free tier. My _very rough_ estimate is
+  that the randomizer probably costs a few dollars per million requests.
 
 [zeroimage]: https://github.com/ahamlinman/zeroimage
 [sam]: https://github.com/awslabs/serverless-application-model
