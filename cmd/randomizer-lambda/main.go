@@ -22,6 +22,7 @@ func main() {
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to configure Slack token: %+v\n", err)
+		os.Exit(2)
 	}
 
 	storeFactory, err := dynamodb.FactoryFromEnv(context.Background())

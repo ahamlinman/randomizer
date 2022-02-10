@@ -100,7 +100,7 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 }
 
 // ctxLock is a mutual exclusion lock that allows clients to cancel a pending
-// lock operation via a context. The zero value is an unlocked lock.
+// lock operation with a context. The zero value is an unlocked lock.
 type ctxLock struct {
 	init sync.Once
 	ch   chan struct{} // buffered, size 1
