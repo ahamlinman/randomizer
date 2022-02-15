@@ -81,7 +81,7 @@ func (s Store) List(ctx context.Context) ([]string, error) {
 	for i, item := range result.Items {
 		v, ok := item[groupKey].(*types.AttributeValueMemberS)
 		if !ok {
-			return nil, errors.Errorf("invalid type %T in group names", v)
+			return nil, errors.Errorf("invalid type %T in group names", item[groupKey])
 		}
 		list[i] = v.Value
 	}
