@@ -22,9 +22,9 @@ func main() {
 	flag.StringVar(&addr, "addr", ":7636", "address to bind the server to")
 	flag.Parse()
 
-	token := os.Getenv("SLACK_TOKEN")
-	if token == "" {
-		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided in environment")
+	tokenProvider, err := slack.TokenProviderFromEnv()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to configure Slack token: %+v\n", err)
 		os.Exit(2)
 	}
 
@@ -35,9 +35,9 @@ func main() {
 	}
 
 	http.Handle("/", slack.App{
-		Token:        []byte(token),
-		StoreFactory: storeFactory,
-		DebugWriter:  os.Stderr,
+		TokenProvider: tokenProvider,
+		StoreFactory:  storeFactory,
+		DebugWriter:   os.Stderr,
 	})
 
 	fmt.Println("Starting randomizer service on", addr)

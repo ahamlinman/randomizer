@@ -19,9 +19,9 @@ import (
 )
 
 func main() {
-	token := os.Getenv("SLACK_TOKEN")
-	if token == "" {
-		fmt.Fprintln(os.Stderr, "SLACK_TOKEN must be provided in environment")
+	tokenProvider, err := slack.TokenProviderFromEnv()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to configure Slack token: %+v\n", err)
 		os.Exit(2)
 	}
 
@@ -32,9 +32,9 @@ func main() {
 	}
 
 	app := slack.App{
-		Token:        []byte(token),
-		StoreFactory: storeFactory,
-		DebugWriter:  os.Stderr,
+		TokenProvider: tokenProvider,
+		StoreFactory:  storeFactory,
+		DebugWriter:   os.Stderr,
 	}
 	lambda.Start(httpadapter.New(app).ProxyWithContext)
 }

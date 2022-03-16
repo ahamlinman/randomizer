@@ -17,13 +17,12 @@ import (
 type Factory func(partition string) randomizer.Store
 
 // FactoryFromEnv constructs and returns a Factory based on available
-// environment variables. It delegates to more specific store implementations
-// as appropriate.
+// environment variables. If a known DynamoDB environment variable is set, it
+// will return a DynamoDB store. Otherwise, it will return a bbolt store.
 func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) {
 	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
 		return dynamodb.FactoryFromEnv(ctx)
 	}
-
 	return bbolt.FactoryFromEnv()
 }
 

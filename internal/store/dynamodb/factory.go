@@ -2,21 +2,14 @@ package dynamodb
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	_ "embed"
-	"net/http"
 	"os"
-	"sync"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	xrayawsv2 "github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
-	"github.com/pkg/errors"
 
+	"go.alexhamlin.co/randomizer/internal/awsconfig"
 	"go.alexhamlin.co/randomizer/internal/randomizer"
 )
 
@@ -44,25 +37,9 @@ func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) 
 }
 
 func awsConfigFromEnv(ctx context.Context) (aws.Config, error) {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{RootCAs: getTLSRootPool()}
-
-	client := &http.Client{
-		Timeout:   2500 * time.Millisecond,
-		Transport: transport,
-	}
-
-	options := []func(*config.LoadOptions) error{
-		config.WithHTTPClient(client),
-		config.WithRetryer(
-			func() aws.Retryer {
-				return retry.AddWithMaxAttempts(retry.NewStandard(), 2)
-			},
-		),
-	}
-
+	var extraOptions []awsconfig.Option
 	if endpoint := os.Getenv("DYNAMODB_ENDPOINT"); endpoint != "" {
-		options = append(options,
+		extraOptions = append(extraOptions,
 			config.WithEndpointResolver(aws.EndpointResolverFunc(
 				func(_, _ string) (aws.Endpoint, error) {
 					return aws.Endpoint{URL: endpoint}, nil
@@ -71,20 +48,7 @@ func awsConfigFromEnv(ctx context.Context) (aws.Config, error) {
 		)
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx, options...)
-	if err != nil {
-		return aws.Config{}, errors.Wrap(err, "loading AWS config")
-	}
-
-	// WARNING: X-Ray tracing will fail (and panic) if the context passed to store
-	// operations is not already associated with an open X-Ray segment. That means
-	// that as of this writing, this option is only safe to use on AWS Lambda.
-	// Other clients should avoid setting it.
-	if useXRay := os.Getenv("DYNAMODB_XRAY_TRACING"); useXRay == "1" {
-		xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
-	}
-
-	return cfg, nil
+	return awsconfig.New(ctx, extraOptions...)
 }
 
 func tableFromEnv() string {
@@ -92,23 +56,4 @@ func tableFromEnv() string {
 		return table
 	}
 	return "RandomizerGroups"
-}
-
-//go:generate ./refresh-tls-roots.sh
-
-var (
-	//go:embed cert.pem
-	tlsRootsPEM  []byte
-	tlsRoots     *x509.CertPool
-	initTLSRoots sync.Once
-)
-
-func getTLSRootPool() *x509.CertPool {
-	initTLSRoots.Do(func() {
-		tlsRoots = x509.NewCertPool()
-		if !tlsRoots.AppendCertsFromPEM(tlsRootsPEM) {
-			panic("failed to initialize TLS roots for DynamoDB client")
-		}
-	})
-	return tlsRoots
 }
