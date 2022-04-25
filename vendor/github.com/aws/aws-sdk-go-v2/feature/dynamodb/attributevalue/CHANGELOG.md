@@ -1,3 +1,23 @@
+# v1.9.0 (2022-04-15)
+
+* **Feature**: Support has been added for specifying a custom time format when encoding and decoding DynamoDB AttributeValues. Use `EncoderOptions.EncodeTime` to specify a custom time encoding function, and use `DecoderOptions.DecodeTime` for specifying how to handle the corresponding AttributeValues using the format. Thank you [Pablo Lopez](https://github.com/plopezlpz) for this contribution.
+
+# v1.8.4 (2022-03-31)
+
+* **Documentation**: Fixes documentation typos in Number type's helper methods
+
+# v1.8.3 (2022-03-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.2 (2022-03-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.1 (2022-03-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.8.0 (2022-03-08)
 
 * **Feature**: Updated `github.com/aws/smithy-go` to latest version

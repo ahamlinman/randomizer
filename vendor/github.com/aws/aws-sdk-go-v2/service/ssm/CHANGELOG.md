@@ -1,3 +1,24 @@
+# v1.25.0 (2022-04-19)
+
+* **Feature**: Added offset support for specifying the number of days to wait after the date and time specified by a CRON expression when creating SSM association.
+
+# v1.24.1 (2022-03-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.24.0 (2022-03-25)
+
+* **Feature**: This Patch Manager release supports creating, updating, and deleting Patch Baselines for Rocky Linux OS.
+
+# v1.23.1 (2022-03-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.23.0 (2022-03-23)
+
+* **Feature**: Update AddTagsToResource, ListTagsForResource, and RemoveTagsFromResource APIs to reflect the support for tagging Automation resources. Includes other minor documentation updates.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.22.0 (2022-03-08)
 
 * **Feature**: Updated `github.com/aws/smithy-go` to latest version
