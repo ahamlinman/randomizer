@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
+
+# TODO: Shameful cargo-cult practice. Rewrite script to correctly handle errors
+# without the assumption of these options being set.
 set -euo pipefail
+
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 source .cf.local.bash
