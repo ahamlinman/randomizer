@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 
 # https://www.amazontrust.com/repository/
 sources=(
@@ -8,4 +7,5 @@ sources=(
   https://www.amazontrust.com/repository/SFSRootCAG2.pem
 )
 
-wget -O cert.pem "${sources[@]}"
+set -x
+exec wget -O cert.pem "${sources[@]}"
