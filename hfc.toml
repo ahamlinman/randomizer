@@ -5,5 +5,5 @@ name = "randomizer"
 path = "./cmd/randomizer-lambda"
 
 [template]
-path = "CloudFormation/Template.yaml"
+path = "CloudFormation.yaml"
 capabilities = ["CAPABILITY_IAM"]

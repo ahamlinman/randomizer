@@ -34,7 +34,7 @@ works, and is helpful for testing.
 
 ## Serverless Deployment with AWS Lambda
 
-See the README in the `CloudFormation/` directory.
+See `SERVERLESS.md`.
 
 ## Notes on Configuring Your Own Server
 

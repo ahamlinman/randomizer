@@ -87,17 +87,26 @@ need to pick a name for your CloudFormation "stack." Like your repository name,
 this needs to be unique within your AWS account. If you only need to deploy one
 copy of the randomizer, a simple name like "Randomizer" should be enough.
 
-Note that when you pass the SSM parameter name to `cf.sh`, **you must omit the
-leading slash from the name**, unlike with the above `aws ssm` command. This is
-an unfortunate limitation of the CloudFormation template. If you include the
-leading slash, your CloudFormation stack might deploy successfully but fail to
-work once you actually try to run the slash command!
+To configure your deployment, create a `hfc.local.toml` file at the root of the
+randomizer repository with values matching all of your previous decisions:
 
-With all of the above names available, run the following command from this
-directory:
+```toml
+[repository]
+# The --repository-name you created the ECR repository with.
+name = "randomizer"
 
+[[stacks]]
+# Whatever name you'd like. You can have multiple [[stacks]] if you need.
+name = "Randomizer"
+# The --name you created the SSM parameter with, without the leading slash.
+parameters = { SlackTokenSSMName = "Randomizer/SlackToken" }
 ```
-./cf.sh build-deploy <repository name> <stack name> SlackTokenSSMName=<parameter name>
+
+With your local configuration ready, run the helper script to start the
+deployment:
+
+```sh
+./hfc build-deploy Randomizer  # or whatever other stack name you chose
 ```
 
 This command will automatically compile the randomizer code for AWS Lambda,
@@ -113,15 +122,9 @@ workspace. Go ahead and try it out!
 ## Upgrades and Maintenance
 
 To upgrade the randomizer deployment in your AWS account, run the above command
-in a newer version of the randomizer repository without the `SlackTokenSSMName`
-parameter override. For example:
+in a newer version of the randomizer repository.
 
-```
-./cf.sh build-deploy <repository name> <stack name>
-```
-
-Run `./cf.sh help` to learn more about additional commands that might be
-useful, and additional parameters that you can override to tune the deployment.
+Run `./hfc help` to learn more about additional commands that might be useful.
 
 ## Notes
 
