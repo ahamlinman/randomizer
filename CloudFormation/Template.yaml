@@ -76,5 +76,5 @@ Resources:
 
 Outputs:
   ApiUrl:
-    Description: URL for the Slack slash command integration
+    Description: The URL for the Slack webhook
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'

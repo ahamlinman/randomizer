@@ -1,0 +1,9 @@
+[project]
+name = "randomizer"
+
+[build]
+path = "./cmd/randomizer-lambda"
+
+[template]
+path = "CloudFormation/Template.yaml"
+capabilities = ["CAPABILITY_IAM"]
