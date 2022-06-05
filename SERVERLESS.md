@@ -110,9 +110,13 @@ deployment:
 ```
 
 This command will automatically compile the randomizer code for AWS Lambda,
-upload it to your ECR repository, and set it up for use. After some time, the
-script will finish and print the webhook URL for Slack. Copy and paste this
-into the "URL" field of your Slack slash command configuration, and save it.
+upload it to your ECR repository, and set it up for use.
+
+After some time, the script will finish and print out two possible webhook URLs
+for use with Slack. Copy and paste the "preferred URL" (that ends with
+".on.aws") into the "URL" field of your Slack slash command configuration, and
+save it. (The legacy URL is for backwards compatibility with existing
+deployments; requests to this URL cost about 5x more than the preferred URL.)
 
 At this point, you should be able to use the randomizer in your Slack
 workspace. Go ahead and try it out!
@@ -124,7 +128,17 @@ workspace. Go ahead and try it out!
 To upgrade the randomizer deployment in your AWS account, run the above command
 in a newer version of the randomizer repository.
 
+If you have previously set up a Slack integration using a legacy API Gateway
+URL, it is **strongly recommended** that you update your webhook configuration
+to use the new preferred URL instead. In April 2022, AWS introduced [Lambda
+Function URLs][function urls] to support invoking Lambda functions via public
+HTTP(S) URLs at no additional cost without the need for a separate API gateway.
+The current version of the randomizer fully supports both URLs, but the new
+preferred URL is expected to cost about 5x less at scale.
+
 Run `./hfc help` to learn more about additional commands that might be useful.
+
+[function urls]: https://aws.amazon.com/blogs/aws/announcing-aws-lambda-function-urls-built-in-https-endpoints-for-single-function-microservices/
 
 ## Notes
 
@@ -143,7 +157,8 @@ Run `./hfc help` to learn more about additional commands that might be useful.
 - My co-workers and I collectively make a little over 500 requests to the
   randomizer per month, and at that small of a volume it's essentially free to
   run on AWS even without the 12 month free tier. My _very rough_ estimate is
-  that the randomizer probably costs a few dollars per million requests.
+  that the randomizer probably costs less than $1 per million requests with the
+  preferred URL, and a little over $4 per million requests with the legacy URL.
 
 [zeroimage]: https://github.com/ahamlinman/zeroimage
 [sam]: https://github.com/awslabs/serverless-application-model
