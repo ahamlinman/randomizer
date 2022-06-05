@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 
@@ -47,26 +48,25 @@ type handler struct {
 	slack.App
 }
 
-func (h handler) Handle(ctx context.Context, event json.RawMessage) (any, error) {
+func (h handler) Handle(ctx context.Context, event json.RawMessage) (interface{}, error) {
 	var version struct {
 		Version string `json:"version"`
 	}
-	json.Unmarshal(event, &version) // Assume that Lambda's JSON input is valid.
+	mustUnmarshal(event, &version)
 
-	if strings.Split(version.Version, ".")[0] == "2" {
-		return proxyHTTP(ctx, event, httpadapter.NewV2(h.App).ProxyWithContext)
+	if strings.HasPrefix(version.Version, "2.") {
+		var httpEvent events.APIGatewayV2HTTPRequest
+		mustUnmarshal(event, &httpEvent)
+		return httpadapter.NewV2(h.App).ProxyWithContext(ctx, httpEvent)
 	}
-	return proxyHTTP(ctx, event, httpadapter.New(h.App).ProxyWithContext)
+
+	var httpEvent events.APIGatewayProxyRequest
+	mustUnmarshal(event, &httpEvent)
+	return httpadapter.New(h.App).ProxyWithContext(ctx, httpEvent)
 }
 
-func proxyHTTP[In, Out any](
-	ctx context.Context,
-	event json.RawMessage,
-	httpHandler func(context.Context, In) (Out, error),
-) (any, error) {
-	var input In
-	if err := json.Unmarshal(event, &input); err != nil {
-		return nil, err
+func mustUnmarshal(data []byte, v interface{}) {
+	if err := json.Unmarshal(data, v); err != nil {
+		panic(err)
 	}
-	return httpHandler(ctx, input)
 }
