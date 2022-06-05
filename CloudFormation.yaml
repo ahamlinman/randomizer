@@ -57,6 +57,8 @@ Resources:
           SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
           SLACK_TOKEN_SSM_TTL: !Ref SlackTokenSSMTTL
           AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
+      FunctionUrlConfig:
+        AuthType: NONE
       Events:
         ApiGet:
           Type: Api
@@ -75,6 +77,9 @@ Resources:
             ParameterName: !Ref SlackTokenSSMName
 
 Outputs:
+  FunctionUrl:
+    Description: The preferred URL for the Slack webhook
+    Value: !GetAtt FunctionUrl.FunctionUrl
   ApiUrl:
-    Description: The URL for the Slack webhook
+    Description: The legacy URL for the Slack webhook using API Gateway
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'

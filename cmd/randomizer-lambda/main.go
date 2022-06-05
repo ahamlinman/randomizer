@@ -8,9 +8,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 
@@ -31,10 +34,39 @@ func main() {
 		os.Exit(2)
 	}
 
-	app := slack.App{
-		TokenProvider: tokenProvider,
-		StoreFactory:  storeFactory,
-		DebugWriter:   os.Stderr,
+	handler := handler{
+		slack.App{
+			TokenProvider: tokenProvider,
+			StoreFactory:  storeFactory,
+			DebugWriter:   os.Stderr,
+		},
 	}
-	lambda.Start(httpadapter.New(app).ProxyWithContext)
+	lambda.Start(handler.Handle)
+}
+
+type handler struct {
+	slack.App
+}
+
+func (h handler) Handle(ctx context.Context, event json.RawMessage) (interface{}, error) {
+	var version struct {
+		Version string `json:"version"`
+	}
+	mustUnmarshal(event, &version)
+
+	if strings.HasPrefix(version.Version, "2.") {
+		var httpEvent events.APIGatewayV2HTTPRequest
+		mustUnmarshal(event, &httpEvent)
+		return httpadapter.NewV2(h.App).ProxyWithContext(ctx, httpEvent)
+	}
+
+	var httpEvent events.APIGatewayProxyRequest
+	mustUnmarshal(event, &httpEvent)
+	return httpadapter.New(h.App).ProxyWithContext(ctx, httpEvent)
+}
+
+func mustUnmarshal(data []byte, v interface{}) {
+	if err := json.Unmarshal(data, v); err != nil {
+		panic(err)
+	}
 }
