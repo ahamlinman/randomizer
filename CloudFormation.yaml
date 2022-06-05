@@ -59,17 +59,6 @@ Resources:
           AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
       FunctionUrlConfig:
         AuthType: NONE
-      Events:
-        ApiGet:
-          Type: Api
-          Properties:
-            Path: '/'
-            Method: GET
-        ApiPost:
-          Type: Api
-          Properties:
-            Path: '/'
-            Method: POST
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref GroupsTable
@@ -78,8 +67,5 @@ Resources:
 
 Outputs:
   FunctionUrl:
-    Description: The preferred URL for the Slack webhook
+    Description: The URL for the Slack webhook
     Value: !GetAtt FunctionUrl.FunctionUrl
-  ApiUrl:
-    Description: The legacy URL for the Slack webhook using API Gateway
-    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'

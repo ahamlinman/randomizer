@@ -36,6 +36,25 @@ works, and is helpful for testing.
 
 See `SERVERLESS.md`.
 
+### Breaking Change: Migration to Lambda Function URLs
+
+Older versions of the serverless stack used API Gateway events to trigger the
+randomizer in AWS Lambda. Newer deployments exclusively support [Lambda
+Function URLs][function urls], and will **irrevocably destroy any API gateway
+URLs associated with existing deployments!**
+
+To smoothly migrate from a legacy API gateway URL to a new function URL:
+
+1. Deploy commit `bdcb2cb4a765` of the randomizer repository, including both
+   the code and the CloudFormation stack. This will create a new function URL
+   without breaking the existing API gateway URL.
+2. Update the Slack webhook configuration to replace the legacy URL with the
+   new URL. Test the new configuration in Slack to ensure it works as expected.
+3. Deploy the latest version of the randomizer to delete the unused API gateway
+   resources. **This will permanently destroy the old URL.**
+
+[function urls]: https://aws.amazon.com/blogs/aws/announcing-aws-lambda-function-urls-built-in-https-endpoints-for-single-function-microservices/
+
 ## Notes on Configuring Your Own Server
 
 To run the randomizer on your own server, you'll need to pick a storage backend
