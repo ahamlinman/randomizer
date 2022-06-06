@@ -112,11 +112,7 @@ type ctxLock struct {
 // canceled before the lock was acquired, and the caller must not unlock l or
 // violate any invariant that l protects.
 func (l *ctxLock) LockWithContext(ctx context.Context) bool {
-	l.init.Do(func() {
-		l.ch = make(chan struct{}, 1)
-		l.ch <- struct{}{}
-	})
-
+	l.ensureInit()
 	select {
 	case <-l.ch:
 		return true
@@ -127,10 +123,18 @@ func (l *ctxLock) LockWithContext(ctx context.Context) bool {
 
 // Unlock unlocks l.
 func (l *ctxLock) Unlock() {
+	l.ensureInit()
 	select {
 	case l.ch <- struct{}{}:
 		return
 	default:
 		panic("unlock of unlocked ctxLock")
 	}
+}
+
+func (l *ctxLock) ensureInit() {
+	l.init.Do(func() {
+		l.ch = make(chan struct{}, 1)
+		l.ch <- struct{}{}
+	})
 }
