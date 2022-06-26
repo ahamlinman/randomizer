@@ -29,24 +29,22 @@ IAM][iam].
 [configure]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html
 [iam]: https://aws.amazon.com/iam/
 
-## Create an ECR Registry
+## Create an S3 Bucket
 
 When AWS Lambda starts up your function, it will download the compiled
-randomizer code from [Amazon Elastic Container Registry][ecr]. ECR stores
-versions of the randomizer code in a "repository" in your account.
-
-You can create a new ECR repository using the AWS CLI:
+randomizer code from an [Amazon S3][s3] bucket. You can create a new S3 bucket
+using the AWS CLI:
 
 ```sh
-aws ecr create-repository --repository-name randomizer --image-tag-mutability IMMUTABLE
+aws s3 mb s3://[name]
 ```
 
-You can choose whatever `--repository-name` you'd like, as long as it's unique
-within your AWS account. The `--image-tag-mutability` option is optional, but
-provides an additional safeguard to prevent accidentally overwriting your live
-randomizer code outside of the deployment script.
+You can choose whatever `[name]` you'd like, but keep in mind that S3 bucket
+names must be unique across **all AWS accounts**. For example, the name
+`randomizer` has already been taken by some unknown AWS user. You'll probably
+want a name that references yourself, your company, etc.
 
-[ecr]: https://aws.amazon.com/ecr/
+[s3]: https://aws.amazon.com/s3/
 
 ## Add the Slack Verification Token to the AWS SSM Parameter Store
 
@@ -82,18 +80,18 @@ Now, we're ready to use AWS [CloudFormation][CloudFormation] to deploy the
 randomizer into our account, with all necessary resources (e.g. the DynamoDB
 table for storing groups) automatically created and configured.
 
-Similar to how you picked ECR repository and SSM parameter names, you'll also
-need to pick a name for your CloudFormation "stack." Like your repository name,
-this needs to be unique within your AWS account. If you only need to deploy one
-copy of the randomizer, a simple name like "Randomizer" should be enough.
+Similar to how you picked S3 bucket and SSM parameter names, you'll also need
+to pick a name for your CloudFormation "stack." Like your repository name, this
+needs to be unique within your AWS account. If you only need to deploy one copy
+of the randomizer, a simple name like "Randomizer" should be enough.
 
 To configure your deployment, create a `hfc.local.toml` file at the root of the
 randomizer repository with values matching all of your previous decisions:
 
 ```toml
-[repository]
-# The --repository-name you created the ECR repository with.
-name = "randomizer"
+[bucket]
+# The name of the S3 bucket for Lambda code uploads.
+name = "..."
 
 [[stacks]]
 # Whatever name you'd like. You can have multiple [[stacks]] if you need.
@@ -110,9 +108,9 @@ deployment:
 ```
 
 This command will automatically compile the randomizer code for AWS Lambda,
-upload it to your ECR repository, and set it up for use. After some time, the
-script will finish and print the webhook URL for Slack. Copy and paste this
-into the "URL" field of your Slack slash command configuration, and save it.
+upload it to your S3 bucket, and set it up for use. After some time, the script
+will finish and print the webhook URL for Slack. Copy and paste this into the
+"URL" field of your Slack slash command configuration, and save it.
 
 At this point, you should be able to use the randomizer in your Slack
 workspace. Go ahead and try it out!
@@ -128,8 +126,6 @@ Run `./hfc help` to learn more about additional commands that might be useful.
 
 ## Notes
 
-- The deployment script runs [zeroimage][zeroimage] with `go run` to upload the
-  compiled randomizer binary as a container image to your ECR repository.
 - The CloudFormation template (Template.yaml) uses the [AWS SAM][sam]
   transformation to simplify the setup of the Lambda function.
 - The DynamoDB table in the template is provisioned in On-Demand capacity mode.
