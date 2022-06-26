@@ -24,13 +24,14 @@ Parameters:
     Description: The container image for the Lambda function to run.
     Type: String
   CodeS3Bucket:
-    Description: The S3 bucket containing the Lambda deployment package
+    Description: The S3 bucket containing the Lambda deployment package.
     Type: String
   CodeS3Key:
-    Description: The S3 key of the Lambda deployment package
+    Description: The S3 key of the Lambda deployment package.
     Type: String
 
 Conditions:
+  HasImageUri: !Not [!Equals [!Ref ImageUri, '']]
   HasXRayTracingEnabled: !Equals [!Ref XRayTracingEnabled, 'true']
 
 Resources:
@@ -51,6 +52,7 @@ Resources:
 
   Function:
     Type: AWS::Serverless::Function
+    Condition: HasImageUri
     Properties:
       Description: A randomizer slash command for Slack, with support for saving groups and more
       Architectures: [arm64]
@@ -98,6 +100,7 @@ Resources:
 
 Outputs:
   FunctionUrl:
+    Condition: HasImageUri
     Description: The URL for the Slack webhook (container image version)
     Value: !GetAtt FunctionUrl.FunctionUrl
   HandlerFunctionUrl:
