@@ -20,6 +20,14 @@ Parameters:
     Description: If 'true', turn on X-Ray tracing for all requests.
     Type: String
     Default: 'true'
+  AWSClientEmbeddedTLSRoots:
+    Description: >-
+      If 'true', use embedded TLS roots for connections to AWS services. This
+      removes about 500ms of cold start latency by limiting the set of root
+      certificates that must be parsed, but could break if AWS adopts new root
+      CAs that are unknown to the randomizer.
+    Type: String
+    Default: 'true'
   CodeS3Bucket:
     Description: The S3 bucket containing the Lambda deployment package.
     Type: String
@@ -29,6 +37,7 @@ Parameters:
 
 Conditions:
   HasXRayTracingEnabled: !Equals [!Ref XRayTracingEnabled, 'true']
+  HasAWSClientEmbeddedTLSRoots: !Equals [!Ref AWSClientEmbeddedTLSRoots, 'true']
 
 Resources:
   GroupsTable:
@@ -63,6 +72,7 @@ Resources:
           SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
           SLACK_TOKEN_SSM_TTL: !Ref SlackTokenSSMTTL
           AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
+          AWS_CLIENT_EMBEDDED_TLS_ROOTS: !If [HasAWSClientEmbeddedTLSRoots, '1', !Ref AWS::NoValue]
       FunctionUrlConfig:
         AuthType: NONE
       Policies:
