@@ -89,9 +89,9 @@ To configure your deployment, create a `hfc.local.toml` file at the root of the
 randomizer repository with values matching all of your previous decisions:
 
 ```toml
-[bucket]
+[upload]
 # The name of the S3 bucket for Lambda code uploads.
-name = "..."
+bucket = "..."
 
 [[stacks]]
 # Whatever name you'd like. You can have multiple [[stacks]] if you need.
