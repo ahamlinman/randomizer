@@ -23,6 +23,12 @@ Parameters:
   ImageUri:
     Description: The container image for the Lambda function to run.
     Type: String
+  CodeS3Bucket:
+    Description: The S3 bucket containing the Lambda deployment package
+    Type: String
+  CodeS3Key:
+    Description: The S3 key of the Lambda deployment package
+    Type: String
 
 Conditions:
   HasXRayTracingEnabled: !Equals [!Ref XRayTracingEnabled, 'true']
@@ -65,7 +71,35 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Ref SlackTokenSSMName
 
+  HandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: A randomizer slash command for Slack, with support for saving groups and more
+      Runtime: provided.al2
+      Architectures: [arm64]
+      CodeUri:
+        Bucket: !Ref CodeS3Bucket
+        Key: !Ref CodeS3Key
+      Handler: bootstrap
+      Tracing: !If [HasXRayTracingEnabled, Active, PassThrough]
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref GroupsTable
+          SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
+          SLACK_TOKEN_SSM_TTL: !Ref SlackTokenSSMTTL
+          AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
+      FunctionUrlConfig:
+        AuthType: NONE
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GroupsTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Ref SlackTokenSSMName
+
 Outputs:
   FunctionUrl:
-    Description: The URL for the Slack webhook
+    Description: The URL for the Slack webhook (container image version)
     Value: !GetAtt FunctionUrl.FunctionUrl
+  HandlerFunctionUrl:
+    Description: The URL for the Slack webhook (Lambda package version)
+    Value: !GetAtt HandlerFunctionUrl.FunctionUrl
