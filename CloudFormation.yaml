@@ -20,9 +20,6 @@ Parameters:
     Description: If 'true', turn on X-Ray tracing for all requests.
     Type: String
     Default: 'true'
-  ImageUri:
-    Description: The container image for the Lambda function to run.
-    Type: String
   CodeS3Bucket:
     Description: The S3 bucket containing the Lambda deployment package.
     Type: String
@@ -31,7 +28,6 @@ Parameters:
     Type: String
 
 Conditions:
-  HasImageUri: !Not [!Equals [!Ref ImageUri, '']]
   HasXRayTracingEnabled: !Equals [!Ref XRayTracingEnabled, 'true']
 
 Resources:
@@ -49,29 +45,6 @@ Resources:
         - AttributeName: Group
           AttributeType: S
       BillingMode: PAY_PER_REQUEST
-
-  Function:
-    Type: AWS::Serverless::Function
-    Condition: HasImageUri
-    Properties:
-      Description: A randomizer slash command for Slack, with support for saving groups and more
-      Architectures: [arm64]
-      PackageType: Image
-      ImageUri: !Ref ImageUri
-      Tracing: !If [HasXRayTracingEnabled, Active, PassThrough]
-      Environment:
-        Variables:
-          DYNAMODB_TABLE: !Ref GroupsTable
-          SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
-          SLACK_TOKEN_SSM_TTL: !Ref SlackTokenSSMTTL
-          AWS_CLIENT_XRAY_TRACING: !If [HasXRayTracingEnabled, '1', !Ref AWS::NoValue]
-      FunctionUrlConfig:
-        AuthType: NONE
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref GroupsTable
-        - SSMParameterReadPolicy:
-            ParameterName: !Ref SlackTokenSSMName
 
   HandlerFunction:
     Type: AWS::Serverless::Function
@@ -99,10 +72,6 @@ Resources:
             ParameterName: !Ref SlackTokenSSMName
 
 Outputs:
-  FunctionUrl:
-    Condition: HasImageUri
-    Description: The URL for the Slack webhook (container image version)
-    Value: !GetAtt FunctionUrl.FunctionUrl
-  HandlerFunctionUrl:
-    Description: The URL for the Slack webhook (Lambda package version)
+  SlackUrl:
+    Description: The URL for the Slack webhook configuration
     Value: !GetAtt HandlerFunctionUrl.FunctionUrl
