@@ -1,3 +1,19 @@
+# v1.15.9 (2022-07-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.8 (2022-06-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.7 (2022-06-17)
+
+* **Documentation**: Doc only update for DynamoDB service
+
+# v1.15.6 (2022-06-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.15.5 (2022-05-17)
 
 * **Dependency Update**: Updated to the latest SDK module versions
