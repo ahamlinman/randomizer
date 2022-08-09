@@ -66,8 +66,10 @@ Resources:
         Key: !Ref CodeS3Key
       Handler: bootstrap
       Tracing: !If [HasXRayTracingEnabled, Active, PassThrough]
+      MemorySize: 128 # MiB (base-2) per Lambda quotas documentation
       Environment:
         Variables:
+          GOMEMLIMIT: 120MiB # TODO: Is there even a slight chance that GOGC tuning will be useful?
           DYNAMODB_TABLE: !Ref GroupsTable
           SLACK_TOKEN_SSM_NAME: !Sub '/${SlackTokenSSMName}'
           SLACK_TOKEN_SSM_TTL: !Ref SlackTokenSSMTTL
