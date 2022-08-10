@@ -159,7 +159,21 @@ var testCases = []struct {
 	},
 
 	{
-		description: "not enough options provided to save",
+		description: "no group name provided to save",
+		store:       rndtest.Store{},
+		args:        []string{"/save"},
+		check:       isError("requires an argument"),
+	},
+
+	{
+		description: "no options provided to save",
+		store:       rndtest.Store{},
+		args:        []string{"/save", "test"},
+		check:       isError("need at least two options"),
+	},
+
+	{
+		description: "only one option provided to save",
 		store:       rndtest.Store{},
 		args:        []string{"/save", "test", "one"},
 		check:       isError("need at least two options"),
@@ -211,7 +225,7 @@ var testCases = []struct {
 	{
 		description: "help as an option to be randomized",
 		args:        []string{"help", "me"},
-		check:       isResult(Selection, "*help*"),
+		check:       isResult(Selection, "*help*", "*me*"),
 	},
 }
 
