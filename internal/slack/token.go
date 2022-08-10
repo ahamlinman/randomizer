@@ -71,11 +71,6 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 	)
 
 	return func(ctx context.Context) (string, error) {
-		cfg, err := awsconfig.New(ctx)
-		if err != nil {
-			return "", err
-		}
-
 		if !mu.LockWithContext(ctx) {
 			return "", ctx.Err()
 		}
@@ -83,6 +78,11 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 
 		if time.Now().Before(expiry) {
 			return token, nil
+		}
+
+		cfg, err := awsconfig.New(ctx)
+		if err != nil {
+			return "", err
 		}
 
 		output, err := ssm.NewFromConfig(cfg).GetParameter(ctx, &ssm.GetParameterInput{
