@@ -27,110 +27,61 @@ type request struct {
 	Args      []string
 }
 
-func (a App) newRequest(ctx context.Context, args []string) (request, error) {
-	r := request{Context: ctx}
-	err := r.populateFromArgs(args)
-	return r, err
-}
-
-func (r *request) populateFromArgs(args []string) error {
-	if isHelpRequest(args) {
-		r.Operation = showHelp
-		return nil
-	}
-
-	rest, err := r.consumeFlagIfPresent(args)
-	r.Args = rest
-	return err
-}
-
-func isHelpRequest(args []string) bool {
-	// Show the help message if...
-	switch {
-	// ...the user doesn't know how to ask for help...
-	case len(args) == 0:
-		return true
-
-	// ...or doesn't yet know the flag syntax ("/" prefix)...
-	// (note that we have special-case logic to block "help" as a group name)
-	case len(args) == 1 && args[0] == "help":
-		return true
-
-	// ...or actually asks for it directly.
-	case args[0] == "/help":
-		return true
-
-	default:
-		return false
-	}
-}
-
-func (r *request) consumeFlagIfPresent(args []string) (rest []string, err error) {
-	if len(args) >= 1 && isFlag(args[0]) {
-		return r.consumeFlag(args)
-	}
-
-	return args, nil
-}
-
-func isFlag(flag string) bool {
-	_, ok := flagHandlers[flag]
-	return ok
-}
-
-func (r *request) consumeFlag(args []string) (rest []string, err error) {
-	flag := args[0]
-	handler := flagHandlers[flag]
-
-	consumed, err := handler(r, args)
-	if err != nil {
-		return args, err
-	}
-
-	return args[consumed:], nil
-}
-
-type flagHandler func(r *request, args []string) (argsConsumed int, err error)
-
-var flagHandlers = map[string]flagHandler{
-	"/list":   (*request).parseList,
-	"/show":   (*request).parseShow,
-	"/save":   (*request).parseSave,
-	"/delete": (*request).parseDelete,
-}
-
-func (r *request) parseList(_ []string) (int, error) {
-	r.Operation = listGroups
-	return 1, nil
-}
-
-func (r *request) parseShow(args []string) (int, error) {
-	r.Operation = showGroup
-	return 2, r.parseOperand(args)
-}
-
-func (r *request) parseSave(args []string) (int, error) {
-	r.Operation = saveGroup
-	return 2, r.parseOperand(args)
-}
-
-func (r *request) parseDelete(args []string) (int, error) {
-	r.Operation = deleteGroup
-	return 2, r.parseOperand(args)
-}
-
-func (r *request) parseOperand(args []string) (err error) {
-	r.Operand, err = parseFlagValue(args)
+func (a App) newRequest(ctx context.Context, args []string) (req request, err error) {
+	req.Context = ctx
+	req.Operation, req.Operand, req.Args, err = parseArgs(args)
 	return
 }
 
-func parseFlagValue(args []string) (string, error) {
+func parseArgs(args []string) (op operation, operand string, opargs []string, err error) {
+	if len(args) == 0 || isHelpRequest(args) {
+		return showHelp, "", args, nil
+	}
+
+	switch args[0] {
+	// Arguments without an explicitly known flag always trigger a randomization,
+	// even if the first argument starts with a slash, simply because it's less
+	// work to implement and unlikely to cause big problems in practice. Logic
+	// elsewhere in the randomizer prevents the use of flag-like group names, so
+	// that new flags can't make existing groups inaccessible.
+	default:
+		return makeSelection, "", args, nil
+
+	// Listing groups requires no arguments...
+	case "/list":
+		return listGroups, "", args, nil
+
+	// ...and everything else needs the name of a group to operate on, which we
+	// validate and extract out from the rest of the arguments for convenience. We
+	// make no assumptions about how each operation uses the rest of the available
+	// arguments.
+	case "/show":
+		op = showGroup
+	case "/save":
+		op = saveGroup
+	case "/delete":
+		op = deleteGroup
+	}
+
 	if len(args) < 2 {
-		return "", Error{
+		return op, "", nil, Error{
 			cause:    errors.Errorf("%q flag requires an argument", args[0]),
 			helpText: fmt.Sprintf("Whoops, %q requires an argument!", args[0]),
 		}
 	}
 
-	return args[1], nil
+	return op, args[1], args[2:], nil
+}
+
+func isHelpRequest(args []string) bool {
+	switch {
+	// We accept the standard slash-prefixed flag syntax...
+	case args[0] == "/help":
+		return true
+	// ...and anticipate users not knowing that special syntax offhand. Logic
+	// elsewhere in the randomizer prevents the use of "help" as a group name.
+	case len(args) == 1 && args[0] == "help":
+		return true
+	}
+	return false
 }
