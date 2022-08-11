@@ -34,7 +34,11 @@ func (a App) newRequest(ctx context.Context, args []string) (req request, err er
 }
 
 func parseArgs(args []string) (op operation, operand string, opargs []string, err error) {
-	if len(args) == 0 || isHelpRequest(args) {
+	// We accept the standard flag syntax for help, but strongly expect that users
+	// won't know that syntax in advance. Logic elsewhere in the randomizer
+	// prevents the use of "help" as a group name to avoid conflicts with this
+	// special case.
+	if len(args) == 0 || args[0] == "/help" || len(args) == 1 && args[0] == "help" {
 		return showHelp, "", args, nil
 	}
 
@@ -71,17 +75,4 @@ func parseArgs(args []string) (op operation, operand string, opargs []string, er
 	}
 
 	return op, args[1], args[2:], nil
-}
-
-func isHelpRequest(args []string) bool {
-	switch {
-	// We accept the standard slash-prefixed flag syntax...
-	case args[0] == "/help":
-		return true
-	// ...and anticipate users not knowing that special syntax offhand. Logic
-	// elsewhere in the randomizer prevents the use of "help" as a group name.
-	case len(args) == 1 && args[0] == "help":
-		return true
-	}
-	return false
 }
