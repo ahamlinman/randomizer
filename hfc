@@ -1,4 +1,3 @@
 #!/bin/sh
 # See https://go.alexhamlin.co/hfc
-set -x
-exec go run go.alexhamlin.co/hfc@latest "$@"
+set -x; exec go run go.alexhamlin.co/hfc@latest "$@"
