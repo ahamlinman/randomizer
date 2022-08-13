@@ -1,28 +1,28 @@
 package randomizer
 
-import (
-	"bytes"
-	"fmt"
-	"strings"
-)
+import "strings"
 
-func embolden(items []string) []string {
-	result := make([]string, len(items))
+func inlinelist(items []string) string {
+	var b strings.Builder
 	for i, item := range items {
-		result[i] = "*" + item + "*"
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteRune('*')
+		b.WriteString(item)
+		b.WriteRune('*')
 	}
-	return result
+	return b.String()
 }
 
-func bulletize(items []string) string {
-	var buf bytes.Buffer
-	for _, item := range items {
-		buf.WriteString(fmt.Sprintf("• %s\n", item))
+func bulletlist(items []string) string {
+	var b strings.Builder
+	for i, item := range items {
+		if i > 0 {
+			b.WriteRune('\n')
+		}
+		b.WriteString("• ")
+		b.WriteString(item)
 	}
-	buf.Truncate(buf.Len() - 1)
-	return buf.String()
-}
-
-func listify(items []string) string {
-	return strings.Join(items, ", ")
+	return b.String()
 }

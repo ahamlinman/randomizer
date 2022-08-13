@@ -34,7 +34,7 @@ func (a App) listGroups(request request) (Result, error) {
 		resultType: ListedGroups,
 		message: fmt.Sprintf(
 			"The following groups are available in this channel:\n%s",
-			bulletize(groups),
+			bulletlist(groups),
 		),
 	}, nil
 }
@@ -66,8 +66,7 @@ func (a App) showGroup(request request) (Result, error) {
 		resultType: ShowedGroup,
 		message: fmt.Sprintf(
 			"The %q group has the following options:\n%s",
-			name,
-			bulletize(group),
+			name, bulletlist(group),
 		),
 	}, nil
 }
@@ -84,8 +83,7 @@ func (a App) saveGroup(request request) (Result, error) {
 			cause: errors.Errorf("saving with forbidden group name %q", name),
 			helpText: fmt.Sprintf(
 				`Whoops, %q has a special meaning and can't be used as a group name. (Type "%s help" to learn more!)`,
-				name,
-				a.name,
+				name, a.name,
 			),
 		}
 	}
@@ -110,8 +108,7 @@ func (a App) saveGroup(request request) (Result, error) {
 		resultType: SavedGroup,
 		message: fmt.Sprintf(
 			"Done! The %q group was saved in this channel with the following options:\n%s",
-			name,
-			bulletize(options),
+			name, bulletlist(options),
 		),
 	}, nil
 }

@@ -1,7 +1,7 @@
 package randomizer
 
 import (
-	"bytes"
+	"strings"
 	"text/template"
 )
 
@@ -13,7 +13,7 @@ func (a App) showHelp(request request) (Result, error) {
 }
 
 func (a App) getHelpMessage() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	helpMessageTemplate.Execute(&buf, struct{ Name string }{a.name})
 	return buf.String()
 }

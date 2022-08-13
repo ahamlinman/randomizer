@@ -17,7 +17,7 @@ func (a App) makeSelection(request request) (Result, error) {
 
 	return Result{
 		resultType: Selection,
-		message:    fmt.Sprintf("I randomized and got: %s.", listify(embolden(options))),
+		message:    fmt.Sprintf("I randomized and got: %s.", inlinelist(options)),
 	}, nil
 }
 
@@ -46,8 +46,7 @@ func (a App) expandGroup(ctx context.Context, group string) ([]string, error) {
 			cause: errors.Errorf("group %q not found", group),
 			helpText: fmt.Sprintf(
 				`Whoops, I couldn't find the %q group in this channel. (Type "%s help" to learn more about groups!)`,
-				group,
-				a.name,
+				group, a.name,
 			),
 		}
 	}
