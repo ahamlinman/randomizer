@@ -1,3 +1,31 @@
+# v1.16.4 (2022-09-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.3 (2022-08-31)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.2 (2022-08-30)
+
+* No change notes available for this release.
+
+# v1.16.1 (2022-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.0 (2022-08-18)
+
+* **Feature**: This release adds support for importing data from S3 into a new DynamoDB table
+
+# v1.15.13 (2022-08-11)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.12 (2022-08-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.15.11 (2022-08-08)
 
 * **Dependency Update**: Updated to the latest SDK module versions
