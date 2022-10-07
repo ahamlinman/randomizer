@@ -1,3 +1,21 @@
+# v1.30.0 (2022-09-26)
+
+* **Feature**: This release includes support for applying a CloudWatch alarm to Systems Manager capabilities like Automation, Run Command, State Manager, and Maintenance Windows.
+
+# v1.29.0 (2022-09-23)
+
+* **Feature**: This release adds new SSM document types ConformancePackTemplate and CloudFormation
+
+# v1.28.1 (2022-09-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.0 (2022-09-14)
+
+* **Feature**: Fixed a bug in the API client generation which caused some operation parameters to be incorrectly generated as value types instead of pointer types. The service API always required these affected parameters to be nilable. This fixes the SDK client to match the expectations of the the service API.
+* **Feature**: This release adds support for Systems Manager State Manager Association tagging.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.27.13 (2022-09-02)
 
 * **Dependency Update**: Updated to the latest SDK module versions

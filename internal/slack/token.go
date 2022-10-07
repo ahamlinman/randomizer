@@ -87,7 +87,7 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 
 		output, err := ssm.NewFromConfig(cfg).GetParameter(ctx, &ssm.GetParameterInput{
 			Name:           aws.String(name),
-			WithDecryption: true,
+			WithDecryption: aws.Bool(true),
 		})
 		if err != nil {
 			return "", errors.Wrap(err, "loading Slack token parameter")
