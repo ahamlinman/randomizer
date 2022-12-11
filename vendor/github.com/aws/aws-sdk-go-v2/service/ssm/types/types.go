@@ -2163,6 +2163,31 @@ type FailureDetails struct {
 	noSmithyDocumentSerde
 }
 
+// A resource policy helps you to define the IAM entity (for example, an Amazon Web
+// Services account) that can manage your Systems Manager resources. Currently,
+// OpsItemGroup is the only resource that supports Systems Manager resource
+// policies. The resource policy for OpsItemGroup enables Amazon Web Services
+// accounts to view and interact with OpsCenter operational work items (OpsItems).
+type GetResourcePoliciesResponseEntry struct {
+
+	// A resource policy helps you to define the IAM entity (for example, an Amazon Web
+	// Services account) that can manage your Systems Manager resources. Currently,
+	// OpsItemGroup is the only resource that supports Systems Manager resource
+	// policies. The resource policy for OpsItemGroup enables Amazon Web Services
+	// accounts to view and interact with OpsCenter operational work items (OpsItems).
+	Policy *string
+
+	// ID of the current policy version. The hash helps to prevent a situation where
+	// multiple users attempt to overwrite a policy. You must provide this hash when
+	// updating or deleting a policy.
+	PolicyHash *string
+
+	// A policy ID.
+	PolicyId *string
+
+	noSmithyDocumentSerde
+}
+
 // Status information about the aggregated associations.
 type InstanceAggregatedAssociationOverview struct {
 
@@ -3553,11 +3578,24 @@ type OpsItem struct {
 	// in the Amazon Web Services Systems Manager User Guide.
 	OperationalData map[string]OpsItemDataValue
 
+	// The OpsItem Amazon Resource Name (ARN).
+	OpsItemArn *string
+
 	// The ID of the OpsItem.
 	OpsItemId *string
 
-	// The type of OpsItem. Currently, the only valid values are /aws/changerequest and
-	// /aws/issue.
+	// The type of OpsItem. Systems Manager supports the following types of
+	// OpsItems:
+	//
+	// * /aws/issue This type of OpsItem is used for default OpsItems
+	// created by OpsCenter.
+	//
+	// * /aws/changerequest This type of OpsItem is used by
+	// Change Manager for reviewing and approving or rejecting change requests.
+	//
+	// *
+	// /aws/insights This type of OpsItem is used by OpsCenter for aggregating and
+	// reporting on duplicate OpsItems.
 	OpsItemType *string
 
 	// The time specified in a change request for a runbook workflow to end. Currently
@@ -3792,8 +3830,18 @@ type OpsItemSummary struct {
 	// The ID of the OpsItem.
 	OpsItemId *string
 
-	// The type of OpsItem. Currently, the only valid values are /aws/changerequest and
-	// /aws/issue.
+	// The type of OpsItem. Systems Manager supports the following types of
+	// OpsItems:
+	//
+	// * /aws/issue This type of OpsItem is used for default OpsItems
+	// created by OpsCenter.
+	//
+	// * /aws/changerequest This type of OpsItem is used by
+	// Change Manager for reviewing and approving or rejecting change requests.
+	//
+	// *
+	// /aws/insights This type of OpsItem is used by OpsCenter for aggregating and
+	// reporting on duplicate OpsItems.
 	OpsItemType *string
 
 	// The time specified in a change request for a runbook workflow to end. Currently
@@ -5086,6 +5134,9 @@ type StepExecution struct {
 	// The timeout seconds of the step.
 	TimeoutSeconds *int64
 
+	// The CloudWatch alarms that were invoked by the automation.
+	TriggeredAlarms []AlarmStateInformation
+
 	// Strategies used when step fails, we support Continue and Abort. Abort will fail
 	// the automation when the step fails. Continue will ignore the failure of current
 	// step and allow automation to run the next step. With conditional branching, we
@@ -5223,6 +5274,10 @@ type TargetLocation struct {
 
 	// The Amazon Web Services Regions targeted by the current Automation execution.
 	Regions []string
+
+	// The details for the CloudWatch alarm you want to apply to an automation or
+	// command.
+	TargetLocationAlarmConfiguration *AlarmConfiguration
 
 	// The maximum number of Amazon Web Services Regions and Amazon Web Services
 	// accounts allowed to run the Automation concurrently.

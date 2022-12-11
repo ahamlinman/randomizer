@@ -24,7 +24,7 @@ import (
 )
 
 // SDKVersion records the current X-Ray Go SDK version.
-const SDKVersion = "1.7.1"
+const SDKVersion = "1.8.0"
 
 // SDKType records which X-Ray SDK customer uses.
 const SDKType = "X-Ray for Go"
@@ -93,7 +93,7 @@ func newGlobalConfig() *globalConfig {
 			ret.contextMissingStrategy = cm
 		}
 	} else {
-		cm := ctxmissing.NewDefaultRuntimeErrorStrategy()
+		cm := ctxmissing.NewDefaultLogErrorStrategy()
 		ret.contextMissingStrategy = cm
 	}
 
