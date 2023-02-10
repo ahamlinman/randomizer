@@ -6,16 +6,12 @@ import (
 )
 
 func (a App) showHelp(request request) (Result, error) {
+	var b strings.Builder
+	helpMessageTemplate.Execute(&b, struct{ Name string }{a.name})
 	return Result{
 		resultType: ShowedHelp,
-		message:    a.getHelpMessage(),
+		message:    b.String(),
 	}, nil
-}
-
-func (a App) getHelpMessage() string {
-	var buf strings.Builder
-	helpMessageTemplate.Execute(&buf, struct{ Name string }{a.name})
-	return buf.String()
 }
 
 var helpMessageTemplate = template.Must(template.New("").Parse(
