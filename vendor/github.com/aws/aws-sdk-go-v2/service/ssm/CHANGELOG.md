@@ -1,3 +1,19 @@
+# v1.36.2 (2023-04-10)
+
+* No change notes available for this release.
+
+# v1.36.1 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.36.0 (2023-03-22)
+
+* **Feature**: This Patch Manager release supports creating, updating, and deleting Patch Baselines for AmazonLinux2023, AlmaLinux.
+
+# v1.35.7 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.35.6 (2023-03-10)
 
 * **Dependency Update**: Updated to the latest SDK module versions

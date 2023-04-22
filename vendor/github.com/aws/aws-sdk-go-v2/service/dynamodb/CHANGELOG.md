@@ -1,3 +1,19 @@
+# v1.19.5 (2023-04-17)
+
+* **Documentation**: Documentation updates for DynamoDB API
+
+# v1.19.4 (2023-04-10)
+
+* No change notes available for this release.
+
+# v1.19.3 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.19.2 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.19.1 (2023-03-10)
 
 * **Dependency Update**: Updated to the latest SDK module versions
