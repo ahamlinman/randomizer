@@ -1,9 +1,10 @@
 # syntax = docker.io/docker/dockerfile:1.5
 
-# NOTE: This Dockerfile requires BuildKit. When using `docker build`, set
-# DOCKER_BUILDKIT=1.
+ARG ALPINE_BASE=docker.io/library/alpine:3.18
+ARG GOLANG_BASE=docker.io/library/golang:1.20-alpine3.18
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.20-alpine3.18 AS build
+
+FROM --platform=$BUILDPLATFORM $GOLANG_BASE AS build
 ENV CGO_ENABLED=0
 ARG TARGETPLATFORM
 RUN \
@@ -23,7 +24,7 @@ FROM scratch AS server-binary
 COPY --link --from=build /randomizer-server /
 
 
-FROM docker.io/library/alpine:3.18 AS server-image
+FROM $ALPINE_BASE AS server-image
 COPY --link --from=build /randomizer-server /usr/local/bin/randomizer-server
 EXPOSE 7636
 ENTRYPOINT ["/usr/local/bin/randomizer-server"]
