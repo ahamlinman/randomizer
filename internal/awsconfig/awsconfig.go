@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	_ "embed"
+	"fmt"
 	"net/http"
 	"os"
 	"sync"
@@ -34,7 +35,9 @@ func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
 	// can be enabled for standard server deployments if desired, but is likely
 	// far less beneficial.
 	if useEmbeddedRoots := os.Getenv("AWS_CLIENT_EMBEDDED_TLS_ROOTS"); useEmbeddedRoots == "1" {
-		transport.TLSClientConfig = &tls.Config{RootCAs: getRootCAPool()}
+		transport.TLSClientConfig = &tls.Config{
+			RootCAs: getEmbeddedCertPool(),
+		}
 	}
 
 	client := &http.Client{
@@ -68,31 +71,38 @@ func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
 	return cfg, errors.Wrap(err, "loading AWS config")
 }
 
-// tlsRootsPEM contains PEM-encoded X.509 certificates for the root CAs used by
-// AWS service endpoints.
+// embeddedRootsDER contains DER-encoded X.509 certificates for the root CAs
+// maintained by Amazon Trust Services, which all AWS service endpoints chain
+// from.
 //
-// When the randomizer runs on AWS Lambda in the recommended configuration, this
-// limited set of certificates is so much cheaper to parse than the full set of
+// When the randomizer runs on AWS Lambda in the recommended configuration,
+// this limited set of roots is so much cheaper to parse than the full set of
 // roots trusted by Amazon Linux 2 that it cuts invocation time on cold starts
 // approximately in half, specifically by around 500ms. This is a large enough
 // difference for a human to notice, and accounts for about 15% of the 3 second
 // response time limit that Slack imposes on slash commands.
 //
-//go:generate ./refresh-tls-roots.sh
-//go:embed cert.pem
-var tlsRootsPEM []byte
+//go:generate ./refresh-amazon-trust-roots.sh
+//go:embed amazon-trust.cer
+var embeddedRootsDER []byte
 
 var (
-	tlsRoots     *x509.CertPool
-	initTLSRoots sync.Once
+	embeddedRoots     *x509.CertPool
+	initEmbeddedRoots sync.Once
 )
 
-func getRootCAPool() *x509.CertPool {
-	initTLSRoots.Do(func() {
-		tlsRoots = x509.NewCertPool()
-		if !tlsRoots.AppendCertsFromPEM(tlsRootsPEM) {
-			panic("failed to initialize Amazon TLS root pool")
+func getEmbeddedCertPool() *x509.CertPool {
+	initEmbeddedRoots.Do(func() {
+		certs, err := x509.ParseCertificates(embeddedRootsDER)
+		if err != nil {
+			panic(fmt.Errorf("failed to initialize embedded TLS roots: %v", err))
+		}
+
+		embeddedRoots = x509.NewCertPool()
+		for _, cert := range certs {
+			embeddedRoots.AddCert(cert)
 		}
 	})
-	return tlsRoots
+
+	return embeddedRoots
 }

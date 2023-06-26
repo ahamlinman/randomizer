@@ -2,7 +2,6 @@ package dynamodb
 
 import (
 	"context"
-	_ "embed"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
