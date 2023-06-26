@@ -1,9 +1,5 @@
-/*
-
-The randomizer-dbtools command provides quick-and-dirty helper utilities for
-randomizer data stores.
-
-*/
+// The randomizer-dbtools command provides basic utilities for managing
+// randomizer data stores.
 package main
 
 import (

@@ -1,4 +1,4 @@
-// Package rndtest provides test helpers for the randomizer application.
+// Package rndtest provides helpers for tests that invoke a randomizer.
 package rndtest
 
 import (

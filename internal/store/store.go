@@ -1,3 +1,5 @@
+// Package store and its sub-packages provide real-world [randomizer.Store]
+// implementations.
 package store
 
 import (

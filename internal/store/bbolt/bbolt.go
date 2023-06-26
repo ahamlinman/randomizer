@@ -1,3 +1,4 @@
+// Package bbolt supports randomizer storage in a local bbolt database file.
 package bbolt
 
 import (

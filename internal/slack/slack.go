@@ -1,3 +1,4 @@
+// Package slack supports invoking the randomizer as a Slack slash command.
 package slack
 
 import (

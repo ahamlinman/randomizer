@@ -1,3 +1,5 @@
+// Package randomizer implements the randomizer's core logic in a manner
+// suitable for use by multiple frontends.
 package randomizer
 
 import "fmt"

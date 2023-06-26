@@ -1,3 +1,4 @@
+// Package dynamodb supports randomizer storage in an Amazon DynamoDB table.
 package dynamodb
 
 import (

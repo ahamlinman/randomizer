@@ -1,9 +1,8 @@
-/*
-
-The randomizer-server command starts a web server that accepts Slack Slash
-Command API requests and runs the randomizer in response.
-
-*/
+// The randomizer-server command is an HTTP server that serves the Slack slash
+// command API for the randomizer.
+//
+// See the randomizer repository README for more information on configuring and
+// deploying the server.
 package main
 
 import (
