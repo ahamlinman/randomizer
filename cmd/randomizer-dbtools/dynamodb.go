@@ -45,6 +45,7 @@ func getDynamoDB() *dynamodb.Client {
 	var options []func(*config.LoadOptions) error
 	if dynamoDBEndpoint != "" {
 		options = append(options,
+			//lint:ignore SA1019 TODO: Switch to WithEndpointResolverWithOptions
 			config.WithEndpointResolver(aws.EndpointResolverFunc(
 				func(_, _ string) (aws.Endpoint, error) {
 					return aws.Endpoint{URL: dynamoDBEndpoint}, nil

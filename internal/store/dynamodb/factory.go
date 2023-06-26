@@ -40,6 +40,7 @@ func awsConfigFromEnv(ctx context.Context) (aws.Config, error) {
 	var extraOptions []awsconfig.Option
 	if endpoint := os.Getenv("DYNAMODB_ENDPOINT"); endpoint != "" {
 		extraOptions = append(extraOptions,
+			//lint:ignore SA1019 TODO: Switch to WithEndpointResolverWithOptions
 			config.WithEndpointResolver(aws.EndpointResolverFunc(
 				func(_, _ string) (aws.Endpoint, error) {
 					return aws.Endpoint{URL: endpoint}, nil
