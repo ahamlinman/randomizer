@@ -3,7 +3,7 @@ package randomizer
 import (
 	"context"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 
@@ -233,7 +233,7 @@ func TestMain(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			app := NewApp("randomizer", tc.store)
-			app.shuffle = sort.Strings
+			app.shuffle = slices.Sort
 
 			res, err := app.Main(context.Background(), tc.args)
 			tc.check(t, res, err)

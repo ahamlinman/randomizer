@@ -2,7 +2,7 @@ package randomizer
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -28,7 +28,7 @@ func (a App) listGroups(request request) (Result, error) {
 		}, nil
 	}
 
-	sort.Strings(groups)
+	slices.Sort(groups)
 
 	return Result{
 		resultType: ListedGroups,
@@ -60,7 +60,7 @@ func (a App) showGroup(request request) (Result, error) {
 		}
 	}
 
-	sort.Strings(group)
+	slices.Sort(group)
 
 	return Result{
 		resultType: ShowedGroup,
@@ -102,7 +102,7 @@ func (a App) saveGroup(request request) (Result, error) {
 		}
 	}
 
-	sort.Strings(options)
+	slices.Sort(options)
 
 	return Result{
 		resultType: SavedGroup,

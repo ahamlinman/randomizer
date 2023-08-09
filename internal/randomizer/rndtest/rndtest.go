@@ -3,7 +3,7 @@ package rndtest
 
 import (
 	"context"
-	"sort"
+	"slices"
 
 	"github.com/pkg/errors"
 )
@@ -22,7 +22,7 @@ func (s Store) List(_ context.Context) ([]string, error) {
 	for k := range s {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	return keys, nil
 }
 
@@ -41,9 +41,8 @@ func (s Store) Put(_ context.Context, name string, options []string) error {
 		return errors.New("store put error")
 	}
 
-	copied := make([]string, len(options))
-	copy(copied, options)
-	sort.Strings(copied)
+	copied := slices.Clone(options)
+	slices.Sort(copied)
 	s[name] = copied
 	return nil
 }
