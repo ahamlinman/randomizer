@@ -83,11 +83,6 @@ func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
 //go:embed amazon-trust.cer
 var embeddedRootsDER []byte
 
-var (
-	embeddedRoots     *x509.CertPool
-	initEmbeddedRoots sync.Once
-)
-
 // getEmbeddedCertPool returns a cert pool containing only the root CAs
 // operated by Amazon Trust Services, which all AWS service endpoints chain
 // from.
@@ -98,18 +93,14 @@ var (
 // approximately in half, specifically by around 500ms. This is a large enough
 // difference for a human to notice, and accounts for about 15% of the 3 second
 // response time limit that Slack imposes on slash commands.
-func getEmbeddedCertPool() *x509.CertPool {
-	initEmbeddedRoots.Do(func() {
-		certs, err := x509.ParseCertificates(embeddedRootsDER)
-		if err != nil {
-			panic(fmt.Errorf("failed to initialize embedded TLS roots: %v", err))
-		}
-
-		embeddedRoots = x509.NewCertPool()
-		for _, cert := range certs {
-			embeddedRoots.AddCert(cert)
-		}
-	})
-
-	return embeddedRoots
-}
+var getEmbeddedCertPool = sync.OnceValue(func() *x509.CertPool {
+	certs, err := x509.ParseCertificates(embeddedRootsDER)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse embedded TLS roots: %v", err))
+	}
+	pool := x509.NewCertPool()
+	for _, cert := range certs {
+		pool.AddCert(cert)
+	}
+	return pool
+})
