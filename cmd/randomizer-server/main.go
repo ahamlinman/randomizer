@@ -18,20 +18,28 @@ import (
 	"go.alexhamlin.co/randomizer/internal/store"
 )
 
+var (
+	flagAddr    = flag.String("addr", ":7636", "address to bind the server to")
+	flagLogJSON = flag.Bool("log-json", false, "log JSON to stderr instead of text")
+)
+
 func main() {
-	var addr string
-	flag.StringVar(&addr, "addr", ":7636", "address to bind the server to")
 	flag.Parse()
+
+	logger := slog.Default()
+	if *flagLogJSON {
+		logger = slog.New(slog.NewJSONHandler(os.Stderr, nil))
+	}
 
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
-		slog.Error("Unable to configure Slack token", "err", err)
+		logger.Error("Unable to configure Slack token", "err", err)
 		os.Exit(2)
 	}
 
 	storeFactory, err := store.FactoryFromEnv(context.Background())
 	if err != nil {
-		slog.Error("Unable to create store", "err", err)
+		logger.Error("Unable to create store", "err", err)
 		os.Exit(2)
 	}
 
@@ -39,19 +47,19 @@ func main() {
 	mux.Handle("/", slack.App{
 		TokenProvider: tokenProvider,
 		StoreFactory:  storeFactory,
-		Logger:        slog.Default(),
+		Logger:        logger,
 	})
 	mux.Handle("/healthz",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
 
-	srv := &http.Server{Addr: addr, Handler: mux}
+	srv := &http.Server{Addr: *flagAddr, Handler: mux}
 	go func() {
-		slog.Info("Starting randomizer server", "addr", addr)
+		logger.Info("Starting randomizer server", "addr", *flagAddr)
 		err := srv.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Unable to start server", "err", err)
+			logger.Error("Unable to start server", "err", err)
 			os.Exit(1)
 		}
 	}()
@@ -61,9 +69,9 @@ func main() {
 	<-exit
 	signal.Stop(exit)
 
-	slog.Info("Shutting down; interrupt again to force exit")
+	logger.Info("Shutting down; interrupt again to force exit")
 	err = srv.Shutdown(context.Background())
 	if err != nil {
-		slog.Error("Unable to shut down gracefully", "err", err)
+		logger.Error("Unable to shut down gracefully", "err", err)
 	}
 }
