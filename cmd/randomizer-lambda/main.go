@@ -26,22 +26,24 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
+
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
-		slog.Error("Failed to configure Slack token", "err", err)
+		logger.Error("Failed to configure Slack token", "err", err)
 		os.Exit(2)
 	}
 
 	storeFactory, err := dynamodb.FactoryFromEnv(context.Background())
 	if err != nil {
-		slog.Error("Failed to create DynamoDB store", "err", err)
+		logger.Error("Failed to create DynamoDB store", "err", err)
 		os.Exit(2)
 	}
 
 	app := slack.App{
 		TokenProvider: tokenProvider,
 		StoreFactory:  storeFactory,
-		Logger:        slog.Default(),
+		Logger:        logger,
 	}
 	lambda.Start(httpadapter.NewV2(app).ProxyWithContext)
 }
