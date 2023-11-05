@@ -54,7 +54,6 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !tokenIsValid {
-		a.log("Invalid token in request\n")
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
