@@ -7,10 +7,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"os/signal"
 
 	"go.alexhamlin.co/randomizer/internal/slack"
 	"go.alexhamlin.co/randomizer/internal/store"
@@ -23,30 +25,45 @@ func main() {
 
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to configure Slack token: %+v\n", err)
+		log.Printf("Unable to configure Slack token: %+v\n", err)
 		os.Exit(2)
 	}
 
 	storeFactory, err := store.FactoryFromEnv(context.Background())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
+		log.Printf("Unable to create store: %+v\n", err)
 		os.Exit(2)
 	}
 
-	http.Handle("/", slack.App{
+	mux := http.NewServeMux()
+	mux.Handle("/", slack.App{
 		TokenProvider: tokenProvider,
 		StoreFactory:  storeFactory,
 		DebugWriter:   os.Stderr,
 	})
-	http.Handle("/healthz",
+	mux.Handle("/healthz",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
 
-	fmt.Println("Starting randomizer service on", addr)
-	err = http.ListenAndServe(addr, nil)
+	srv := &http.Server{Addr: addr, Handler: mux}
+	go func() {
+		log.Printf("Starting randomizer server on %s", addr)
+		err := srv.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Unable to start server: %v\n", err)
+			os.Exit(1)
+		}
+	}()
+
+	exit := make(chan os.Signal, 1)
+	signal.Notify(exit, exitSignals...)
+	<-exit
+	signal.Stop(exit)
+
+	log.Print("Shutting down; interrupt again to force exit")
+	err = srv.Shutdown(context.Background())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to start server: %v\n", err)
-		os.Exit(1)
+		log.Printf("Unable to shut down gracefully: %v", err)
 	}
 }
