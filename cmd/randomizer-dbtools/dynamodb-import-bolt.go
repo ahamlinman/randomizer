@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	bolt "go.etcd.io/bbolt"
 )
@@ -58,8 +57,9 @@ func runDynamoDBImportBolt(cmd *cobra.Command, args []string) {
 
 				var items []string
 				decoder := gob.NewDecoder(bytes.NewReader(itemsGob))
-				if err := decoder.Decode(&items); err != nil {
-					return errors.Wrapf(err, "decoding items for %q in %q", groupStr, partitionStr)
+				err := decoder.Decode(&items)
+				if err != nil {
+					return fmt.Errorf("decoding items for %q in %q: %w", groupStr, partitionStr, err)
 				}
 
 				writeRequests = append(writeRequests, types.WriteRequest{

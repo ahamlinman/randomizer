@@ -3,8 +3,6 @@ package randomizer
 import (
 	"context"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 type operation int
@@ -69,7 +67,7 @@ func parseArgs(args []string) (op operation, operand string, opargs []string, er
 
 	if len(args) < 2 {
 		return op, "", nil, Error{
-			cause:    errors.Errorf("%q flag requires an argument", args[0]),
+			cause:    fmt.Errorf("%q flag requires an argument", args[0]),
 			helpText: fmt.Sprintf("Whoops, %q requires an argument!", args[0]),
 		}
 	}

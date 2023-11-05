@@ -3,9 +3,9 @@ package rndtest
 
 import (
 	"context"
+	"errors"
 	"slices"
 
-	"github.com/pkg/errors"
 	"golang.org/x/exp/maps"
 )
 

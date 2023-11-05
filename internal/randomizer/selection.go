@@ -3,8 +3,6 @@ package randomizer
 import (
 	"context"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 func (a App) makeSelection(request request) (Result, error) {
@@ -43,7 +41,7 @@ func (a App) expandGroup(ctx context.Context, group string) ([]string, error) {
 
 	if len(expansion) == 0 {
 		return nil, Error{
-			cause: errors.Errorf("group %q not found", group),
+			cause: fmt.Errorf("group %q not found", group),
 			helpText: fmt.Sprintf(
 				`Whoops, I couldn't find the %q group in this channel. (Type "%s help" to learn more about groups!)`,
 				group, a.name,

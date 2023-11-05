@@ -1,9 +1,8 @@
 package randomizer
 
 import (
+	"errors"
 	"testing"
-
-	"github.com/pkg/errors"
 )
 
 var errOriginalCause = errors.New("there was a test error")

@@ -3,11 +3,12 @@ package dynamodb
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -64,7 +65,7 @@ func (s Store) List(ctx context.Context) ([]string, error) {
 		)).
 		Build()
 	if err != nil {
-		return nil, errors.Wrap(err, "building expression")
+		return nil, fmt.Errorf("building expression: %w", err)
 	}
 
 	result, err := s.db.Query(ctx, &dynamodb.QueryInput{
@@ -75,14 +76,14 @@ func (s Store) List(ctx context.Context) ([]string, error) {
 		ExpressionAttributeValues: expr.Values(),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "listing groups for %q from table %q", s.partition, s.table)
+		return nil, fmt.Errorf("listing groups for %q from table %q: %w", s.partition, s.table, err)
 	}
 
 	list := make([]string, len(result.Items))
 	for i, item := range result.Items {
 		v, ok := item[groupKey].(*types.AttributeValueMemberS)
 		if !ok {
-			return nil, errors.Errorf("invalid type %T in group names", item[groupKey])
+			return nil, fmt.Errorf("invalid type %T in group names", item[groupKey])
 		}
 		list[i] = v.Value
 	}
@@ -97,7 +98,7 @@ func (s Store) Get(ctx context.Context, name string) ([]string, error) {
 		)).
 		Build()
 	if err != nil {
-		return nil, errors.Wrap(err, "building expression")
+		return nil, fmt.Errorf("building expression: %w", err)
 	}
 
 	result, err := s.db.GetItem(ctx, &dynamodb.GetItemInput{
@@ -110,7 +111,7 @@ func (s Store) Get(ctx context.Context, name string) ([]string, error) {
 		ExpressionAttributeNames: expr.Names(),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "getting %q for %q from table %q", name, s.partition, s.table)
+		return nil, fmt.Errorf("getting %q for %q from table %q: %w", name, s.partition, s.table, err)
 	}
 
 	if len(result.Item) == 0 {
@@ -119,8 +120,9 @@ func (s Store) Get(ctx context.Context, name string) ([]string, error) {
 
 	v, ok := result.Item[itemsKey].(*types.AttributeValueMemberSS)
 	if !ok {
-		return nil, errors.Errorf("invalid type %T in group items", v)
+		return nil, fmt.Errorf("invalid type %T in group items", v)
 	}
+
 	return v.Value, nil
 }
 
@@ -135,7 +137,11 @@ func (s Store) Put(ctx context.Context, name string, options []string) error {
 			itemsKey:     &types.AttributeValueMemberSS{Value: options},
 		},
 	})
-	return errors.Wrapf(err, "saving %q for %q to table %q", name, s.partition, s.table)
+	if err != nil {
+		return fmt.Errorf("saving %q for %q to table %q: %w", name, s.partition, s.table, err)
+	}
+
+	return nil
 }
 
 // Delete removes the named group from this Store's partition.
@@ -148,6 +154,10 @@ func (s Store) Delete(ctx context.Context, name string) (bool, error) {
 		},
 		ReturnValues: types.ReturnValueAllOld,
 	})
+	if err != nil {
+		return false, fmt.Errorf("deleting %q for %q from table %q: %w", name, s.partition, s.table, err)
+	}
+
 	existed := len(result.Attributes) > 0
-	return existed, errors.Wrapf(err, "deleting %q for %q from table %q", name, s.partition, s.table)
+	return existed, nil
 }

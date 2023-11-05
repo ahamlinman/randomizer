@@ -5,8 +5,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"errors"
+	"fmt"
 
-	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -62,7 +63,12 @@ func (b Store) Get(_ context.Context, name string) (options []string, err error)
 		}
 
 		decoder := gob.NewDecoder(bytes.NewReader(result))
-		return errors.Wrapf(decoder.Decode(&options), "decoding group %q", name)
+		err := decoder.Decode(&options)
+		if err != nil {
+			return fmt.Errorf("decoding group %q: %w", name, err)
+		}
+
+		return nil
 	})
 	return
 }
@@ -72,20 +78,22 @@ func (b Store) Put(_ context.Context, name string, options []string) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(b.bucket))
 		if err != nil {
-			return errors.Wrap(err, "creating bucket")
+			return fmt.Errorf("creating bucket: %w", err)
 		}
 
 		var result bytes.Buffer
 		encoder := gob.NewEncoder(&result)
-		if err := encoder.Encode(&options); err != nil {
-			return errors.Wrapf(err, "encoding group %q (%v)", name, options)
+		err = encoder.Encode(&options)
+		if err != nil {
+			return fmt.Errorf("encoding group %q (%v): %w", name, options, err)
 		}
 
-		return errors.Wrapf(
-			bucket.Put([]byte(name), result.Bytes()),
-			"writing group %q",
-			name,
-		)
+		err = bucket.Put([]byte(name), result.Bytes())
+		if err != nil {
+			return fmt.Errorf("writing group %q: %w", name, err)
+		}
+
+		return nil
 	})
 }
 
@@ -96,13 +104,17 @@ func (b Store) Delete(_ context.Context, name string) (existed bool, err error) 
 		if bucket == nil {
 			return nil
 		}
-
 		if bucket.Get([]byte(name)) == nil {
 			return nil
 		}
 
 		existed = true
-		return errors.Wrapf(bucket.Delete([]byte(name)), "deleting group %q", name)
+		err := bucket.Delete([]byte(name))
+		if err != nil {
+			return fmt.Errorf("deleting group %q: %w", name, err)
+		}
+
+		return nil
 	})
 	return
 }

@@ -2,13 +2,14 @@ package slack
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
-	"github.com/pkg/errors"
 
 	"go.alexhamlin.co/randomizer/internal/awsconfig"
 )
@@ -49,8 +50,13 @@ func ssmTTLFromEnv() (time.Duration, error) {
 	if !ok {
 		return DefaultAWSParameterTTL, nil
 	}
+
 	ttl, err := time.ParseDuration(ttlEnv)
-	return ttl, errors.Wrap(err, "SLACK_TOKEN_SSM_TTL is not a valid Go duration")
+	if err != nil {
+		return 0, fmt.Errorf("SLACK_TOKEN_SSM_TTL is not a valid Go duration: %w", err)
+	}
+
+	return ttl, nil
 }
 
 // StaticToken uses token as the expected value of the verification token.
@@ -90,7 +96,7 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 			WithDecryption: aws.Bool(true),
 		})
 		if err != nil {
-			return "", errors.Wrap(err, "loading Slack token parameter")
+			return "", fmt.Errorf("loading Slack token parameter: %w", err)
 		}
 
 		token = *output.Parameter.Value

@@ -5,12 +5,11 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"go.alexhamlin.co/randomizer/internal/randomizer"
 	"go.alexhamlin.co/randomizer/internal/store"
@@ -77,13 +76,16 @@ func (a App) getRequestParams(r *http.Request) (url.Values, error) {
 		// This implicitly assumes an application/x-www-form-urlencoded body, per
 		// https://api.slack.com/slash-commands#app_command_handling.
 		err := r.ParseForm()
-		return r.PostForm, errors.Wrap(err, "reading POST form data")
+		if err != nil {
+			return nil, fmt.Errorf("reading POST form data: %w", err)
+		}
+		return r.PostForm, nil
 
 	case http.MethodGet:
 		return r.URL.Query(), nil
 	}
 
-	return nil, errors.Errorf("unsupported method %v", r.Method)
+	return nil, fmt.Errorf("unsupported method %v", r.Method)
 }
 
 func (a App) isTokenValid(ctx context.Context, params url.Values) (bool, error) {

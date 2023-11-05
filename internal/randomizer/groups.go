@@ -1,11 +1,10 @@
 package randomizer
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func (a App) listGroups(request request) (Result, error) {
@@ -80,7 +79,7 @@ func (a App) saveGroup(request request) (Result, error) {
 
 	if isForbiddenGroupName(name) {
 		return Result{}, Error{
-			cause: errors.Errorf("saving with forbidden group name %q", name),
+			cause: fmt.Errorf("saving with forbidden group name %q", name),
 			helpText: fmt.Sprintf(
 				`Whoops, %q has a special meaning and can't be used as a group name. (Type "%s help" to learn more!)`,
 				name, a.name,

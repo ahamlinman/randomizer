@@ -11,7 +11,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.42.0
 	github.com/aws/aws-xray-sdk-go v1.8.2
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.0
-	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	go.etcd.io/bbolt v1.3.8
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
@@ -38,6 +37,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.50.0 // indirect

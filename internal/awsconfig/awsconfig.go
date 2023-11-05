@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	xrayawsv2 "github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -65,7 +64,7 @@ func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
 
 	cfg, err := config.LoadDefaultConfig(ctx, options...)
 	if err != nil {
-		return aws.Config{}, errors.Wrap(err, "loading AWS config")
+		return aws.Config{}, fmt.Errorf("loading AWS config: %w", err)
 	}
 
 	// WARNING: X-Ray tracing will panic if the context passed to AWS operations
@@ -76,7 +75,7 @@ func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
 		xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	}
 
-	return cfg, errors.Wrap(err, "loading AWS config")
+	return cfg, nil
 }
 
 //go:generate ./refresh-amazon-trust-roots.sh
