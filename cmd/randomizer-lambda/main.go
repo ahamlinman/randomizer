@@ -15,7 +15,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -28,20 +28,20 @@ import (
 func main() {
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to configure Slack token: %+v\n", err)
+		slog.Error("Failed to configure Slack token", "err", err)
 		os.Exit(2)
 	}
 
 	storeFactory, err := dynamodb.FactoryFromEnv(context.Background())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create store: %+v\n", err)
+		slog.Error("Failed to create DynamoDB store", "err", err)
 		os.Exit(2)
 	}
 
 	app := slack.App{
 		TokenProvider: tokenProvider,
 		StoreFactory:  storeFactory,
-		DebugWriter:   os.Stderr,
+		Logger:        slog.Default(),
 	}
 	lambda.Start(httpadapter.NewV2(app).ProxyWithContext)
 }

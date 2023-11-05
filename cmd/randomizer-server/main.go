@@ -39,7 +39,7 @@ func main() {
 	mux.Handle("/", slack.App{
 		TokenProvider: tokenProvider,
 		StoreFactory:  storeFactory,
-		DebugWriter:   os.Stderr,
+		Logger:        slog.Default(),
 	})
 	mux.Handle("/healthz",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

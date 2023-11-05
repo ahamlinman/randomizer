@@ -5,8 +5,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
-	"fmt"
-	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -31,9 +30,9 @@ type App struct {
 	// StoreFactory provides a Store for the Slack channel in which the request
 	// was made.
 	StoreFactory store.Factory
-	// DebugWriter, if non-nil, will be used to print information about errors
-	// that occur while handling each request.
-	DebugWriter io.Writer
+	// Logger, if non-nil, will be used to report information about errors that
+	// occur while handling each request.
+	Logger *slog.Logger
 }
 
 // ServeHTTP handles the GET or POST request made by Slack when the randomizer
@@ -42,14 +41,14 @@ type App struct {
 func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	params, err := a.getRequestParams(r)
 	if err != nil {
-		a.log("Failed to get request params: %v\n", err)
+		a.logErr(err, "Failed to get request params")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	tokenIsValid, err := a.isTokenValid(r.Context(), params)
 	if err != nil {
-		a.log("Unable to check verification token: %v\n", err)
+		a.logErr(err, "Failed to validate token")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -59,13 +58,12 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if params.Get("ssl_check") == "1" {
-		a.log("Handled SSL check\n")
 		return
 	}
 
 	result, err := a.runRandomizer(r.Context(), params)
 	if err != nil {
-		a.log("Error from randomizer: %v\n", err)
+		a.logErr(err, "Failed to run randomizer")
 		a.writeError(w, err)
 		return
 	}
@@ -145,12 +143,12 @@ func (a App) writeResponse(w http.ResponseWriter, response response) {
 	w.Header().Add("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
-		a.log("Error writing response: %v\n", err)
+		a.logErr(err, "Failed to write response")
 	}
 }
 
-func (a App) log(format string, v ...interface{}) {
-	if a.DebugWriter != nil {
-		fmt.Fprintf(a.DebugWriter, format, v...)
+func (a App) logErr(err error, msg string) {
+	if a.Logger != nil {
+		a.Logger.Error(msg, "err", err)
 	}
 }
