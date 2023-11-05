@@ -38,6 +38,10 @@ func main() {
 		StoreFactory:  storeFactory,
 		DebugWriter:   os.Stderr,
 	})
+	http.Handle("/healthz",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}))
 
 	fmt.Println("Starting randomizer service on", addr)
 	err = http.ListenAndServe(addr, nil)
