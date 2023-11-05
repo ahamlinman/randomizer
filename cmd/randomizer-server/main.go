@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,13 +25,13 @@ func main() {
 
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
-		log.Printf("Unable to configure Slack token: %+v\n", err)
+		slog.Error("Unable to configure Slack token", "err", err)
 		os.Exit(2)
 	}
 
 	storeFactory, err := store.FactoryFromEnv(context.Background())
 	if err != nil {
-		log.Printf("Unable to create store: %+v\n", err)
+		slog.Error("Unable to create store", "err", err)
 		os.Exit(2)
 	}
 
@@ -48,10 +48,10 @@ func main() {
 
 	srv := &http.Server{Addr: addr, Handler: mux}
 	go func() {
-		log.Printf("Starting randomizer server on %s", addr)
+		slog.Info("Starting randomizer server", "addr", addr)
 		err := srv.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("Unable to start server: %v\n", err)
+			slog.Error("Unable to start server", "err", err)
 			os.Exit(1)
 		}
 	}()
@@ -61,9 +61,9 @@ func main() {
 	<-exit
 	signal.Stop(exit)
 
-	log.Print("Shutting down; interrupt again to force exit")
+	slog.Info("Shutting down; interrupt again to force exit")
 	err = srv.Shutdown(context.Background())
 	if err != nil {
-		log.Printf("Unable to shut down gracefully: %v", err)
+		slog.Error("Unable to shut down gracefully", "err", err)
 	}
 }
