@@ -1,3 +1,5 @@
+//go:build randomizer.firestore
+
 package firestore
 
 import (
@@ -6,6 +8,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/firestore"
+
 	"go.alexhamlin.co/randomizer/internal/randomizer"
 )
 
