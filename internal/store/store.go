@@ -9,6 +9,7 @@ import (
 	"go.alexhamlin.co/randomizer/internal/randomizer"
 	"go.alexhamlin.co/randomizer/internal/store/bbolt"
 	"go.alexhamlin.co/randomizer/internal/store/dynamodb"
+	"go.alexhamlin.co/randomizer/internal/store/firestore"
 )
 
 // Factory represents a type for functions that produce a store for the
@@ -24,6 +25,9 @@ type Factory func(partition string) randomizer.Store
 func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) {
 	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
 		return dynamodb.FactoryFromEnv(ctx)
+	}
+	if envHasAny("FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID") {
+		return firestore.FactoryFromEnv()
 	}
 	return bbolt.FactoryFromEnv()
 }
