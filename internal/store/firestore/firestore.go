@@ -13,8 +13,8 @@ type Store struct {
 	partition string
 }
 
-type itemsDoc struct {
-	Items []string `firestore:"items"`
+type optionsDoc struct {
+	Options []string `firestore:"options"`
 }
 
 func New(client *firestore.Client, partition string) Store {
@@ -42,18 +42,18 @@ func (f Store) Get(ctx context.Context, group string) ([]string, error) {
 		return nil, fmt.Errorf("getting document: %w", err)
 	}
 
-	var result itemsDoc
+	var result optionsDoc
 	err = doc.DataTo(&result)
 	if err != nil {
 		return nil, fmt.Errorf("decoding document: %w", err)
 	}
 
-	return result.Items, nil
+	return result.Options, nil
 }
 
 func (f Store) Put(ctx context.Context, group string, options []string) error {
 	ref := f.client.Collection(f.partition).Doc(group)
-	_, err := ref.Set(ctx, itemsDoc{Items: options})
+	_, err := ref.Set(ctx, optionsDoc{options})
 	return err
 }
 
