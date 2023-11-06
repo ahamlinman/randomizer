@@ -36,53 +36,6 @@ works, and is helpful for testing.
 
 See `SERVERLESS.md`.
 
-### Breaking Change: Migration to Lambda Function URLs
-
-Older versions of the serverless stack used API Gateway events to trigger the
-randomizer in AWS Lambda. Newer deployments exclusively support [Lambda
-Function URLs][function urls], and will **irrevocably destroy any API gateway
-URLs associated with existing deployments!**
-
-To smoothly migrate from a legacy API gateway URL to a new function URL:
-
-1. Deploy commit `bdcb2cb4a765` of the randomizer repository, including both
-   the code and the CloudFormation stack. This will create a new function URL
-   without breaking the existing API gateway URL.
-2. Update the Slack webhook configuration to replace the legacy URL with the
-   new URL. Test the new configuration in Slack to ensure it works as expected.
-3. Continue with the directions below to migrate from image-based deployment to
-   .zip deployment. **This will permanently destroy the API Gateway URL.**
-
-[function urls]: https://aws.amazon.com/blogs/aws/announcing-aws-lambda-function-urls-built-in-https-endpoints-for-single-function-microservices/
-
-### Breaking Change: Migration from Container Images to .zip Archives
-
-Older versions of the serverless stack uploaded the Lambda handler code as a
-container image to an AWS ECR repository. Newer deployments upload the handler
-as a .zip archive, as these archives are much simpler to build and enable the
-handler code to better leverage resources from the Lambda runtime. It is not
-possible to change the package type of an existing Lambda function, so this
-change will **irrevocably destroy any Lambda Function URL associated with an
-image-based function!**
-
-To smoothly migrate from an image-based function to a .zip-based function:
-
-1. Create a new S3 bucket to hold the new .zip archives.
-2. Add a `[bucket]` section to your `hfc.local.toml`, with a `name` set to the
-   name of the new S3 bucket.
-3. Deploy commit `242ab5156141` of the randomizer repository, including both
-   the code and the CloudFormation stack. This will update the existing
-   image-based function _and_ create a new .zip-based function, both pointing
-   at the same DynamoDB table.
-4. Update the Slack webhook configuration to replace the URL for the
-   image-based function with the URL for the .zip-based function. Test the new
-   configuration in Slack to ensure it works as expected.
-5. Remove the `[repository]` section from your `hfc.local.toml`, and deploy the
-   latest version of the randomizer to delete the unused image-based Lambda
-   function. **This will permanently destroy the old URL.**
-6. At your leisure, delete the ECR repository that you previously used for
-   randomizer images.
-
 ## Notes on Configuring Your Own Server
 
 To run the randomizer on your own server, you'll need to pick a storage backend
@@ -112,14 +65,14 @@ The following environment variables are required:
 
 To get the API server binary, run `go build ./cmd/randomizer-server`. You can
 also build and run a Docker image using the provided `Dockerfile`. By default,
-the server listens on port 7636; this can be changed with a command line flag.
-Run the server with `-help` for more details.
+the server listens on port 7636; you can change this with a CLI flag. Run the
+server with `-help` for more details.
 
 Topics not covered by these brief notes include:
 
 - Proper service management, whether through Docker, a container orchestrator
-  (Docker Swarm, Kubernetes, etc.), or a more traditional service manager
-  (systemd, etc.).
+  (Kubernetes, Nomad, Docker Swarm, etc.), or a more traditional service
+  manager (systemd, etc.).
 - Setting up a reverse proxy to provide SSL termination for the randomizer API
   (as randomizer-server does not serve TLS out of the box).
 - The specifics of configuring AWS IAM credentials and policies, adding the
