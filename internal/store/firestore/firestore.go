@@ -3,7 +3,6 @@ package firestore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"cloud.google.com/go/firestore"
@@ -12,6 +11,10 @@ import (
 type Store struct {
 	client    *firestore.Client
 	partition string
+}
+
+type itemsDoc struct {
+	Items []string `firestore:"items"`
 }
 
 func New(client *firestore.Client, partition string) Store {
@@ -33,13 +36,29 @@ func (f Store) List(ctx context.Context) ([]string, error) {
 }
 
 func (f Store) Get(ctx context.Context, group string) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	ref := f.client.Collection(f.partition).Doc(group)
+	doc, err := ref.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting document: %w", err)
+	}
+
+	var result itemsDoc
+	err = doc.DataTo(&result)
+	if err != nil {
+		return nil, fmt.Errorf("decoding document: %w", err)
+	}
+
+	return result.Items, nil
 }
 
 func (f Store) Put(ctx context.Context, group string, options []string) error {
-	return errors.ErrUnsupported
+	ref := f.client.Collection(f.partition).Doc(group)
+	_, err := ref.Set(ctx, itemsDoc{Items: options})
+	return err
 }
 
 func (f Store) Delete(ctx context.Context, group string) (bool, error) {
-	return false, errors.ErrUnsupported
+	ref := f.client.Collection(f.partition).Doc(group)
+	_, err := ref.Delete(ctx)
+	return (err == nil), err // TODO: Support the first return value.
 }
