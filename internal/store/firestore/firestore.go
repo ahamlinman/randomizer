@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/firestore"
+	"github.com/googleapis/gax-go/v2/apierror"
+	"google.golang.org/grpc/codes"
 )
 
 type Store struct {
@@ -59,6 +61,14 @@ func (f Store) Put(ctx context.Context, group string, options []string) error {
 
 func (f Store) Delete(ctx context.Context, group string) (bool, error) {
 	ref := f.client.Collection(f.partition).Doc(group)
-	_, err := ref.Delete(ctx)
-	return (err == nil), err // TODO: Support the first return value.
+	_, err := ref.Delete(ctx, firestore.Exists)
+
+	apiErr, ok := apierror.FromError(err)
+	if ok && apiErr.GRPCStatus().Code() == codes.NotFound {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
