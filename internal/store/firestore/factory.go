@@ -27,6 +27,6 @@ func FactoryFromEnv() (func(string) randomizer.Store, error) {
 		if err != nil {
 			panic(err)
 		}
-		return New(client)
+		return New(client, partition)
 	}, nil
 }
