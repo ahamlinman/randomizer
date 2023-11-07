@@ -1,5 +1,3 @@
-//go:build randomizer.firestore
-
 package firestore
 
 import (

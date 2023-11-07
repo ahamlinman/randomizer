@@ -1,5 +1,4 @@
-//go:build randomizer.firestore
-
+// Package firestore supports randomizer storage in Google Cloud Firestore.
 package firestore
 
 import (
