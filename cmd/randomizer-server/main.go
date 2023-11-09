@@ -33,13 +33,13 @@ func main() {
 
 	tokenProvider, err := slack.TokenProviderFromEnv()
 	if err != nil {
-		logger.Error("Unable to configure Slack token", "err", err)
+		logger.Error("Failed to configure Slack token", "err", err)
 		os.Exit(2)
 	}
 
 	storeFactory, err := store.FactoryFromEnv(context.Background())
 	if err != nil {
-		logger.Error("Unable to create store", "err", err)
+		logger.Error("Failed to create store", "err", err)
 		os.Exit(2)
 	}
 
@@ -59,7 +59,7 @@ func main() {
 		logger.Info("Starting randomizer server", "addr", *flagAddr)
 		err := srv.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("Unable to start server", "err", err)
+			logger.Error("Failed to start server", "err", err)
 			os.Exit(1)
 		}
 	}()
@@ -72,6 +72,6 @@ func main() {
 	logger.Info("Shutting down; interrupt again to force exit")
 	err = srv.Shutdown(context.Background())
 	if err != nil {
-		logger.Error("Unable to shut down gracefully", "err", err)
+		logger.Error("Failed to shut down gracefully", "err", err)
 	}
 }
