@@ -141,7 +141,6 @@ Run `./hfc help` to learn more about additional commands that might be useful.
   run on AWS even without the 12 month free tier. My _very rough_ estimate is
   that the randomizer probably costs less than $1 per million requests.
 
-[zeroimage]: https://github.com/ahamlinman/zeroimage
 [sam]: https://github.com/awslabs/serverless-application-model
 [capacity mode]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
 [x-ray]: https://aws.amazon.com/xray/
