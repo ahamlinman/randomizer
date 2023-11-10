@@ -24,6 +24,11 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ahamlinman
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
     - name: Build and Push
       uses: docker/build-push-action@v3
       with:
@@ -31,6 +36,8 @@ jobs:
         tags: |
           ghcr.io/ahamlinman/randomizer:latest
           ghcr.io/ahamlinman/randomizer:${{ github.sha }}
+          ahamlinman/randomizer:latest
+          ahamlinman/randomizer:${{ github.sha }}
         platforms: |
           linux/amd64
           linux/arm64
