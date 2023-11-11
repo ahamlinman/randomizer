@@ -18,6 +18,8 @@ import (
 	"go.alexhamlin.co/randomizer/internal/store"
 )
 
+var exitSignals = []os.Signal{os.Interrupt}
+
 var (
 	flagAddr    = flag.String("addr", ":7636", "address to bind the server to")
 	flagLogJSON = flag.Bool("log-json", false, "log JSON to stderr instead of text")

@@ -2,9 +2,8 @@
 
 package main
 
-import (
-	"os"
-	"syscall"
-)
+import "syscall"
 
-var exitSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
+func init() {
+	exitSignals = append(exitSignals, syscall.SIGTERM)
+}
