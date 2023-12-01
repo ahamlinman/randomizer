@@ -1,3 +1,36 @@
+# v1.44.1 (2023-11-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.44.0 (2023-11-29)
+
+* **Feature**: Expose Options() accessor on service clients.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.43.3 (2023-11-28.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.43.2 (2023-11-28)
+
+* **Bug Fix**: Respect setting RetryMaxAttempts in functional options at client construction.
+
+# v1.43.1 (2023-11-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.43.0 (2023-11-16)
+
+* **Feature**: This release introduces the ability to filter automation execution steps which have parent steps. In addition, runbook variable information is returned by GetAutomationExecution and parent step information is returned by the DescribeAutomationStepExecutions API.
+
+# v1.42.2 (2023-11-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.42.1 (2023-11-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.42.0 (2023-11-01)
 
 * **Feature**: Adds support for configured endpoints via environment variables and the AWS shared configuration file.
