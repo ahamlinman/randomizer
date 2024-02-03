@@ -1,3 +1,15 @@
+# v1.45.0 (2024-01-31)
+
+* **Feature**: This release adds an optional Duration parameter to StateManager Associations. This allows customers to specify how long an apply-only-on-cron association execution should run. Once the specified Duration is out all the ongoing cancellable commands or automations are cancelled.
+
+# v1.44.7 (2024-01-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.44.6 (2023-12-20)
+
+* No change notes available for this release.
+
 # v1.44.5 (2023-12-08)
 
 * **Bug Fix**: Reinstate presence of default Retryer in functional options, but still respect max attempts set therein.
