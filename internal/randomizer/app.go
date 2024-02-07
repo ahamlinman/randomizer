@@ -2,8 +2,7 @@ package randomizer
 
 import (
 	"context"
-	"math/rand"
-	"time"
+	"math/rand/v2"
 )
 
 // Store represents an object that provides persistence for "groups" of
@@ -44,8 +43,7 @@ func NewApp(name string, store Store) App {
 }
 
 func shuffle(options []string) {
-	source := rand.NewSource(time.Now().UnixNano())
-	rand.New(source).Shuffle(len(options), func(i, j int) {
+	rand.Shuffle(len(options), func(i, j int) {
 		options[i], options[j] = options[j], options[i]
 	})
 }
