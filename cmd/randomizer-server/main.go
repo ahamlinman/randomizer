@@ -51,7 +51,7 @@ func main() {
 		StoreFactory:  storeFactory,
 		Logger:        logger,
 	})
-	mux.Handle("/healthz",
+	mux.Handle("GET /healthz",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
