@@ -1,7 +1,6 @@
 package slack
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,38 +12,48 @@ import (
 )
 
 func TestValidRequests(t *testing.T) {
-	app := App{TokenProvider: StaticToken("right")}
+	store := make(rndtest.Store)
+	app := App{
+		TokenProvider: StaticToken("right"),
+		StoreFactory:  func(_ string) randomizer.Store { return store },
+	}
+
+	headers := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
 	params := makeTestParams("/save test one two")
+	body := strings.NewReader(params.Encode())
 
-	for _, method := range []string{http.MethodGet, http.MethodPost} {
-		t.Run(method, func(t *testing.T) {
-			store := make(rndtest.Store)
-			app.StoreFactory = func(_ string) randomizer.Store { return store }
+	resp := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/", body)
+	req.Header = headers
+	app.ServeHTTP(resp, req)
 
-			requestURL := url.URL{Path: "/"}
-			if method == http.MethodGet {
-				requestURL.RawQuery = params.Encode()
-			}
+	if resp.Result().StatusCode != http.StatusOK {
+		t.Errorf("invalid status: got %v, want %v", resp.Result().StatusCode, http.StatusOK)
+	}
+	if len(store) < 1 {
+		t.Error("/save command failed to save a new group in the store")
+	}
+}
 
-			var body io.Reader
-			headers := make(http.Header)
-			if method == http.MethodPost {
-				headers.Add("Content-Type", "application/x-www-form-urlencoded")
-				body = strings.NewReader(params.Encode())
-			}
+func TestInvalidMethod(t *testing.T) {
+	app := App{
+		TokenProvider: StaticToken("right"),
+		StoreFactory:  func(_ string) randomizer.Store { return rndtest.Store(nil) },
+	}
 
-			resp := httptest.NewRecorder()
-			req := httptest.NewRequest(method, requestURL.String(), body)
-			req.Header = headers
-			app.ServeHTTP(resp, req)
+	params := makeTestParams("one two three")
+	params.Set("token", "right")
+	reqURL := url.URL{Path: "/", RawQuery: params.Encode()}
 
-			if resp.Result().StatusCode != http.StatusOK {
-				t.Errorf("invalid status: got %v, want %v", resp.Result().StatusCode, http.StatusOK)
-			}
-			if len(store) < 1 {
-				t.Error("/save command failed to save a new group in the store")
-			}
-		})
+	resp := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, reqURL.String(), nil)
+	app.ServeHTTP(resp, req)
+
+	if resp.Result().StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("invalid status: got %v, want %v", resp.Result().StatusCode, http.StatusMethodNotAllowed)
+	}
+	if resp.Result().Header.Get("Allow") != http.MethodPost {
+		t.Errorf("invalid Accept header: got %q, want %q", resp.Result().Header.Get("Allow"), http.MethodPost)
 	}
 }
 
@@ -54,11 +63,9 @@ func TestInvalidToken(t *testing.T) {
 		StoreFactory:  func(_ string) randomizer.Store { return rndtest.Store(nil) },
 	}
 
+	headers := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
 	params := makeTestParams("help")
 	params.Set("token", "wrong")
-
-	headers := make(http.Header)
-	headers.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(params.Encode()))

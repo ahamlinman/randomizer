@@ -33,35 +33,22 @@ type App struct {
 	Logger *slog.Logger
 }
 
-// ServeHTTP handles the GET or POST request made by Slack when the randomizer
-// slash command is invoked. (The HTTP method used by Slack can be selected
-// when configuring the slash command.)
+// ServeHTTP handles the POST request that Slack makes to invoke the randomizer
+// slash command.
 func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var params url.Values
-	switch r.Method {
-	case http.MethodGet, http.MethodHead:
-		params = r.URL.Query()
-		// TODO: Why the $@!% did I implement GET support? The randomizer is full of
-		// non-idempotent commands; it fundamentally cannot support the semantics of
-		// GET and HEAD in this architecture, nor does it make sense to in the
-		// context of Slack's use of this endpoint.
-
-	case http.MethodPost:
-		if err := r.ParseForm(); err != nil {
-			a.logErr(err, "Failed to read POST form")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		params = r.PostForm
-
-	default:
-		w.Header().Add("Allow", strings.Join(
-			[]string{http.MethodGet, http.MethodHead, http.MethodPost}, ", "))
+	if r.Method != http.MethodPost {
+		w.Header().Add("Allow", http.MethodPost)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	tokenIsValid, err := a.isTokenValid(r.Context(), params)
+	if err := r.ParseForm(); err != nil {
+		a.logErr(err, "Failed to read POST form")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	tokenIsValid, err := a.isTokenValid(r.Context(), r.PostForm)
 	if err != nil {
 		a.logErr(err, "Failed to validate token")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -72,11 +59,11 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if params.Get("ssl_check") == "1" {
+	if r.PostForm.Get("ssl_check") == "1" {
 		return
 	}
 
-	result, err := a.runRandomizer(r.Context(), params)
+	result, err := a.runRandomizer(r.Context(), r.PostForm)
 	if err != nil {
 		a.logErr(err, "Failed to run randomizer")
 		a.writeError(w, err)
