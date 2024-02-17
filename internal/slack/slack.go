@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -38,10 +37,27 @@ type App struct {
 // slash command is invoked. (The HTTP method used by Slack can be selected
 // when configuring the slash command.)
 func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	params, err := a.getRequestParams(r)
-	if err != nil {
-		a.logErr(err, "Failed to get request params")
-		w.WriteHeader(http.StatusBadRequest)
+	var params url.Values
+	switch r.Method {
+	case http.MethodGet, http.MethodHead:
+		params = r.URL.Query()
+		// TODO: Why the $@!% did I implement GET support? The randomizer is full of
+		// non-idempotent commands; it fundamentally cannot support the semantics of
+		// GET and HEAD in this architecture, nor does it make sense to in the
+		// context of Slack's use of this endpoint.
+
+	case http.MethodPost:
+		if err := r.ParseForm(); err != nil {
+			a.logErr(err, "Failed to read POST form")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		params = r.PostForm
+
+	default:
+		w.Header().Add("Allow", strings.Join(
+			[]string{http.MethodGet, http.MethodHead, http.MethodPost}, ", "))
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -68,24 +84,6 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.writeResult(w, result)
-}
-
-func (a App) getRequestParams(r *http.Request) (url.Values, error) {
-	switch r.Method {
-	case http.MethodPost:
-		// This implicitly assumes an application/x-www-form-urlencoded body, per
-		// https://api.slack.com/slash-commands#app_command_handling.
-		err := r.ParseForm()
-		if err != nil {
-			return nil, fmt.Errorf("reading POST form data: %w", err)
-		}
-		return r.PostForm, nil
-
-	case http.MethodGet:
-		return r.URL.Query(), nil
-	}
-
-	return nil, fmt.Errorf("unsupported method %v", r.Method)
 }
 
 func (a App) isTokenValid(ctx context.Context, params url.Values) (bool, error) {
