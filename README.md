@@ -23,10 +23,9 @@ You'll need the [Go][go] toolchain installed to try the demo program.
 1. Build the demo: `go build ./cmd/randomizer-demo`
 1. See what to do next: `./randomizer-demo help`
 
-The demo outputs the same text that would be sent to Slack, using proper
-[message formatting][format]. Groups are saved in a [bbolt][bbolt] database
-file in the current directory. This gives a rough taste of how the command
-works, and is helpful for testing.
+The demo saves groups in a [bbolt][bbolt] database in the current directory,
+and outputs responses using [Slack's message formatting][format]. This gives a
+taste of how the command works, and helps with testing.
 
 [go]: https://golang.org/
 [format]: https://api.slack.com/docs/message-formatting
@@ -37,11 +36,11 @@ works, and is helpful for testing.
 This repo provides two guides on deploying the randomizer API for use with
 Slack:
 
-- `SERVERLESS.md` is a fairly detailed walkthrough for deployment on [AWS
+- `SERVERLESS.md` is a detailed walkthrough for deployment on [AWS
   Lambda][lambda], Amazon's managed function as a service platform.
-- `SERVERMORE.md` is a fairly high-level guide for setting up the
-  `randomizer-server` HTTP server, that assumes more background knowledge
-  and/or willingness to dive into details of both standard server management
-  and the randomizer implementation.
+- `SERVERMORE.md` is a high-level guide for setting up the `randomizer-server`
+  HTTP server, that assumes more background knowledge and/or willingness to
+  dive into details of both standard server management and the randomizer
+  implementation.
 
 [lambda]: https://aws.amazon.com/lambda/
