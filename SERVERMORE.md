@@ -17,7 +17,7 @@ If you're uncomfortable with these topics or the rest of this guide, and you
 aren't interested in learning them, the AWS Lambda setup might be preferable
 (see `SERVERLESS.md`).
 
-In addition to the environment variables below, check `randomizer-server -help`
+In addition to the environment variables below, see `randomizer-server -help`
 for CLI flags that you may wish to set, like the bind address for the server
 (defaults to ":7636").
 
@@ -40,10 +40,9 @@ token (the newer signing secret configuration isn't supported):
 [bbolt][bbolt] is the local key-value database engine behind systems like etcd,
 Consul, InfluxDB 2.x, and more.
 
-The bbolt backend's only prerequisite is persistent disk storage. The database
-file will be locked by a single server process at a time, so note that this
-backend won't support things like high availability or zero-downtime
-deployment.
+The bbolt backend's only prerequisite is persistent disk storage. Since a
+single running server locks the database file, this backend won't support high
+availability or zero-downtime deployment.
 
 The bbolt backend is active by default if no other backends have environment
 variables set. You can set `DB_PATH` to the desired location of the database on

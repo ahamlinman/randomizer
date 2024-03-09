@@ -31,9 +31,9 @@ IAM][iam].
 
 ## Create an S3 Bucket
 
-When AWS Lambda starts up your function, it will download the compiled
-randomizer code from an [Amazon S3][s3] bucket. You can create a new S3 bucket
-using the AWS CLI:
+When AWS Lambda starts up your function, it downloads the compiled randomizer
+code from an [Amazon S3][s3] bucket. You can create a new S3 bucket using the
+AWS CLI:
 
 ```sh
 aws s3 mb s3://[name]
@@ -50,8 +50,8 @@ want a name that references yourself, your company, etc.
 
 The randomizer validates that each HTTP request legitimately came from Slack by
 checking for a special Slack-provided token value in the request parameters.
-Since this token is a secret value, we'll store it in the [AWS Systems Manager
-Parameter Store][ssm parameter store] with encryption.
+Since this token is a secret value, you should store it in the [AWS Systems
+Manager Parameter Store][ssm parameter store] with encryption.
 
 Note that the current version of the randomizer only supports the deprecated
 "Verification Token" to validate requests, and not the newer "Signing Secret"
@@ -67,17 +67,17 @@ aws ssm put-parameter --type SecureString --name /Randomizer/SlackToken --value 
 
 The parameter name in the `aws ssm` command is unique within your AWS account,
 must start with a `/`, and can contain extra slash-separated parts to help
-organize all the SSM parameters in your account. While the parameter can be
-encrypted with the default AWS-managed SSM key, the CloudFormation template
-doesn't currently support encryption with a custom KMS key (which would cost
-$1/mo and require extra IAM and KMS setup).
+organize all the SSM parameters in your account. While you can encrypt the
+parameter with the default AWS-managed SSM key, the CloudFormation template
+doesn't support encryption with a custom KMS key (which costs $1/mo and
+requires extra IAM and KMS setup).
 
 [ssm parameter store]: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
 
 ## Run the Initial Deployment
 
-Now, we can use AWS [CloudFormation][CloudFormation] to deploy the randomizer
-into our account, with all necessary resources (like the DynamoDB table for
+Now, you'll use AWS [CloudFormation][CloudFormation] to deploy the randomizer
+into your account, with all necessary resources (like the DynamoDB table for
 storing groups) automatically created and configured.
 
 Similar to how you picked S3 bucket and SSM parameter names, you'll also need
@@ -107,10 +107,10 @@ deployment:
 ./hfc build-deploy Randomizer  # or whatever other stack name you chose
 ```
 
-This command will automatically compile the randomizer code for AWS Lambda,
-upload it to your S3 bucket, and set it up for use. After some time, the script
-will finish and print the webhook URL for Slack. Copy and paste this into the
-"URL" field of your Slack slash command configuration, and save it.
+This command automatically compiles the randomizer code for AWS Lambda, uploads
+it to your S3 bucket, sets it up for use, and prints a webhook URL for Slack.
+Copy and paste this into the "URL" field of your Slack slash command
+configuration, and save it.
 
 At this point, you should be able to use the randomizer in your Slack
 workspace. Go ahead and try it out!
