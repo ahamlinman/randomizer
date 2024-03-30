@@ -5,7 +5,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
-	"go.alexhamlin.co/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/randomizer"
 )
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by a local

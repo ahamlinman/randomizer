@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"strings"
 
-	"go.alexhamlin.co/randomizer/internal/randomizer"
-	"go.alexhamlin.co/randomizer/internal/store"
+	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/store"
 )
 
 // App provides HTTP handling logic that allows the randomizer to be integrated

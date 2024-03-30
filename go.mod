@@ -1,4 +1,4 @@
-module go.alexhamlin.co/randomizer
+module github.com/ahamlinman/randomizer
 
 go 1.22
 

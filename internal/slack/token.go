@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 
-	"go.alexhamlin.co/randomizer/internal/awsconfig"
+	"github.com/ahamlinman/randomizer/internal/awsconfig"
 )
 
 const DefaultAWSParameterTTL = 2 * time.Minute

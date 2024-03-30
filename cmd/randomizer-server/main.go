@@ -14,8 +14,8 @@ import (
 	"os"
 	"os/signal"
 
-	"go.alexhamlin.co/randomizer/internal/slack"
-	"go.alexhamlin.co/randomizer/internal/store"
+	"github.com/ahamlinman/randomizer/internal/slack"
+	"github.com/ahamlinman/randomizer/internal/store"
 )
 
 var exitSignals = []os.Signal{os.Interrupt}

@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
-	"go.alexhamlin.co/randomizer/internal/awsconfig"
-	"go.alexhamlin.co/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/awsconfig"
+	"github.com/ahamlinman/randomizer/internal/randomizer"
 )
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by Amazon

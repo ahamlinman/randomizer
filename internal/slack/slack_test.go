@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.alexhamlin.co/randomizer/internal/randomizer"
-	"go.alexhamlin.co/randomizer/internal/randomizer/rndtest"
+	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/randomizer/rndtest"
 )
 
 func TestValidRequests(t *testing.T) {

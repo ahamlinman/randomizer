@@ -6,10 +6,10 @@ import (
 	"context"
 	"os"
 
-	"go.alexhamlin.co/randomizer/internal/randomizer"
-	"go.alexhamlin.co/randomizer/internal/store/bbolt"
-	"go.alexhamlin.co/randomizer/internal/store/dynamodb"
-	"go.alexhamlin.co/randomizer/internal/store/firestore"
+	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/store/bbolt"
+	"github.com/ahamlinman/randomizer/internal/store/dynamodb"
+	"github.com/ahamlinman/randomizer/internal/store/firestore"
 )
 
 // Factory represents a type for functions that produce a store for the

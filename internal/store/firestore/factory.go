@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	"go.alexhamlin.co/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/randomizer"
 )
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by a Google

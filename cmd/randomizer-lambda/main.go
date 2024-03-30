@@ -21,8 +21,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 
-	"go.alexhamlin.co/randomizer/internal/slack"
-	"go.alexhamlin.co/randomizer/internal/store/dynamodb"
+	"github.com/ahamlinman/randomizer/internal/slack"
+	"github.com/ahamlinman/randomizer/internal/store/dynamodb"
 )
 
 func main() {
