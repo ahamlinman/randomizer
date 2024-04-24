@@ -1,3 +1,20 @@
+# v1.49.5 (2024-03-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.49.4 (2024-03-18)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.49.3 (2024-03-12)
+
+* **Documentation**: March 2024 doc-only updates for Systems Manager.
+
+# v1.49.2 (2024-03-07)
+
+* **Bug Fix**: Remove dependency on go-cmp.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.49.1 (2024-02-23)
 
 * **Bug Fix**: Move all common, SDK-side middleware stack ops into the service client module to prevent cross-module compatibility issues in the future.
