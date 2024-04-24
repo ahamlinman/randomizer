@@ -14,8 +14,8 @@ This guide **doesn't** cover:
   you wish to use a cloud provider for group storage or secrets.
 
 If you're uncomfortable with these topics or the rest of this guide, and you
-aren't interested in learning them, the AWS Lambda setup might be preferable
-(see `SERVERLESS.md`).
+aren't interested in learning them, you might prefer the AWS Lambda setup in
+`SERVERLESS.md`.
 
 In addition to the environment variables below, see `randomizer-server -help`
 for CLI flags that you may wish to set, like the bind address for the server
@@ -73,7 +73,7 @@ operational ease comparable to the AWS Lambda solution (though the randomizer
 doesn't include infrastructure-as-code for it out of the box).
 
 The Firestore backend requires a pre-existing database in a Google Cloud
-project (only Native mode been tested, but Datastore mode may work too).
+project (only Native mode has been tested, but Datastore mode may work too).
 Note that the randomizer expects to use the full database, and that only the
 "(default)" database in each Google Cloud project is eligible for the Firestore
 free tier.

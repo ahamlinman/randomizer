@@ -130,7 +130,7 @@ Run `./hfc help` to learn more about additional commands that might be useful.
   transformation to simplify the setup of the Lambda function.
 - The template provisions the DynamoDB table in On-Demand capacity mode, which
   isn't eligible for the AWS Free Tier. See the [Read/Write Capacity
-  Mode][capacity mode] documentation for more details.
+  Mode][capacity mode] documentation for details.
 - The default configuration enables [AWS X-Ray][x-ray] tracing for the function
   and its requests to DynamoDB. X-Ray is free for up to 100,000 traces per month
   for every AWS account, and it's useful to see where each request is spending

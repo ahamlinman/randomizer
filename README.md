@@ -24,7 +24,7 @@ You'll need the [Go][go] toolchain installed to try the demo program.
 1. See what to do next: `./randomizer-demo help`
 
 The demo saves groups in a [bbolt][bbolt] database in the current directory,
-and outputs responses using [Slack's message formatting][format]. This gives a
+and outputs responses using [Slack's "mrkdwn" format][format]. This gives a
 taste of how the command works, and helps with testing.
 
 [go]: https://golang.org/
@@ -38,9 +38,8 @@ Slack:
 
 - `SERVERLESS.md` is a detailed walkthrough for deployment on [AWS
   Lambda][lambda], Amazon's managed function as a service platform.
-- `SERVERMORE.md` is a high-level guide for setting up the `randomizer-server`
-  HTTP server, that assumes more background knowledge and/or willingness to
-  dive into details of both standard server management and the randomizer
-  implementation.
+- `SERVERMORE.md` is a high-level guide for configuring the `randomizer-server`
+  HTTP server. It assumes more background knowledge and/or willingness to dive
+  into the details of server management and the randomizer implementation.
 
 [lambda]: https://aws.amazon.com/lambda/
