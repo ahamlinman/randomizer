@@ -31,9 +31,9 @@ IAM][iam].
 
 ## Create an S3 Bucket
 
-When AWS Lambda starts up your function, it will download the compiled
-randomizer code from an [Amazon S3][s3] bucket. You can create a new S3 bucket
-using the AWS CLI:
+When AWS Lambda starts up your function, it downloads the compiled randomizer
+code from an [Amazon S3][s3] bucket. You can create a new S3 bucket using the
+AWS CLI:
 
 ```sh
 aws s3 mb s3://[name]
@@ -50,8 +50,8 @@ want a name that references yourself, your company, etc.
 
 The randomizer validates that each HTTP request legitimately came from Slack by
 checking for a special Slack-provided token value in the request parameters.
-Since this token is a secret value, we'll store it in the [AWS Systems Manager
-Parameter Store][ssm parameter store] with encryption.
+Since this token is a secret value, you should store it in the [AWS Systems
+Manager Parameter Store][ssm parameter store] with encryption.
 
 Note that the current version of the randomizer only supports the deprecated
 "Verification Token" to validate requests, and not the newer "Signing Secret"
@@ -66,19 +66,19 @@ aws ssm put-parameter --type SecureString --name /Randomizer/SlackToken --value 
 ```
 
 The parameter name in the `aws ssm` command is unique within your AWS account,
-must start with a `/`, and can contain additional slash-separated parts to help
-you organize all of the SSM parameters in your account. While the parameter can
-be encrypted with the default AWS-managed SSM key, the CloudFormation template
-does not currently support encryption with a custom KMS key (which would cost
-$1/mo and require additional IAM and KMS setup).
+must start with a `/`, and can contain extra slash-separated parts to help
+organize all the SSM parameters in your account. While you can encrypt the
+parameter with the default AWS-managed SSM key, the CloudFormation template
+doesn't support encryption with a custom KMS key (which costs $1/mo and
+requires extra IAM and KMS setup).
 
 [ssm parameter store]: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
 
 ## Run the Initial Deployment
 
-Now, we're ready to use AWS [CloudFormation][CloudFormation] to deploy the
-randomizer into our account, with all necessary resources (e.g. the DynamoDB
-table for storing groups) automatically created and configured.
+Now, you'll use AWS [CloudFormation][CloudFormation] to deploy the randomizer
+into your account, with all necessary resources (like the DynamoDB table for
+storing groups) automatically created and configured.
 
 Similar to how you picked S3 bucket and SSM parameter names, you'll also need
 to pick a name for your CloudFormation "stack." Like your repository name, this
@@ -107,10 +107,10 @@ deployment:
 ./hfc build-deploy Randomizer  # or whatever other stack name you chose
 ```
 
-This command will automatically compile the randomizer code for AWS Lambda,
-upload it to your S3 bucket, and set it up for use. After some time, the script
-will finish and print the webhook URL for Slack. Copy and paste this into the
-"URL" field of your Slack slash command configuration, and save it.
+This command automatically compiles the randomizer code for AWS Lambda, uploads
+it to your S3 bucket, sets it up for use, and prints a webhook URL for Slack.
+Copy and paste this into the "URL" field of your Slack slash command
+configuration, and save it.
 
 At this point, you should be able to use the randomizer in your Slack
 workspace. Go ahead and try it out!
@@ -119,8 +119,8 @@ workspace. Go ahead and try it out!
 
 ## Upgrades and Maintenance
 
-To upgrade the randomizer deployment in your AWS account, run the above command
-in a newer version of the randomizer repository.
+To upgrade the randomizer deployment in your AWS account, run
+`./hfc build-deploy Randomizer` in a newer version of the repository.
 
 Run `./hfc help` to learn more about additional commands that might be useful.
 
@@ -128,9 +128,9 @@ Run `./hfc help` to learn more about additional commands that might be useful.
 
 - The CloudFormation template (Template.yaml) uses the [AWS SAM][sam]
   transformation to simplify the setup of the Lambda function.
-- The DynamoDB table in the template is provisioned in On-Demand capacity mode.
-  Note that this mode is not eligible for the AWS Free Tier. See the
-  documentation for [Read/Write Capacity Mode][capacity mode] for more details.
+- The template provisions the DynamoDB table in On-Demand capacity mode, which
+  isn't eligible for the AWS Free Tier. See the [Read/Write Capacity
+  Mode][capacity mode] documentation for details.
 - The default configuration enables [AWS X-Ray][x-ray] tracing for the function
   and its requests to DynamoDB. X-Ray is free for up to 100,000 traces per month
   for every AWS account, and it's useful to see where each request is spending
@@ -138,8 +138,8 @@ Run `./hfc help` to learn more about additional commands that might be useful.
   the deployment script.
 - My co-workers and I collectively make a little over 500 requests to the
   randomizer per month, and at that small of a volume it's essentially free to
-  run on AWS even without the 12 month free tier. My _very rough_ estimate is
-  that the randomizer probably costs less than $1 per million requests.
+  run on AWS even without the 12 month free tier. My _rough_ estimate is that
+  the randomizer costs less than $1 per million requests.
 
 [sam]: https://github.com/awslabs/serverless-application-model
 [capacity mode]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
