@@ -1,3 +1,27 @@
+# v1.50.5 (2024-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.50.4 (2024-05-23)
+
+* No change notes available for this release.
+
+# v1.50.3 (2024-05-16)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.50.2 (2024-05-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.50.1 (2024-05-08)
+
+* **Bug Fix**: GoDoc improvement
+
+# v1.50.0 (2024-04-24)
+
+* **Feature**: Add SSM DescribeInstanceProperties API to public AWS SDK.
+
 # v1.49.5 (2024-03-29)
 
 * **Dependency Update**: Updated to the latest SDK module versions
