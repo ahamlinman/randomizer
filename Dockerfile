@@ -1,7 +1,7 @@
-# syntax = docker.io/docker/dockerfile:1.6
+# syntax = docker.io/docker/dockerfile:1.9
 
-ARG ALPINE_BASE=docker.io/library/alpine:3.19
-ARG GOLANG_BASE=docker.io/library/golang:1.22-alpine3.19
+ARG ALPINE_BASE=docker.io/library/alpine:3.20
+ARG GOLANG_BASE=docker.io/library/golang:1.23-alpine3.20
 
 
 FROM --platform=$BUILDPLATFORM $GOLANG_BASE AS build

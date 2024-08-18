@@ -4,9 +4,8 @@ package rndtest
 import (
 	"context"
 	"errors"
+	"maps"
 	"slices"
-
-	"golang.org/x/exp/maps"
 )
 
 // Store implements randomizer.Store by mapping group names to sorted lists of
@@ -18,9 +17,7 @@ func (s Store) List(_ context.Context) ([]string, error) {
 	if s == nil {
 		return nil, errors.New("store list error")
 	}
-	keys := maps.Keys(s)
-	slices.Sort(keys)
-	return keys, nil
+	return slices.Sorted(maps.Keys(s)), nil
 }
 
 // Get implements randomizer.Store.

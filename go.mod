@@ -1,6 +1,6 @@
 module github.com/ahamlinman/randomizer
 
-go 1.22
+go 1.23
 
 require (
 	cloud.google.com/go/firestore v1.15.0
@@ -15,7 +15,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.5
 	github.com/spf13/cobra v1.8.1
 	go.etcd.io/bbolt v1.3.10
-	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 	google.golang.org/grpc v1.65.0
 )
 
