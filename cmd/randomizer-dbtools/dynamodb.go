@@ -42,22 +42,14 @@ func init() {
 }
 
 func getDynamoDB() *dynamodb.Client {
-	var options []func(*config.LoadOptions) error
-	if dynamoDBEndpoint != "" {
-		options = append(options,
-			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-				func(_, _ string, _ ...any) (aws.Endpoint, error) {
-					return aws.Endpoint{URL: dynamoDBEndpoint}, nil
-				},
-			)),
-		)
-	}
-
-	cfg, err := config.LoadDefaultConfig(context.Background(), options...)
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not load AWS config: %v\n", err)
 		os.Exit(2)
 	}
-
-	return dynamodb.NewFromConfig(cfg)
+	return dynamodb.NewFromConfig(cfg, func(opts *dynamodb.Options) {
+		if dynamoDBEndpoint != "" {
+			opts.BaseEndpoint = aws.String(dynamoDBEndpoint)
+		}
+	})
 }
