@@ -35,16 +35,14 @@ type Option = func(*config.LoadOptions) error
 // New creates a new AWS client configuration using reasonable default settings
 // for timeouts and retries.
 func New(ctx context.Context) (aws.Config, error) {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport := http.DefaultTransport
 
 	// This option is recommended in AWS Lambda deployments due to the
 	// significant reduction in cold start latency (see getEmbeddedCertPool).
 	// It can be enabled for standard server deployments if desired, but is far
 	// less beneficial.
 	if os.Getenv("AWS_CLIENT_EMBEDDED_TLS_ROOTS") == "1" {
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: getEmbeddedCertPool(),
-		}
+		transport = getEmbeddedCertTransport()
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx,
@@ -73,21 +71,27 @@ func New(ctx context.Context) (aws.Config, error) {
 	return cfg, nil
 }
 
+// getEmbeddedCertTransport returns an HTTP transport that trusts only the root
+// CAs operated by Amazon Trust Services, which all AWS service endpoints chain
+// from.
+//
+// When the randomizer runs on AWS Lambda in the recommended configuration, this
+// limited set of roots is so much cheaper to parse than a typical set of system
+// roots that it cuts cold start invocation time roughly in half (by around
+// 500ms). This is a large enough difference for a human to notice, and accounts
+// for about 15% of the 3 second response time limit that Slack imposes on slash
+// commands.
+var getEmbeddedCertTransport = sync.OnceValue(func() *http.Transport {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{RootCAs: loadEmbeddedCertPool()}
+	return transport
+})
+
 //go:generate ./refresh-amazon-trust-roots.sh
 //go:embed amazon-trust.cer
 var embeddedRootsDER []byte
 
-// getEmbeddedCertPool returns a cert pool containing only the root CAs
-// operated by Amazon Trust Services, which all AWS service endpoints chain
-// from.
-//
-// When the randomizer runs on AWS Lambda in the recommended configuration,
-// this limited set of roots is so much cheaper to parse than the full set of
-// roots trusted by Amazon Linux 2 that it cuts invocation time on cold starts
-// approximately in half (by around 500ms). This is a large enough difference
-// for a human to notice, and accounts for about 15% of the 3 second response
-// time limit that Slack imposes on slash commands.
-var getEmbeddedCertPool = sync.OnceValue(func() *x509.CertPool {
+func loadEmbeddedCertPool() *x509.CertPool {
 	certs, err := x509.ParseCertificates(embeddedRootsDER)
 	if err != nil {
 		panic(fmt.Errorf("failed to parse embedded TLS roots: %v", err))
@@ -97,4 +101,4 @@ var getEmbeddedCertPool = sync.OnceValue(func() *x509.CertPool {
 		pool.AddCert(cert)
 	}
 	return pool
-})
+}
