@@ -34,35 +34,30 @@ type Option = func(*config.LoadOptions) error
 
 // New creates a new AWS client configuration using reasonable default settings
 // for timeouts and retries.
-func New(ctx context.Context, extraOptions ...Option) (aws.Config, error) {
+func New(ctx context.Context) (aws.Config, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 
 	// This option is recommended in AWS Lambda deployments due to the
 	// significant reduction in cold start latency (see getEmbeddedCertPool).
-	// It can be enabled for standard server deployments if desired, but is
-	// likely far less beneficial.
+	// It can be enabled for standard server deployments if desired, but is far
+	// less beneficial.
 	if os.Getenv("AWS_CLIENT_EMBEDDED_TLS_ROOTS") == "1" {
 		transport.TLSClientConfig = &tls.Config{
 			RootCAs: getEmbeddedCertPool(),
 		}
 	}
 
-	client := &http.Client{
-		Timeout:   DefaultTimeout,
-		Transport: transport,
-	}
-
-	options := []Option{
-		config.WithHTTPClient(client),
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithHTTPClient(&http.Client{
+			Timeout:   DefaultTimeout,
+			Transport: transport,
+		}),
 		config.WithRetryer(
 			func() aws.Retryer {
 				return retry.AddWithMaxAttempts(retry.NewStandard(), DefaultRetryMaxAttempts)
 			},
 		),
-	}
-	options = append(options, extraOptions...)
-
-	cfg, err := config.LoadDefaultConfig(ctx, options...)
+	)
 	if err != nil {
 		return aws.Config{}, fmt.Errorf("loading AWS config: %w", err)
 	}
@@ -89,9 +84,9 @@ var embeddedRootsDER []byte
 // When the randomizer runs on AWS Lambda in the recommended configuration,
 // this limited set of roots is so much cheaper to parse than the full set of
 // roots trusted by Amazon Linux 2 that it cuts invocation time on cold starts
-// approximately in half, specifically by around 500ms. This is a large enough
-// difference for a human to notice, and accounts for about 15% of the 3 second
-// response time limit that Slack imposes on slash commands.
+// approximately in half (by around 500ms). This is a large enough difference
+// for a human to notice, and accounts for about 15% of the 3 second response
+// time limit that Slack imposes on slash commands.
 var getEmbeddedCertPool = sync.OnceValue(func() *x509.CertPool {
 	certs, err := x509.ParseCertificates(embeddedRootsDER)
 	if err != nil {
