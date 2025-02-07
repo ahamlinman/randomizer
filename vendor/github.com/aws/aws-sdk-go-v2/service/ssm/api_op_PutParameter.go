@@ -76,7 +76,8 @@ type PutParameterInput struct {
 	// have a value limit of 4 KB. Advanced parameters have a value limit of 8 KB.
 	//
 	// Parameters can't be referenced or nested in the values of other parameters. You
-	// can't include {{}} or {{ssm:parameter-name}} in a parameter value.
+	// can't include values wrapped in double brackets {{}} or {{ssm:parameter-name}}
+	// in a parameter value.
 	//
 	// This member is required.
 	Value *string
@@ -139,8 +140,8 @@ type PutParameterInput struct {
 	Overwrite *bool
 
 	// One or more policies to apply to a parameter. This operation takes a JSON
-	// array. Parameter Store, a capability of Amazon Web Services Systems Manager
-	// supports the following policy types:
+	// array. Parameter Store, a tool in Amazon Web Services Systems Manager supports
+	// the following policy types:
 	//
 	// Expiration: This policy deletes the parameter after it expires. When you create
 	// the policy, you specify the expiration date. You can update the expiration date
@@ -324,6 +325,9 @@ func (c *Client) addOperationPutParameterMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -361,6 +365,18 @@ func (c *Client) addOperationPutParameterMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

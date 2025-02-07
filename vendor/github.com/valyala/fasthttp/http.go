@@ -38,21 +38,28 @@ func SetBodySizePoolLimit(reqBodyLimit, respBodyLimit int) {
 type Request struct {
 	noCopy noCopy
 
+	bodyStream io.Reader
+	w          requestBodyWriter
+	body       *bytebufferpool.ByteBuffer
+
+	multipartForm         *multipart.Form
+	multipartFormBoundary string
+
+	postArgs Args
+
+	bodyRaw []byte
+
+	uri URI
+
 	// Request header.
 	//
 	// Copying Header by value is forbidden. Use pointer to Header instead.
 	Header RequestHeader
 
-	uri      URI
-	postArgs Args
+	// Request timeout. Usually set by DoDeadline or DoTimeout
+	// if <= 0, means not set
+	timeout time.Duration
 
-	bodyStream io.Reader
-	w          requestBodyWriter
-	body       *bytebufferpool.ByteBuffer
-	bodyRaw    []byte
-
-	multipartForm         *multipart.Form
-	multipartFormBoundary string
 	secureErrorLogMessage bool
 
 	// Group bool members in order to reduce Request object size.
@@ -64,10 +71,6 @@ type Request struct {
 	// Used by Server to indicate the request was received on a HTTPS endpoint.
 	// Client/HostClient shouldn't use this field but should depend on the uri.scheme instead.
 	isTLS bool
-
-	// Request timeout. Usually set by DoDeadline or DoTimeout
-	// if <= 0, means not set
-	timeout time.Duration
 
 	// Use Host header (request.Header.SetHost) instead of the host from SetRequestURI, SetHost, or URI().SetHost
 	UseHostHeader bool
@@ -88,6 +91,17 @@ type Request struct {
 type Response struct {
 	noCopy noCopy
 
+	bodyStream io.Reader
+
+	// Remote TCPAddr from concurrently net.Conn.
+	raddr net.Addr
+	// Local TCPAddr from concurrently net.Conn.
+	laddr net.Addr
+	w     responseBodyWriter
+	body  *bytebufferpool.ByteBuffer
+
+	bodyRaw []byte
+
 	// Response header.
 	//
 	// Copying Header by value is forbidden. Use pointer to Header instead.
@@ -101,11 +115,6 @@ type Response struct {
 	// Use SetBodyStream to set the body stream.
 	StreamBody bool
 
-	bodyStream io.Reader
-	w          responseBodyWriter
-	body       *bytebufferpool.ByteBuffer
-	bodyRaw    []byte
-
 	// Response.Read() skips reading body if set to true.
 	// Use it for reading HEAD responses.
 	//
@@ -115,11 +124,6 @@ type Response struct {
 
 	keepBodyBuffer        bool
 	secureErrorLogMessage bool
-
-	// Remote TCPAddr from concurrently net.Conn.
-	raddr net.Addr
-	// Local TCPAddr from concurrently net.Conn.
-	laddr net.Addr
 }
 
 // SetHost sets host for the request.
@@ -186,6 +190,16 @@ func (req *Request) ConnectionClose() bool {
 // SetConnectionClose sets 'Connection: close' header.
 func (req *Request) SetConnectionClose() {
 	req.Header.SetConnectionClose()
+}
+
+// GetTimeOut retrieves the timeout duration set for the Request.
+//
+// This method returns a time.Duration that determines how long the request
+// can wait before it times out. In the default use case, the timeout applies
+// to the entire request lifecycle, including both receiving the response
+// headers and the response body.
+func (req *Request) GetTimeOut() time.Duration {
+	return req.timeout
 }
 
 // SendFile registers file on the given path to be used as response body
@@ -1435,19 +1449,14 @@ func (resp *Response) ReadLimitBody(r *bufio.Reader, maxBodySize int) error {
 	if !resp.mustSkipBody() {
 		err = resp.ReadBody(r, maxBodySize)
 		if err != nil {
-			if isConnectionReset(err) {
-				return nil
-			}
 			return err
 		}
 	}
 
-	if resp.Header.ContentLength() == -1 && !resp.StreamBody {
+	// A response without a body can't have trailers.
+	if resp.Header.ContentLength() == -1 && !resp.StreamBody && !resp.mustSkipBody() {
 		err = resp.Header.ReadTrailer(r)
 		if err != nil && err != io.EOF {
-			if isConnectionReset(err) {
-				return nil
-			}
 			return err
 		}
 	}
@@ -1581,9 +1590,8 @@ func (req *Request) Write(w *bufio.Writer) error {
 		if len(req.Header.Host()) == 0 {
 			if len(host) == 0 {
 				return errRequestHostRequired
-			} else {
-				req.Header.SetHostBytes(host)
 			}
+			req.Header.SetHostBytes(host)
 		} else if !req.UseHostHeader {
 			req.Header.SetHostBytes(host)
 		}
@@ -1596,10 +1604,10 @@ func (req *Request) Write(w *bufio.Writer) error {
 			nl := len(uri.username) + len(uri.password) + 1
 			nb := nl + len(strBasicSpace)
 			tl := nb + base64.StdEncoding.EncodedLen(nl)
-			if tl > cap(req.Header.bufKV.value) {
-				req.Header.bufKV.value = make([]byte, 0, tl)
+			if tl > cap(req.Header.bufV) {
+				req.Header.bufV = make([]byte, 0, tl)
 			}
-			buf := req.Header.bufKV.value[:0]
+			buf := req.Header.bufV[:0]
 			buf = append(buf, uri.username...)
 			buf = append(buf, strColon...)
 			buf = append(buf, uri.password...)
@@ -2210,18 +2218,107 @@ func writeBodyFixedSize(w *bufio.Writer, r io.Reader, size int64) error {
 	return err
 }
 
+// copyZeroAlloc optimizes io.Copy by calling ReadFrom or WriteTo only when
+// copying between os.File and net.TCPConn. If the reader has a WriteTo
+// method, it uses WriteTo for copying; if the writer has a ReadFrom method,
+// it uses ReadFrom for copying. If neither method is available, it gets a
+// buffer from sync.Pool to perform the copy.
+//
+// io.CopyBuffer always uses the WriterTo or ReadFrom interface if it's
+// available. however, os.File and net.TCPConn unfortunately have a
+// fallback in their WriterTo that calls io.Copy if sendfile isn't possible.
+//
+// See issue: https://github.com/valyala/fasthttp/issues/1889
+//
+// sendfile can only be triggered when copying between os.File and net.TCPConn.
+// Since the function confirming zero-copy is a private function, we use
+// ReadFrom only in this specific scenario. For all other cases, we prioritize
+// using our own copyBuffer method.
+//
+// o: our copyBuffer
+// r: readFrom
+// w: writeTo
+//
+// write\read *File  *TCPConn  writeTo  other
+// *File        o       r         w       o
+// *TCPConn    w,r      o         w       o
+// readFrom     r       r         w       r
+// other        o       o         w       o
+//
+//nolint:dupword
 func copyZeroAlloc(w io.Writer, r io.Reader) (int64, error) {
-	if wt, ok := r.(io.WriterTo); ok {
-		return wt.WriteTo(w)
+	var readerIsFile, readerIsConn bool
+
+	switch r := r.(type) {
+	case *os.File:
+		readerIsFile = true
+	case *net.TCPConn:
+		readerIsConn = true
+	case io.WriterTo:
+		return r.WriteTo(w)
 	}
-	if rt, ok := w.(io.ReaderFrom); ok {
-		return rt.ReadFrom(r)
+
+	switch w := w.(type) {
+	case *os.File:
+		if readerIsConn {
+			return w.ReadFrom(r)
+		}
+	case *net.TCPConn:
+		if readerIsFile {
+			// net.WriteTo requires go1.22 or later
+			// Benchmark tests show that on Windows, WriteTo performs
+			// significantly better than ReadFrom. On Linux, however,
+			// ReadFrom slightly outperforms WriteTo. When possible,
+			// copyZeroAlloc aims to perform  better than or as well
+			// as io.Copy, so we use WriteTo whenever possible for
+			// optimal performance.
+			if rt, ok := r.(io.WriterTo); ok {
+				return rt.WriteTo(w)
+			}
+			return w.ReadFrom(r)
+		}
+	case io.ReaderFrom:
+		return w.ReadFrom(r)
 	}
+
 	vbuf := copyBufPool.Get()
 	buf := vbuf.([]byte)
-	n, err := io.CopyBuffer(w, r, buf)
+	n, err := copyBuffer(w, r, buf)
 	copyBufPool.Put(vbuf)
 	return n, err
+}
+
+// copyBuffer is rewritten from io.copyBuffer. We do not check if src has a
+// WriteTo method, if dst has a ReadFrom method, or if buf is empty.
+func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (written int64, err error) {
+	for {
+		nr, er := src.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw < 0 || nr < nw {
+				nw = 0
+				if ew == nil {
+					ew = errors.New("invalid write result")
+				}
+			}
+			written += int64(nw)
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+				break
+			}
+		}
+		if er != nil {
+			if er != io.EOF {
+				err = er
+			}
+			break
+		}
+	}
+	return written, err
 }
 
 var copyBufPool = sync.Pool{
@@ -2279,12 +2376,13 @@ func readBodyWithStreaming(r *bufio.Reader, contentLength, maxBodySize int, dst 
 		readN = 8 * 1024
 	}
 
-	if contentLength >= 0 && maxBodySize >= contentLength {
-		b, err = appendBodyFixedSize(r, dst, readN)
-	} else {
-		b, err = readBodyIdentity(r, readN, dst)
-	}
-
+	// A fixed-length pre-read function should be used here; otherwise,
+	// it may read content beyond the request body into areas outside
+	// the br buffer. This could affect the handling of the next request
+	// in the br buffer, if there is one. The original two branches can
+	// be handled with this single branch. by the way,
+	// fix issue: https://github.com/valyala/fasthttp/issues/1816
+	b, err = appendBodyFixedSize(r, dst, readN)
 	if err != nil {
 		return b, err
 	}
@@ -2407,17 +2505,24 @@ func parseChunkSize(r *bufio.Reader) (int, error) {
 		c, err := r.ReadByte()
 		if err != nil {
 			return -1, ErrBrokenChunk{
-				error: fmt.Errorf("cannot read '\r' char at the end of chunk size: %w", err),
+				error: fmt.Errorf("cannot read '\\r' char at the end of chunk size: %w", err),
 			}
 		}
 		// Skip chunk extension after chunk size.
 		// Add support later if anyone needs it.
 		if c != '\r' {
+			// Security: Don't allow newlines in chunk extensions.
+			// This can lead to request smuggling issues with some reverse proxies.
+			if c == '\n' {
+				return -1, ErrBrokenChunk{
+					error: errors.New("invalid character '\\n' after chunk size"),
+				}
+			}
 			continue
 		}
 		if err := r.UnreadByte(); err != nil {
 			return -1, ErrBrokenChunk{
-				error: fmt.Errorf("cannot unread '\r' char at the end of chunk size: %w", err),
+				error: fmt.Errorf("cannot unread '\\r' char at the end of chunk size: %w", err),
 			}
 		}
 		break
