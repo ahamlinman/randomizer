@@ -20,10 +20,6 @@ RUN \
     ./cmd/randomizer-server
 
 
-FROM scratch AS server-binary
-COPY --link --from=build /randomizer-server /
-
-
 FROM $ALPINE_BASE AS server-image
 COPY --link --from=build /randomizer-server /usr/local/bin/randomizer-server
 EXPOSE 7636
