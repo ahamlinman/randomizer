@@ -5,7 +5,7 @@ ARG GOLANG_BASE=docker.io/library/golang:1.23-alpine3.21
 
 
 FROM --platform=$BUILDPLATFORM $GOLANG_BASE AS build
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=0 GOTOOLCHAIN=auto
 ARG TARGETPLATFORM
 RUN \
   --mount=type=bind,target=/mnt/randomizer \
