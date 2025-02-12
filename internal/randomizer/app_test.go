@@ -232,13 +232,14 @@ var testCases = []struct {
 func TestMain(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			app := NewApp("randomizer", tc.store)
+			store := tc.store.Clone()
+			app := NewApp("randomizer", store)
 			app.shuffle = slices.Sort
 
 			res, err := app.Main(context.Background(), tc.args)
 			tc.check(t, res, err)
 
-			if tc.expectedStore != nil && !reflect.DeepEqual(tc.store, tc.expectedStore) {
+			if tc.expectedStore != nil && !reflect.DeepEqual(store, tc.expectedStore) {
 				t.Errorf("unexpected store state\ngot:  %v\nwant: %v", tc.store, tc.expectedStore)
 			}
 		})

@@ -12,6 +12,18 @@ import (
 // strings. A nil Store will return errors for every operation.
 type Store map[string][]string
 
+// Clone returns a deep copy of the original store.
+func (s Store) Clone() Store {
+	if s == nil {
+		return nil
+	}
+	out := make(Store, len(s))
+	for k, v := range s {
+		out[k] = slices.Clone(v)
+	}
+	return out
+}
+
 // List implements randomizer.Store.
 func (s Store) List(_ context.Context) ([]string, error) {
 	if s == nil {
