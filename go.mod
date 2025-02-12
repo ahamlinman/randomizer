@@ -1,6 +1,6 @@
 module github.com/ahamlinman/randomizer
 
-go 1.23
+go 1.24.0
 
 require (
 	cloud.google.com/go/firestore v1.18.0

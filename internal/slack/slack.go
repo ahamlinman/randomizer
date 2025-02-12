@@ -73,14 +73,17 @@ func (a App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.writeResult(w, result)
 }
 
-func (a App) isTokenValid(ctx context.Context, params url.Values) (bool, error) {
+func (a App) isTokenValid(ctx context.Context, params url.Values) (ok bool, _ error) {
 	gotToken := params.Get("token")
 	wantToken, err := a.TokenProvider(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	return subtle.ConstantTimeCompare([]byte(gotToken), []byte(wantToken)) == 1, nil
+	subtle.WithDataIndependentTiming(func() {
+		ok = subtle.ConstantTimeCompare([]byte(gotToken), []byte(wantToken)) == 1
+	})
+	return
 }
 
 func (a App) runRandomizer(ctx context.Context, params url.Values) (randomizer.Result, error) {
