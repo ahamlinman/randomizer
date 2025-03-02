@@ -1,21 +1,19 @@
 package randomizer
 
-import (
-	"strings"
-	"text/template"
-)
+import "strings"
 
 func (a App) showHelp(request request) (Result, error) {
-	var b strings.Builder
-	helpMessageTemplate.Execute(&b, struct{ Name string }{a.name})
 	return Result{
 		resultType: ShowedHelp,
-		message:    b.String(),
+		message:    strings.ReplaceAll(helpMessageTemplate, "{{.Name}}", a.name),
 	}, nil
 }
 
-var helpMessageTemplate = template.Must(template.New("").Parse(
-	`{{.Name}} randomizes the order of options in a list.
+// helpMessageTemplate is written with text/template syntax for familiarity.
+// However, text/template uses reflection in a way that disables dead code
+// elimination for the _entire_ program, so we instead use plan string
+// replacement to substitute our one value.
+const helpMessageTemplate = `{{.Name}} randomizes the order of options in a list.
 
 *Example:* {{.Name}} one two three
 &gt; I randomized and got: *two*, *three*, *one*.
@@ -26,4 +24,4 @@ If you use a set of options a lot, try saving them as a *group* in the current c
 *Use a group:* {{.Name}} snacks
 *List your current channel's groups:* {{.Name}} /list
 *Show the options in a group:* {{.Name}} /show snacks
-*Delete a group:* {{.Name}} /delete snacks`))
+*Delete a group:* {{.Name}} /delete snacks`
