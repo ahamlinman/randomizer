@@ -17,7 +17,7 @@ import (
 //
 // A Factory may panic if it requires a non-empty partition and no partition is
 // given.
-type Factory func(partition string) randomizer.Store
+type Factory = func(partition string) randomizer.Store
 
 // FactoryFromEnv constructs and returns a Factory based on available
 // environment variables. If a known DynamoDB environment variable is set, it

@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/ahamlinman/randomizer/internal/randomizer"
-	"github.com/ahamlinman/randomizer/internal/store"
 )
 
 // App provides HTTP handling logic that allows the randomizer to be integrated
@@ -27,7 +26,7 @@ type App struct {
 	TokenProvider TokenProvider
 	// StoreFactory provides a Store for the Slack channel in which the request
 	// was made.
-	StoreFactory store.Factory
+	StoreFactory func(partition string) randomizer.Store
 	// Logger, if non-nil, will be used to report information about errors that
 	// occur while handling each request.
 	Logger *slog.Logger
