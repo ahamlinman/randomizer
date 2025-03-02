@@ -3,6 +3,7 @@ name = "randomizer"
 
 [build]
 path = "./cmd/randomizer-lambda"
+tags = ["grpcnotrace"]  # note that lambda.norpc is implicit for all hfc builds
 
 [template]
 path = "CloudFormation.yaml"
