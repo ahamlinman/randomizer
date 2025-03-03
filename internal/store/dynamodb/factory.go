@@ -13,10 +13,7 @@ import (
 )
 
 func init() {
-	registry.Registry["dynamodb"] = registry.Entry{
-		EnvironmentKeys: []string{"DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT"},
-		FactoryFromEnv:  FactoryFromEnv,
-	}
+	registry.Registry["dynamodb"].FactoryFromEnv = FactoryFromEnv
 }
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by Amazon

@@ -40,29 +40,43 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 		return nil, errors.New("no store backends available in this build")
 	}
 
-	chosen := make(map[string]registry.Entry)
+	linked := make(map[string]bool)
+	candidates := make(map[string]*registry.Entry)
 	for name, entry := range registry.Registry {
+		if entry.FactoryFromEnv != nil {
+			linked[name] = true
+		}
 		if envHasAny(entry.EnvironmentKeys...) {
-			chosen[name] = entry
-		}
-	}
-	if len(chosen) == 0 {
-		if bbolt, ok := registry.Registry["bbolt"]; ok {
-			return bbolt.FactoryFromEnv(ctx)
-		} else {
-			available := slices.Collect(maps.Keys(registry.Registry))
-			return nil, fmt.Errorf(
-				"can't find environment settings to select between store backends: %v", available)
-		}
-	}
-	if len(chosen) == 1 {
-		for _, entry := range chosen {
-			return entry.FactoryFromEnv(ctx)
+			candidates[name] = entry
 		}
 	}
 
-	available := slices.Collect(maps.Keys(chosen))
-	return nil, fmt.Errorf("environment settings match multiple store backends: %v", available)
+	var chosen string
+	if len(candidates) == 0 && linked["bbolt"] {
+		chosen = "bbolt"
+	}
+	if len(candidates) == 1 {
+		for name := range candidates {
+			chosen = name
+		}
+	}
+
+	if chosen == "" && len(candidates) == 0 {
+		available := slices.Collect(maps.Keys(linked))
+		return nil, fmt.Errorf(
+			"can't find environment settings to select between store backends: %v", available)
+	}
+	if chosen == "" {
+		options := slices.Collect(maps.Keys(candidates))
+		return nil, fmt.Errorf(
+			"environment settings match multiple store backends: %v", options)
+	}
+	if !linked[chosen] {
+		return nil, fmt.Errorf(
+			"%s store backend not available in this build", chosen)
+	}
+
+	return registry.Registry[chosen].FactoryFromEnv(ctx)
 }
 
 func envHasAny(names ...string) bool {
