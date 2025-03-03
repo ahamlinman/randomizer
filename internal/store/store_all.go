@@ -10,5 +10,4 @@ import (
 
 func init() {
 	hasAllStoreBackends = true
-	hasNonBoltStoreBackend = true
 }

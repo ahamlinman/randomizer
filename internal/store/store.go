@@ -14,12 +14,9 @@ import (
 	"github.com/ahamlinman/randomizer/internal/store/registry"
 )
 
-// The FactoryFromEnv comment explains how build tags affect the safety of the
-// bbolt fallback when no other backend is configured in the environment.
-var (
-	hasAllStoreBackends    bool
-	hasNonBoltStoreBackend bool
-)
+// hasAllStoreBackends indicates whether we can safely use the bbolt fallback
+// explained in the [FactoryFromEnv] comment.
+var hasAllStoreBackends bool
 
 // Factory represents a type for functions that produce a store for the
 // randomizer to use for a given "partition" (e.g. Slack channel). Factories
@@ -36,18 +33,9 @@ type Factory = func(partition string) randomizer.Store
 //
 // Each store backend defines a set of environment variables for configuration.
 // On startup, the randomizer selects one store backend based on the presence
-// of its environment variables, and may fail if the environment has
-// conflicting or missing store configurations.
-//
-// As a special case, the randomizer may select the local bbolt database file
-// "randomizer.db" as its store backend if no other configuration is found in
-// the environment. This fallback is allowed when no randomizer.* build tags
-// have been used to restrict the backends available in this binary, or when
-// the randomizer.bbolt tag has been used to make bbolt the only supported
-// backend. In other build configurations, the DB_PATH environment variable
-// must be set to select the bbolt backend, to ensure that the environment
-// configuration for a backend missing from this binary does not spuriously
-// fall back to bbolt.
+// of its environment variables. It may fail if the environment has conflicting
+// or missing store configurations, or use a default bbolt configuration if no
+// build tags have been used to restrict the backends available in this binary.
 func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	if len(registry.Registry) == 0 {
 		return nil, errors.New("no store backends available in this build")
@@ -61,11 +49,8 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	}
 
 	var chosen string
-	if len(candidates) == 0 {
-		hasBoltBackendOnly := !hasNonBoltStoreBackend
-		if hasAllStoreBackends || hasBoltBackendOnly {
-			chosen = "bbolt"
-		}
+	if len(candidates) == 0 && hasAllStoreBackends {
+		chosen = "bbolt"
 	}
 	if len(candidates) == 1 {
 		for name := range candidates {

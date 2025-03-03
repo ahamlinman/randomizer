@@ -53,13 +53,9 @@ single running server locks the database file, this backend won't support high
 availability or zero-downtime deployment.
 
 To activate the bbolt backend, set `DB_PATH` to the desired location of the
-database on disk.
-
-As a special case, the bbolt backend may be activated by default if no other
-store configuration is set, and will use the "randomizer.db" database in the
-current working directory. This fallback is disabled when build tags are used
-to customize the set of supported backends, unless bbolt is the only backend
-included in the build.
+database on disk. If you haven't used build tags to customize your server's
+supported backends, and no other store is configured, the server activates the
+bbolt backend by default as if `DB_PATH=randomizer.db` had been set.
 
 [bbolt]: https://go.etcd.io/bbolt
 

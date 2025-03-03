@@ -37,9 +37,6 @@ func FactoryFromEnv(_ context.Context) (func(string) randomizer.Store, error) {
 }
 
 func pathFromEnv() string {
-	// Note that this is the randomizer's traditional fallback backend when no
-	// environment keys are set, so the top-level store.FactoryFromEnv explicitly
-	// documents both this key and this default path.
 	if path := os.Getenv("DB_PATH"); path != "" {
 		return path
 	}
