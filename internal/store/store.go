@@ -44,10 +44,10 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 		return nil, errors.New("no store backends available in this build")
 	}
 
-	candidates := make(map[string]registry.Entry)
+	candidates := make(map[string]struct{})
 	for name, entry := range registry.Registry {
 		if envHasAny(entry.EnvironmentKeys...) {
-			candidates[name] = entry
+			candidates[name] = struct{}{}
 		}
 	}
 
