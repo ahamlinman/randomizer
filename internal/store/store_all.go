@@ -9,5 +9,5 @@ import (
 )
 
 func init() {
-	hasAllStoreBackends = true
+	haveAllStoreBackends = true
 }
