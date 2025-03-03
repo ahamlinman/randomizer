@@ -52,7 +52,8 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 
 	var chosen string
 	if len(candidates) == 0 {
-		if hasAllStoreBackends || !hasNonBoltStoreBackend {
+		hasBoltBackendOnly := !hasNonBoltStoreBackend
+		if hasAllStoreBackends || hasBoltBackendOnly {
 			chosen = "bbolt"
 		}
 	}
