@@ -40,4 +40,7 @@ func TestBannedPackages(t *testing.T) {
 	if strings.Contains(nmout.String(), "T cloud.google.com/") {
 		t.Errorf("%s contains Google Cloud packages, even though it's for AWS", name)
 	}
+	if strings.Contains(nmout.String(), "T go.etcd.io/bbolt.") {
+		t.Errorf("%s imports go.etcd.io/bbolt, even though it's for AWS", name)
+	}
 }

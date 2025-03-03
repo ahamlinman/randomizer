@@ -13,13 +13,15 @@ import (
 )
 
 // Factory represents a type for functions that produce a store for the
-// randomizer to use for a given "partition" (e.g. Slack channel).
+// randomizer to use for a given "partition" (e.g. Slack channel). Factories
+// may panic if a non-empty partition is required and not given.
 //
-// A Factory may panic if it requires a non-empty partition and no partition is
-// given.
+// Factory is provided for documentation purposes. Do not import the store
+// package just to use this alias; this will link support for all possible
+// store backends into the final program, even if this was not intended.
 type Factory = func(partition string) randomizer.Store
 
-// FactoryFromEnv constructs and returns a Factory based on available
+// FactoryFromEnv constructs and returns a [Factory] based on available
 // environment variables. If a known DynamoDB environment variable is set, it
 // will return a DynamoDB store. Otherwise, it will return a bbolt store.
 func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) {
