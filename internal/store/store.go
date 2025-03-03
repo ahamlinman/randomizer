@@ -12,10 +12,15 @@ import (
 
 	"github.com/ahamlinman/randomizer/internal/randomizer"
 	"github.com/ahamlinman/randomizer/internal/store/registry"
+)
 
-	_ "github.com/ahamlinman/randomizer/internal/store/bbolt"
-	_ "github.com/ahamlinman/randomizer/internal/store/dynamodb"
-	_ "github.com/ahamlinman/randomizer/internal/store/firestore"
+var (
+	// hasAllStoreBackends is true if no build tags have been used to restrict
+	// the store backends available to this randomizer binary.
+	hasAllStoreBackends bool
+	// hasNonBoltStoreBackend is true if any non-bbolt store backend has been
+	// linked into this binary.
+	hasNonBoltStoreBackend bool
 )
 
 // Factory represents a type for functions that produce a store for the
@@ -32,9 +37,7 @@ type Factory = func(partition string) randomizer.Store
 //
 // Each store backend defines a set of environment variables for configuration.
 // On startup, the randomizer selects one store backend based on the presence
-// of its environment variables, or defaults to the bbolt backend if this build
-// includes it. FactoryFromEnv fails if it cannot select a single backend based
-// on these rules.
+// of its environment variables... (TODO: explain bbolt fallback).
 func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	if len(registry.Registry) == 0 {
 		return nil, errors.New("no store backends available in this build")
@@ -52,8 +55,10 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	}
 
 	var chosen string
-	if len(candidates) == 0 && linked["bbolt"] {
-		chosen = "bbolt"
+	if len(candidates) == 0 {
+		if hasAllStoreBackends || !hasNonBoltStoreBackend {
+			chosen = "bbolt"
+		}
 	}
 	if len(candidates) == 1 {
 		for name := range candidates {
