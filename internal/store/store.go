@@ -29,9 +29,9 @@ func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) 
 		return dynamodb.FactoryFromEnv(ctx)
 	}
 	if envHasAny("FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID") {
-		return firestore.FactoryFromEnv()
+		return firestore.FactoryFromEnv(context.Background())
 	}
-	return bbolt.FactoryFromEnv()
+	return bbolt.FactoryFromEnv(context.Background())
 }
 
 func envHasAny(names ...string) bool {

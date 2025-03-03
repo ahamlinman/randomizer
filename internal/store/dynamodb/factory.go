@@ -9,7 +9,15 @@ import (
 
 	"github.com/ahamlinman/randomizer/internal/awsconfig"
 	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/store/registry"
 )
+
+func init() {
+	registry.Registry["dynamodb"] = registry.Entry{
+		EnvironmentKeys: []string{"DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT"},
+		FactoryFromEnv:  FactoryFromEnv,
+	}
+}
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by Amazon
 // DynamoDB.

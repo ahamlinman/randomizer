@@ -8,11 +8,19 @@ import (
 	"cloud.google.com/go/firestore"
 
 	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/store/registry"
 )
+
+func init() {
+	registry.Registry["firestore"] = registry.Entry{
+		EnvironmentKeys: []string{"FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID"},
+		FactoryFromEnv:  FactoryFromEnv,
+	}
+}
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by a Google
 // Cloud Firestore database.
-func FactoryFromEnv() (func(string) randomizer.Store, error) {
+func FactoryFromEnv(_ context.Context) (func(string) randomizer.Store, error) {
 	projectID, ok := os.LookupEnv("FIRESTORE_PROJECT_ID")
 	if !ok {
 		return nil, errors.New("missing FIRESTORE_PROJECT_ID in environment")
