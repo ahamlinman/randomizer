@@ -26,7 +26,7 @@ var hasAllStoreBackends bool
 // may panic if a non-empty partition is required and not given.
 //
 // Factory is provided for documentation purposes. Do not import the store
-// package just to use this alias; this will link support for all possible
+// package just to use this alias; this may link support for all possible
 // store backends into the final program, even if this was not intended.
 type Factory = func(partition string) randomizer.Store
 
