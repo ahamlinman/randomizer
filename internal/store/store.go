@@ -43,6 +43,13 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	if len(registry.Registry) == 0 {
 		return nil, errors.New("no store backends available in this build")
 	}
+	// If we wanted, we could do this to fall back to bbolt if it were the only
+	// thing linked into the binary:
+	// if len(registry.Registry) == 1 {
+	// 	if bbolt, ok := registry.Registry["bbolt"]; ok {
+	// 		return bbolt.FactoryFromEnv(ctx)
+	// 	}
+	// }
 
 	candidates := make(map[string]registry.Entry)
 	for name, entry := range registry.Registry {
