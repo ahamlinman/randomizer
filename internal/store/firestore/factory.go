@@ -12,10 +12,8 @@ import (
 )
 
 func init() {
-	registry.Registry["firestore"] = registry.Entry{
-		EnvironmentKeys: []string{"FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID"},
-		FactoryFromEnv:  FactoryFromEnv,
-	}
+	registry.Provide("firestore", FactoryFromEnv,
+		"FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID")
 }
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by a Google

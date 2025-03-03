@@ -4,6 +4,7 @@ package registry
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ahamlinman/randomizer/internal/randomizer"
 )
@@ -23,4 +24,20 @@ type Entry struct {
 	// FactoryFromEnv creates a factory for this backend based on its environment
 	// variables.
 	FactoryFromEnv func(context.Context) (func(partition string) randomizer.Store, error)
+}
+
+// Provide registers a new store backend, or panics if a backend is already
+// registered under this name.
+func Provide(
+	name string,
+	factoryFromEnv func(context.Context) (func(partition string) randomizer.Store, error),
+	environmentKeys ...string,
+) {
+	if _, ok := Registry[name]; ok {
+		panic(fmt.Errorf("%s already registered as a store backend", name))
+	}
+	Registry[name] = Entry{
+		EnvironmentKeys: environmentKeys,
+		FactoryFromEnv:  factoryFromEnv,
+	}
 }
