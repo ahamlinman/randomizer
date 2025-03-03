@@ -37,4 +37,7 @@ func TestBannedPackages(t *testing.T) {
 	if strings.Contains(nmout.String(), "T html/template.") {
 		t.Errorf("%s imports html/template, blocking dead code elimination", name)
 	}
+	if strings.Contains(nmout.String(), "T cloud.google.com/") {
+		t.Errorf("%s contains Google Cloud packages, even though it's for AWS", name)
+	}
 }
