@@ -59,12 +59,12 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	}
 
 	if chosen == "" && len(candidates) == 0 {
-		available := slices.Collect(maps.Keys(registry.Registry))
+		available := slices.Sorted(maps.Keys(registry.Registry))
 		return nil, fmt.Errorf(
 			"can't find environment settings to select between store backends: %v", available)
 	}
 	if chosen == "" {
-		options := slices.Collect(maps.Keys(candidates))
+		options := slices.Sorted(maps.Keys(candidates))
 		return nil, fmt.Errorf(
 			"environment settings match multiple store backends: %v", options)
 	}
