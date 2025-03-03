@@ -15,7 +15,10 @@ import (
 )
 
 // hasAllStoreBackends indicates whether we can safely use the bbolt fallback
-// explained in the [FactoryFromEnv] comment.
+// explained in the [FactoryFromEnv] comment. If we fall back to bbolt even
+// though we don't know the full set of possible environment keys (because we
+// used build tags to exclude some backends), we might activate it for a user
+// who meant to configure one of those missing stores instead.
 var hasAllStoreBackends bool
 
 // Factory represents a type for functions that produce a store for the
