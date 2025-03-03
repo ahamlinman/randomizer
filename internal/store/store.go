@@ -43,12 +43,8 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 		return nil, errors.New("no store backends available in this build")
 	}
 
-	linked := make(map[string]bool)
-	candidates := make(map[string]*registry.Entry)
+	candidates := make(map[string]registry.Entry)
 	for name, entry := range registry.Registry {
-		if entry.FactoryFromEnv != nil {
-			linked[name] = true
-		}
 		if envHasAny(entry.EnvironmentKeys...) {
 			candidates[name] = entry
 		}
@@ -67,7 +63,7 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	}
 
 	if chosen == "" && len(candidates) == 0 {
-		available := slices.Collect(maps.Keys(linked))
+		available := slices.Collect(maps.Keys(registry.Registry))
 		return nil, fmt.Errorf(
 			"can't find environment settings to select between store backends: %v", available)
 	}
@@ -75,10 +71,6 @@ func FactoryFromEnv(ctx context.Context) (Factory, error) {
 		options := slices.Collect(maps.Keys(candidates))
 		return nil, fmt.Errorf(
 			"environment settings match multiple store backends: %v", options)
-	}
-	if !linked[chosen] {
-		return nil, fmt.Errorf(
-			"%s store backend not available in this build", chosen)
 	}
 
 	return registry.Registry[chosen].FactoryFromEnv(ctx)

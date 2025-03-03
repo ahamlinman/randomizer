@@ -8,20 +8,9 @@ import (
 	"github.com/ahamlinman/randomizer/internal/randomizer"
 )
 
-// Registry defines the environment keys for all possible store backends, and
-// provides access to factory constructors for the backends linked into this
-// binary.
-//
-// Note that the environment keys must be pre-defined in the registry, and must
-// be kept in sync with the store's implementation. At the risk of introducing
-// programming errors (by keeping the keys out of sync), this approach ensures
-// that attempts to configure an unavailable backend result in a hard error to
-// users, rather than silently defaulting to an incorrect backend.
-var Registry = map[string]*Entry{
-	"bbolt":     {EnvironmentKeys: []string{"DB_PATH"}},
-	"dynamodb":  {EnvironmentKeys: []string{"DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT"}},
-	"firestore": {EnvironmentKeys: []string{"FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID"}},
-}
+// Registry provides environment keys and factory constructors for the store
+// backends linked into this binary.
+var Registry = map[string]Entry{}
 
 // Entry represents a single store backend.
 type Entry struct {
@@ -32,6 +21,6 @@ type Entry struct {
 	EnvironmentKeys []string
 
 	// FactoryFromEnv creates a factory for this backend based on its environment
-	// variables. It is nil if this backend is not available in this build.
+	// variables.
 	FactoryFromEnv func(context.Context) (func(partition string) randomizer.Store, error)
 }

@@ -11,7 +11,10 @@ import (
 )
 
 func init() {
-	registry.Registry["bbolt"].FactoryFromEnv = FactoryFromEnv
+	registry.Registry["bbolt"] = registry.Entry{
+		EnvironmentKeys: []string{"DB_PATH"},
+		FactoryFromEnv:  FactoryFromEnv,
+	}
 }
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by a local
