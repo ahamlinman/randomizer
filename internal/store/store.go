@@ -14,12 +14,10 @@ import (
 	"github.com/ahamlinman/randomizer/internal/store/registry"
 )
 
+// The FactoryFromEnv comment explains how build tags affect the safety of the
+// bbolt fallback when no other backend is configured in the environment.
 var (
-	// hasAllStoreBackends is true if no build tags have been used to restrict
-	// the store backends available to this randomizer binary.
-	hasAllStoreBackends bool
-	// hasNonBoltStoreBackend is true if any non-bbolt store backend has been
-	// linked into this binary.
+	hasAllStoreBackends    bool
 	hasNonBoltStoreBackend bool
 )
 
@@ -32,12 +30,24 @@ var (
 // store backends into the final program, even if this was not intended.
 type Factory = func(partition string) randomizer.Store
 
-// FactoryFromEnv constructs and returns a [Factory] based on both runtime
-// environment variables and build tags.
+// FactoryFromEnv constructs and returns a [Factory] based on runtime
+// environment variables, using one of the store backends included in the
+// binary based on Go build tags.
 //
 // Each store backend defines a set of environment variables for configuration.
 // On startup, the randomizer selects one store backend based on the presence
-// of its environment variables... (TODO: explain bbolt fallback).
+// of its environment variables, and may fail if the environment has
+// conflicting or missing store configurations.
+//
+// As a special case, the randomizer may select the local bbolt database file
+// "randomizer.db" as its store backend if no other configuration is found in
+// the environment. This fallback is allowed when no randomizer.* build tags
+// have been used to restrict the backends available in this binary, or when
+// the randomizer.bbolt tag has been used to make bbolt the only supported
+// backend. In other build configurations, the DB_PATH environment variable
+// must be set to select the bbolt backend, to ensure that the environment
+// configuration for a backend missing from this binary does not spuriously
+// fall back to bbolt.
 func FactoryFromEnv(ctx context.Context) (Factory, error) {
 	if len(registry.Registry) == 0 {
 		return nil, errors.New("no store backends available in this build")
