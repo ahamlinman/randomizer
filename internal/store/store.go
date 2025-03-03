@@ -4,12 +4,18 @@ package store
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"maps"
 	"os"
+	"slices"
 
 	"github.com/ahamlinman/randomizer/internal/randomizer"
-	"github.com/ahamlinman/randomizer/internal/store/bbolt"
-	"github.com/ahamlinman/randomizer/internal/store/dynamodb"
-	"github.com/ahamlinman/randomizer/internal/store/firestore"
+	"github.com/ahamlinman/randomizer/internal/store/registry"
+
+	_ "github.com/ahamlinman/randomizer/internal/store/bbolt"
+	_ "github.com/ahamlinman/randomizer/internal/store/dynamodb"
+	_ "github.com/ahamlinman/randomizer/internal/store/firestore"
 )
 
 // Factory represents a type for functions that produce a store for the
@@ -21,17 +27,42 @@ import (
 // store backends into the final program, even if this was not intended.
 type Factory = func(partition string) randomizer.Store
 
-// FactoryFromEnv constructs and returns a [Factory] based on available
-// environment variables. If a known DynamoDB environment variable is set, it
-// will return a DynamoDB store. Otherwise, it will return a bbolt store.
-func FactoryFromEnv(ctx context.Context) (func(string) randomizer.Store, error) {
-	if envHasAny("DYNAMODB", "DYNAMODB_TABLE", "DYNAMODB_ENDPOINT") {
-		return dynamodb.FactoryFromEnv(ctx)
+// FactoryFromEnv constructs and returns a [Factory] based on both runtime
+// environment variables and build tags.
+//
+// Each store backend defines a set of environment variables for configuration.
+// On startup, the randomizer selects one store backend based on the presence
+// of its environment variables, or defaults to the bbolt backend if this build
+// includes it. FactoryFromEnv fails if it cannot select a single backend based
+// on these rules.
+func FactoryFromEnv(ctx context.Context) (Factory, error) {
+	if len(registry.Registry) == 0 {
+		return nil, errors.New("no store backends available in this build")
 	}
-	if envHasAny("FIRESTORE_PROJECT_ID", "FIRESTORE_DATABASE_ID") {
-		return firestore.FactoryFromEnv(context.Background())
+
+	chosen := make(map[string]registry.Entry)
+	for name, entry := range registry.Registry {
+		if envHasAny(entry.EnvironmentKeys...) {
+			chosen[name] = entry
+		}
 	}
-	return bbolt.FactoryFromEnv(context.Background())
+	if len(chosen) == 0 {
+		if bbolt, ok := registry.Registry["bbolt"]; ok {
+			return bbolt.FactoryFromEnv(ctx)
+		} else {
+			available := slices.Collect(maps.Keys(registry.Registry))
+			return nil, fmt.Errorf(
+				"can't find environment settings to select between store backends: %v", available)
+		}
+	}
+	if len(chosen) == 1 {
+		for _, entry := range chosen {
+			return entry.FactoryFromEnv(ctx)
+		}
+	}
+
+	available := slices.Collect(maps.Keys(chosen))
+	return nil, fmt.Errorf("environment settings match multiple store backends: %v", available)
 }
 
 func envHasAny(names ...string) bool {
