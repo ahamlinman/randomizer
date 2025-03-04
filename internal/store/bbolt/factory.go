@@ -1,16 +1,22 @@
 package bbolt
 
 import (
+	"context"
 	"os"
 
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/ahamlinman/randomizer/internal/store/registry"
 )
+
+func init() {
+	registry.Provide("bbolt", FactoryFromEnv, "DB_PATH")
+}
 
 // FactoryFromEnv returns a store.Factory whose stores are backed by a local
 // Bolt database (using the CoreOS "bbolt" fork).
-func FactoryFromEnv() (func(string) randomizer.Store, error) {
+func FactoryFromEnv(_ context.Context) (func(string) randomizer.Store, error) {
 	path := pathFromEnv()
 
 	db, err := bolt.Open(path, os.ModePerm&0644, nil)
@@ -31,6 +37,5 @@ func pathFromEnv() string {
 	if path := os.Getenv("DB_PATH"); path != "" {
 		return path
 	}
-
 	return "randomizer.db"
 }

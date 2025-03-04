@@ -35,7 +35,15 @@ token (the newer signing secret configuration isn't supported):
 
 ## Storage Backends
 
+By default, the `randomizer-server` build supports all of the following storage
+backends, and permits you to select between them using environment variables.
+If you must optimize your build time or binary size, you can run `go build`
+with `-tags` listing the comma-separated build tags of the backends you wish to
+support (e.g. `go build -tags=randomizer.bbolt,randomizer.dynamodb …`).
+
 ### bbolt
+
+`-tags=randomizer.bbolt`
 
 [bbolt][bbolt] is the local key-value database engine behind systems like etcd,
 Consul, InfluxDB 2.x, and more.
@@ -44,13 +52,16 @@ The bbolt backend's only prerequisite is persistent disk storage. Since a
 single running server locks the database file, this backend won't support high
 availability or zero-downtime deployment.
 
-The bbolt backend is active by default if no other backends have environment
-variables set. You can set `DB_PATH` to the desired location of the database on
-disk, otherwise it defaults to "randomizer.db" in the current directory.
+To activate the bbolt backend, set `DB_PATH` to the desired location of the
+database on disk. If you haven't used build tags to customize your server's
+supported backends, and no other store is configured, the server activates the
+bbolt backend by default as if `DB_PATH=randomizer.db` had been set.
 
 [bbolt]: https://go.etcd.io/bbolt
 
 ### DynamoDB
+
+`-tags=randomizer.dynamodb`
 
 DynamoDB is Amazon's fully managed NoSQL key-value store.
 
@@ -66,6 +77,8 @@ in the code are unstable, and are subject to removal or behavior changes.)
 [AWS vars]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html
 
 ### Google Cloud Firestore
+
+`-tags=randomizer.firestore`
 
 Firestore is Google's fully managed document database. This mode is especially
 useful to run `randomizer-server` on [Cloud Run][Cloud Run], with a level of
