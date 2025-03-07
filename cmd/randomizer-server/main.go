@@ -7,7 +7,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -57,20 +56,24 @@ func main() {
 		}))
 
 	srv := &http.Server{Addr: *flagAddr, Handler: mux}
+	srvErr := make(chan error, 1)
 	go func() {
 		logger.Info("Starting randomizer server", "addr", *flagAddr)
-		err := srv.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("Failed to start server", "err", err)
-			os.Exit(1)
-		}
+		srvErr <- srv.ListenAndServe()
 	}()
 
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, exitSignals...)
-	<-exit
-	signal.Stop(exit)
 
+	select {
+	case err := <-srvErr:
+		logger.Error("Failed to start server", "err", err)
+		os.Exit(1)
+
+	case <-exit:
+	}
+
+	signal.Stop(exit)
 	logger.Info("Shutting down; interrupt again to force exit")
 	err = srv.Shutdown(context.Background())
 	if err != nil {
