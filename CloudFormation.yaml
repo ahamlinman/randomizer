@@ -59,7 +59,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: A randomizer slash command for Slack, with support for saving groups and more
-      Runtime: provided.al2
+      Runtime: provided.al2023
       Architectures: [arm64]
       CodeUri:
         Bucket: !Ref CodeS3Bucket
