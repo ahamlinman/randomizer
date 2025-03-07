@@ -11,7 +11,7 @@ func (a App) showHelp(request request) (Result, error) {
 
 // helpMessageTemplate is written with text/template syntax for familiarity.
 // However, text/template uses reflection in a way that disables dead code
-// elimination for the _entire_ program, so we instead use plan string
+// elimination for the _entire_ program, so we instead use plain string
 // replacement to substitute our one value.
 const helpMessageTemplate = `{{.Name}} randomizes the order of options in a list.
 
