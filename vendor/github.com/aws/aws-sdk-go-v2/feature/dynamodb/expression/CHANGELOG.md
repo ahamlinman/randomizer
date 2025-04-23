@@ -1,3 +1,23 @@
+# v1.7.79 (2025-04-11)
+
+* **Bug Fix**: allow nested list indices in expressions
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.7.78 (2025-04-10)
+
+* **Bug Fix**: allow nested list indices in expressions
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.7.77 (2025-04-09)
+
+* **Bug Fix**: allow nested list indices in expressions
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.7.76 (2025-04-03)
+
+* **Bug Fix**: allow nested list indices in expressions
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.7.75 (2025-03-17)
 
 * **Bug Fix**: allow nested list indices in expressions

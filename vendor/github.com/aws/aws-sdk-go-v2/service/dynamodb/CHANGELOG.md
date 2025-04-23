@@ -1,3 +1,19 @@
+# v1.42.4 (2025-04-11)
+
+* **Documentation**: Doc only update for API descriptions.
+
+# v1.42.3 (2025-04-10)
+
+* No change notes available for this release.
+
+# v1.42.2 (2025-04-09)
+
+* **Documentation**: Documentation update for secondary indexes and Create_Table.
+
+# v1.42.1 (2025-04-03)
+
+* No change notes available for this release.
+
 # v1.42.0 (2025-03-13)
 
 * **Feature**: Generate account endpoints for DynamoDB requests using ARN-sourced account ID when available

@@ -1,3 +1,15 @@
+# v1.58.2 (2025-04-10)
+
+* No change notes available for this release.
+
+# v1.58.1 (2025-04-03)
+
+* No change notes available for this release.
+
+# v1.58.0 (2025-03-24)
+
+* **Feature**: This release adds the AvailableSecurityUpdatesComplianceStatus field to patch baseline operations, as well as the AvailableSecurityUpdateCount and InstancesWithAvailableSecurityUpdates to patch state operations. Applies to Windows Server managed nodes only.
+
 # v1.57.2 (2025-03-04.2)
 
 * **Bug Fix**: Add assurance test for operation order.
