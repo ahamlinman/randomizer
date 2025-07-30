@@ -7,8 +7,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	"github.com/ahamlinman/randomizer/internal/randomizer"
-	"github.com/ahamlinman/randomizer/internal/store/registry"
+	"github.com/featherbread/randomizer/internal/randomizer"
+	"github.com/featherbread/randomizer/internal/store/registry"
 )
 
 func init() {

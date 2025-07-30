@@ -1,4 +1,4 @@
-module github.com/ahamlinman/randomizer
+module github.com/featherbread/randomizer
 
 go 1.24.0
 

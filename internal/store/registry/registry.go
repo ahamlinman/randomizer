@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/featherbread/randomizer/internal/randomizer"
 )
 
 // Registry provides environment keys and factory constructors for the store

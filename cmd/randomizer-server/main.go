@@ -13,8 +13,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ahamlinman/randomizer/internal/slack"
-	"github.com/ahamlinman/randomizer/internal/store"
+	"github.com/featherbread/randomizer/internal/slack"
+	"github.com/featherbread/randomizer/internal/store"
 )
 
 var exitSignals = []os.Signal{os.Interrupt}

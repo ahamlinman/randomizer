@@ -2,4 +2,4 @@
 
 package store
 
-import _ "github.com/ahamlinman/randomizer/internal/store/firestore"
+import _ "github.com/featherbread/randomizer/internal/store/firestore"

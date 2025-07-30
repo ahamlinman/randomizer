@@ -10,8 +10,8 @@ import (
 	"os"
 	"slices"
 
-	"github.com/ahamlinman/randomizer/internal/randomizer"
-	"github.com/ahamlinman/randomizer/internal/store/registry"
+	"github.com/featherbread/randomizer/internal/randomizer"
+	"github.com/featherbread/randomizer/internal/store/registry"
 )
 
 // haveAllStoreBackends indicates whether we can safely use the bbolt fallback

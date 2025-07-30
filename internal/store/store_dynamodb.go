@@ -2,4 +2,4 @@
 
 package store
 
-import _ "github.com/ahamlinman/randomizer/internal/store/dynamodb"
+import _ "github.com/featherbread/randomizer/internal/store/dynamodb"

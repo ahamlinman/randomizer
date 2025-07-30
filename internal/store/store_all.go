@@ -3,9 +3,9 @@
 package store
 
 import (
-	_ "github.com/ahamlinman/randomizer/internal/store/bbolt"
-	_ "github.com/ahamlinman/randomizer/internal/store/dynamodb"
-	_ "github.com/ahamlinman/randomizer/internal/store/firestore"
+	_ "github.com/featherbread/randomizer/internal/store/bbolt"
+	_ "github.com/featherbread/randomizer/internal/store/dynamodb"
+	_ "github.com/featherbread/randomizer/internal/store/firestore"
 )
 
 func init() {

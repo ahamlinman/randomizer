@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ahamlinman/randomizer/internal/randomizer"
-	"github.com/ahamlinman/randomizer/internal/store"
+	"github.com/featherbread/randomizer/internal/randomizer"
+	"github.com/featherbread/randomizer/internal/store"
 )
 
 func main() {

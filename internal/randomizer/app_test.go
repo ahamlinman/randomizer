@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ahamlinman/randomizer/internal/randomizer/rndtest"
+	"github.com/featherbread/randomizer/internal/randomizer/rndtest"
 )
 
 type validator func(*testing.T, Result, error)

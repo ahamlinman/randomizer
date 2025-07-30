@@ -2,4 +2,4 @@
 
 package store
 
-import _ "github.com/ahamlinman/randomizer/internal/store/bbolt"
+import _ "github.com/featherbread/randomizer/internal/store/bbolt"

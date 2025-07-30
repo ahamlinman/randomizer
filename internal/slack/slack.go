@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ahamlinman/randomizer/internal/randomizer"
+	"github.com/featherbread/randomizer/internal/randomizer"
 )
 
 // App provides HTTP handling logic that allows the randomizer to be integrated

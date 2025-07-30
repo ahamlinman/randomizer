@@ -7,9 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
-	"github.com/ahamlinman/randomizer/internal/awsconfig"
-	"github.com/ahamlinman/randomizer/internal/randomizer"
-	"github.com/ahamlinman/randomizer/internal/store/registry"
+	"github.com/featherbread/randomizer/internal/awsconfig"
+	"github.com/featherbread/randomizer/internal/randomizer"
+	"github.com/featherbread/randomizer/internal/store/registry"
 )
 
 func init() {
