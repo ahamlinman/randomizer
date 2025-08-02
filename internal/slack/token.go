@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -71,16 +70,18 @@ func StaticToken(token string) TokenProvider {
 // token value for the provided TTL.
 func AWSParameter(name string, ttl time.Duration) TokenProvider {
 	var (
-		mu     ctxLock
+		lock   = make(chan struct{}, 1)
 		token  string
 		expiry time.Time
 	)
 
 	return func(ctx context.Context) (string, error) {
-		if !mu.LockWithContext(ctx) {
+		select {
+		case lock <- struct{}{}:
+			defer func() { <-lock }()
+		case <-ctx.Done():
 			return "", ctx.Err()
 		}
-		defer mu.Unlock()
 
 		if time.Now().Before(expiry) {
 			return token, nil
@@ -103,44 +104,4 @@ func AWSParameter(name string, ttl time.Duration) TokenProvider {
 		expiry = time.Now().Add(ttl)
 		return token, nil
 	}
-}
-
-// ctxLock is a mutual exclusion lock that allows clients to cancel a pending
-// lock operation with a context. The zero value is an unlocked lock.
-type ctxLock struct {
-	init sync.Once
-	ch   chan struct{} // buffered, size 1
-}
-
-// LockWithContext attempts to lock l. If the lock is already in use, the
-// calling goroutine blocks until l is available or ctx is canceled. The return
-// value indicates whether the lock was actually acquired; if false, ctx was
-// canceled before the lock was acquired, and the caller must not unlock l or
-// violate any invariant that l protects.
-func (l *ctxLock) LockWithContext(ctx context.Context) bool {
-	l.ensureInit()
-	select {
-	case <-l.ch:
-		return true
-	case <-ctx.Done():
-		return false
-	}
-}
-
-// Unlock unlocks l.
-func (l *ctxLock) Unlock() {
-	l.ensureInit()
-	select {
-	case l.ch <- struct{}{}:
-		return
-	default:
-		panic("unlock of unlocked ctxLock")
-	}
-}
-
-func (l *ctxLock) ensureInit() {
-	l.init.Do(func() {
-		l.ch = make(chan struct{}, 1)
-		l.ch <- struct{}{}
-	})
 }
