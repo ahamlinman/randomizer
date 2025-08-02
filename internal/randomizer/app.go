@@ -5,8 +5,7 @@ import (
 	"math/rand/v2"
 )
 
-// Store represents an object that provides persistence for "groups" of
-// options.
+// Store enables persistence for named groups of options.
 type Store interface {
 	// List returns the names of all available groups. If no groups have been
 	// saved, it returns an empty list with a nil error.
@@ -20,20 +19,18 @@ type Store interface {
 	// group with that name.
 	Put(ctx context.Context, group string, options []string) error
 
-	// Delete ensures that the named group no longer exists, returning true or
-	// false to indicate whether the group existed prior to this deletion
-	// attempt.
-	Delete(ctx context.Context, group string) (bool, error)
+	// Delete ensures that the named group no longer exists, and indicates
+	// whether the group existed prior to this deletion attempt.
+	Delete(ctx context.Context, group string) (existed bool, err error)
 }
 
-// App represents a randomizer app that can accept commands.
+// App represents a randomizer instance that can accept commands.
 type App struct {
 	name    string
 	store   Store
 	shuffle func([]string) // Overridden in tests for predictable behavior
 }
 
-// NewApp returns an App.
 func NewApp(name string, store Store) App {
 	return App{
 		name:    name,
@@ -48,11 +45,10 @@ func shuffle(options []string) {
 	})
 }
 
-// Main is the entrypoint to the randomizer tool.
+// Main is the entrypoint to the randomizer.
 //
-// Note that all errors returned from this function will be of this package's
-// Error type. This provides the HelpText method for user-friendly output
-// formatting.
+// All errors returned from Main are of type [Error], and support
+// [Error.HelpText] for user-friendly formatting.
 func (a App) Main(ctx context.Context, args []string) (Result, error) {
 	request, err := a.newRequest(ctx, args)
 	if err != nil {

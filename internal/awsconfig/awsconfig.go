@@ -1,5 +1,4 @@
-// Package awsconfig generates AWS client configurations optimized for use by
-// the randomizer.
+// Package awsconfig provides a randomizer-optimized AWS SDK configuration.
 package awsconfig
 
 import (
@@ -37,10 +36,9 @@ type Option = func(*config.LoadOptions) error
 func New(ctx context.Context) (aws.Config, error) {
 	transport := http.DefaultTransport
 
-	// This option is recommended in AWS Lambda deployments due to the
-	// significant reduction in cold start latency (see getEmbeddedCertPool).
-	// It can be enabled for standard server deployments if desired, but is far
-	// less beneficial.
+	// This option is recommended in AWS Lambda to significantly reduce cold
+	// start latency (see [getEmbeddedCertTransport]). It can be enabled for
+	// standard server deployments if desired, but is far less beneficial.
 	if os.Getenv("AWS_CLIENT_EMBEDDED_TLS_ROOTS") == "1" {
 		transport = getEmbeddedCertTransport()
 	}
@@ -60,10 +58,9 @@ func New(ctx context.Context) (aws.Config, error) {
 		return aws.Config{}, fmt.Errorf("loading AWS config: %w", err)
 	}
 
-	// WARNING: X-Ray tracing will panic if the context passed to AWS operations
-	// is not already associated with an open X-Ray segment. That means that as of
-	// this writing this option is only safe to use on AWS Lambda. Standard server
-	// deployments should avoid setting it.
+	// NOTE: X-Ray tracing panics if the context for an AWS call is not already
+	// associated with an open X-Ray segment. As of writing, this option is only
+	// safe to use on AWS Lambda. Standard server deployments should avoid it.
 	if useXRay := os.Getenv("AWS_CLIENT_XRAY_TRACING"); useXRay == "1" {
 		xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	}
@@ -75,12 +72,11 @@ func New(ctx context.Context) (aws.Config, error) {
 // CAs operated by Amazon Trust Services, which all AWS service endpoints chain
 // from.
 //
-// When the randomizer runs on AWS Lambda in the recommended configuration, this
-// limited set of roots is so much cheaper to parse than a typical set of system
-// roots that it cuts cold start invocation time roughly in half (by around
-// 500ms). This is a large enough difference for a human to notice, and accounts
-// for about 15% of the 3 second response time limit that Slack imposes on slash
-// commands.
+// When the randomizer runs on AWS Lambda with recommended resource settings,
+// this limited set of roots is substantially cheaper to parse than a typical
+// root store, which removes ~500ms of cold-start response latency. That's
+// large enough for a human to notice, and accounts for ~15% of the 3-second
+// response time limit Slack imposes on slash commands.
 var getEmbeddedCertTransport = sync.OnceValue(func() *http.Transport {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{RootCAs: loadEmbeddedCertPool()}

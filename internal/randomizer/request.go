@@ -32,20 +32,19 @@ func (a App) newRequest(ctx context.Context, args []string) (req request, err er
 }
 
 func parseArgs(args []string) (op operation, operand string, opargs []string, err error) {
-	// We accept the standard flag syntax for help, but strongly expect that users
-	// won't know that syntax in advance. Logic elsewhere in the randomizer
-	// prevents the use of "help" as a group name to avoid conflicts with this
-	// special case.
+	// We accept the standard flag syntax for help, but expect that users won't
+	// know that syntax in advance. Logic elsewhere in the randomizer blocks
+	// using "help" as a group name to avoid conflicts with this special case.
 	if len(args) == 0 || args[0] == "/help" || len(args) == 1 && args[0] == "help" {
 		return showHelp, "", args, nil
 	}
 
 	switch args[0] {
-	// Arguments without an explicitly known flag always trigger a randomization,
-	// even if the first argument starts with a slash, simply because it's less
-	// work to implement and unlikely to cause big problems in practice. Logic
-	// elsewhere in the randomizer prevents the use of flag-like group names, so
-	// that new flags can't make existing groups inaccessible.
+	// Arguments without an explicitly known flag trigger randomization, even if
+	// the first argument starts with a slash, because it's easier to implement
+	// and unlikely to cause problems in practice. Logic elsewhere in the
+	// randomizer blocks using flag-like group names, so new flags can't make
+	// existing groups inaccessible.
 	default:
 		return makeSelection, "", args, nil
 

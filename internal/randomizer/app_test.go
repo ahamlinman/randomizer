@@ -260,12 +260,10 @@ func isResult(expectedType ResultType, contains ...string) validator {
 		message := res.Message()
 		for _, c := range contains {
 			i := strings.Index(message, c)
-
 			if i < 0 {
 				t.Errorf("result missing %q in expected position\n%v", c, res.Message())
 				continue
 			}
-
 			message = message[i+len(c):]
 		}
 	}
@@ -276,14 +274,9 @@ func isError(contains string) validator {
 		if err == nil {
 			t.Fatalf("unexpected result %v", res)
 		}
-
-		if _, ok := err.(Error); !ok {
-			t.Fatalf("unexpected error type %T", err)
-		}
-
-		rerr := err.(Error)
-
-		if !strings.Contains(rerr.HelpText(), contains) {
+		if rerr, ok := err.(Error); !ok {
+			t.Errorf("unexpected error type %T", err)
+		} else if !strings.Contains(rerr.HelpText(), contains) {
 			t.Errorf("error help text missing substring %q", contains)
 		}
 	}

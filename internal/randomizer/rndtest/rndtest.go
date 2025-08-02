@@ -9,7 +9,7 @@ import (
 )
 
 // Store implements randomizer.Store by mapping group names to sorted lists of
-// strings. A nil Store will return errors for every operation.
+// strings. A nil Store returns errors for every operation.
 type Store map[string][]string
 
 // Clone returns a deep copy of the original store.

@@ -15,10 +15,10 @@ var Registry = map[string]Entry{}
 
 // Entry represents a single store backend.
 type Entry struct {
-	// EnvironmentKeys is the list of environment variables that this store's
-	// factory checks for configuration. If any one of these keys is set in the
-	// environment (and no conflicting keys are set), this store will be selected
-	// as the backend for this randomizer instance.
+	// EnvironmentKeys lists the names of environment variables that this store's
+	// factory checks for configuration. If the environment contains any of these
+	// keys, and contains no keys for other factories, the randomizer selects this
+	// store as its backend.
 	EnvironmentKeys []string
 
 	// FactoryFromEnv creates a factory for this backend based on its environment
